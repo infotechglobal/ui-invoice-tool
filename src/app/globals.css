@@ -1,8 +1,13 @@
 @tailwind base;
 @tailwind components;
+
+.loginForm{
+  @apply px-11 text-gray-900 text-base rounded-md drop-shadow-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:border-gray-600 dark:placeholder-gray-400 dark:text-black dark:focus:ring-blue-500 dark:focus:border-blue-500
+}
 @tailwind utilities;
 
-:root {
+
+/* :root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
@@ -30,4 +35,4 @@ body {
   .text-balance {
     text-wrap: balance;
   }
-}
+} */
