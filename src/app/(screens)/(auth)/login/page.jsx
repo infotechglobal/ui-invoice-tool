@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { loginImage, Francepay, emailIcon, pass } from '../../../../../public/assets/assets.js';
 import Image from 'next/image';
 import { Poppins } from 'next/font/google';
+import axios from 'axios';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -26,10 +27,29 @@ function LoginPage() {
   };
 
   // Handler function for form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Process form data here
+
     console.log('Form Data:', formData);
+
+    try {
+      const { data } = await axios.post('http://localhost:5000/auth/login/', {
+        email: formData.email,
+        password:formData.password
+      }, {
+
+      }
+      )
+
+      console.log(data);
+      alert(data.message);
+    } catch (error) {
+      console.log(error)
+      const errMsg= error.response.data.error;
+      alert(errMsg);
+    }
+
+
   };
 
   return (
@@ -58,7 +78,7 @@ function LoginPage() {
               className="mx-auto"
             />
           </div>
-          <form className={`${poppins.className} mx-auto w-[472px]`} onSubmit={handleSubmit}>
+          <form action="POST" className={`${poppins.className} mx-auto w-[472px]`} onSubmit={handleSubmit}>
             <div className="mb-5 relative">
               <Image
                 src={emailIcon}
@@ -89,7 +109,7 @@ function LoginPage() {
                 className="absolute top-[10px] left-2 z-30"
               />
               <input
-                type="password"
+                type="string"
                 id="password"
                 name="password"
                 value={formData.password}
