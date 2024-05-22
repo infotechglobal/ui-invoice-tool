@@ -5,7 +5,7 @@ export default function ScreensLayout({ children }) {
           <div className="w-[280px] h-[100vh] flex-shrink-0   ">
             <Sidebar />
           </div>
-          <div className="flex-grow border-2 border-gray-500" >
+          <div className="flex-grow border-2 border-inherit" >
             {children}
           </div>
         </div>
