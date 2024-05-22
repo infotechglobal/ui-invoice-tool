@@ -36,6 +36,7 @@ module.exports = {
         archivo: ['Archivo', 'sans-serif'],
       },
       fontSize: {
+        '14px': '14px',
         '28px': '28px',
         'custom-18': ['18px', {
           lineHeight: '24px',
