@@ -1,9 +1,10 @@
 'use client';
 import React, { useState } from 'react';
-import { loginImage, Francepay, emailIcon, pass } from '../../../../../public/assets/assets.js';
+import { loginImage, Francepay, email_icon, pass } from '../../../../../public/assets/assets.js';
 import Image from 'next/image';
 import { Poppins } from 'next/font/google';
 import axios from 'axios';
+import { useRouter } from 'next/navigation'
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -11,6 +12,7 @@ const poppins = Poppins({
 });
 
 function LoginPage() {
+  const router = useRouter()
   // Initialize state for form inputs
   const [formData, setFormData] = useState({
     email: '',
@@ -42,7 +44,12 @@ function LoginPage() {
       )
 
       console.log(data);
+      
       alert(data.message);
+      if(data.status=='true'){
+          router.push('/admin/Invoices')
+      }
+
     } catch (error) {
       console.log(error)
       const errMsg= error.response.data.error;
@@ -81,7 +88,7 @@ function LoginPage() {
           <form action="POST" className={`${poppins.className} mx-auto w-[472px]`} onSubmit={handleSubmit}>
             <div className="mb-5 relative">
               <Image
-                src={emailIcon}
+                src={email_icon}
                 width={25}
                 height={20}
                 alt="Email icon"
@@ -109,7 +116,7 @@ function LoginPage() {
                 className="absolute top-[10px] left-2 z-30"
               />
               <input
-                type="string"
+                type="password"
                 id="password"
                 name="password"
                 value={formData.password}
