@@ -1057,11 +1057,30 @@ const UserData = [
 
   ];
 
+
+  const transactions = [
+    { transactionName: "50 $ crédités sur votre compte", time: "3 mai 2024 à 12h00" },
+    { transactionName: "20 $ débités de votre compte", time: "4 mai 2024 à 13h00" },
+    { transactionName: "Achat chez XYZ Store", time: "5 mai 2024 à 14h00" },
+    // Add more sample data objects here
+    { transactionName: "10 $ crédités sur votre compte", time: "6 mai 2024 à 15h00" },
+    { transactionName: "15 $ débités de votre compte", time: "7 mai 2024 à 16h00" },
+    { transactionName: "Achat en ligne", time: "8 mai 2024 à 17h00" },
+    { transactionName: "30 $ crédités sur votre compte", time: "9 mai 2024 à 18h00" },
+    { transactionName: "5 $ débités de votre compte", time: "10 mai 2024 à 19h00" },
+    { transactionName: "Achat chez ABC Store", time: "11 mai 2024 à 20h00" },
+    
+
+];
+
+
 export {UserData}
+export {transactions}
 export { default as loginImage } from './LoginPagePicure.png';
+export { default as pic } from './pic.png';
 export { default as BrandLogo } from './BrandLogo.png';
 export { default as Francepay } from './FrancePay.png';
-export { default as emailIcon } from './emailICon.png';
+export { default as email_icon } from './email.png';
 export { default as pass } from './password.png';
 
 
