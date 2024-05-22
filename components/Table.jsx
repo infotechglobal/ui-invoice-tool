@@ -7,11 +7,27 @@ import {
     TableRow,
   } from "@/components/ui/table";
   
+  import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+  } from "@/components/ui/pagination"
+  
 import { UserData } from "../public/assets/assets";
+import { useState } from "react";
   
   export function CustomTable() {
+    console.log(UserData.length)
+    const rowPerPage= 8;
+    const [pageNo, setPageNo]= useState(1);
+    const [startIndex, setStartIndex]= useState(0);
+    const [endIndex, setEndIndex]= useState(rowPerPage);
     return (
-      <Table>
+      <>      <Table>
         <TableHeader>
           <TableRow>
             <TableHead className="T-head">User Id</TableHead>
@@ -26,8 +42,8 @@ import { UserData } from "../public/assets/assets";
           </TableRow>
         </TableHeader>
         <TableBody>
-          {UserData.map((user) => (
-            <TableRow key={user.UserID}>
+          {UserData.slice(startIndex,endIndex).map((user) => (
+            <TableRow key={user.UserID+Math.random()}>
               <TableCell className="T-data">{user.UserID}</TableCell>
               <TableCell className="T-data-name">{user.NomClient}</TableCell>
               <TableCell className="T-data-name">{user.PrenomClient}</TableCell>
@@ -41,6 +57,47 @@ import { UserData } from "../public/assets/assets";
           ))}
         </TableBody>
       </Table>
+
+
+      <Pagination>
+  <PaginationContent>
+    <PaginationItem>
+      <PaginationPrevious
+       className={startIndex==0 ?"pointer-events-none opacity-50":undefined}
+       onClick ={()=>{
+        if(startIndex>0){
+          setPageNo(pageNo-1);
+        }
+        console.log("prev clicked", startIndex, endIndex);
+          setStartIndex(startIndex-rowPerPage);
+          setEndIndex(endIndex-rowPerPage)
+       }}
+       />
+    </PaginationItem>
+    <PaginationItem>
+      <PaginationLink href="#" >{pageNo}</PaginationLink>
+    </PaginationItem>
+    {/* <PaginationItem>
+      <PaginationEllipsis />
+    </PaginationItem> */}
+    <PaginationItem>
+      <PaginationNext 
+      className={endIndex>=UserData.length ?"pointer-events-none opacity-50":undefined}
+      onClick ={()=>{
+        console.log("next clicked", startIndex, endIndex);
+        if(endIndex<UserData.length){
+          setPageNo(pageNo+1);
+        }
+        setStartIndex(startIndex+rowPerPage);
+        setEndIndex(endIndex+rowPerPage)
+     }}
+      />
+    </PaginationItem>
+  </PaginationContent>
+</Pagination>
+
+      </>
+
     );
   }
   
