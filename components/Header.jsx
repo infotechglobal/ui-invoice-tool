@@ -1,7 +1,8 @@
 import React from 'react'
-import { Mail } from "lucide-react"
+import { ArrowUp, Mail,ArrowLeft,Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DatePicker } from './DatePicker'
+
 function Header({isInvoice}) {
   return (
     <div className="header flex flex-col">
@@ -15,11 +16,12 @@ function Header({isInvoice}) {
         </div>
         {/* buttons */}
         <div className='flex items-end'>
-            <Button className="bg-downloadButton-200 h-6 ">
-                <Mail className="mr-2 h-4 w-4" /> Dernière mise à jour : 8 mai 2024 à 13h00
+            <Button size="btn" className="bg-downloadButton-200 h-6 ">
+            <ArrowUp className='mr-2 mt-0' size={16} color="#f6faff" strokeWidth={3} />
+                Dernière mise à jour : 8 mai 2024 à 13h00
             </Button>
-            <Button className="bg-downloadButton-200 h-6 ml-3">
-                <Mail className="mr-2 h-4 w-4" /> Retourner
+            <Button size="btn" className="bg-downloadButton-200 h-6 ml-3">
+            <ArrowLeft className='mr-2 mt-0' size={16} color="#f6faff" />Retourner
             </Button>
         </div>
     </div>
@@ -37,7 +39,7 @@ function Header({isInvoice}) {
                     <DatePicker className={"h-4"} />
                 </div>
                 <Button className="bg-downloadButton-200 h-7 ">
-                    <Mail className="mr-2 h-4 w-4" />Download
+                <Download className='mr-2 mt-0' size={16} color="#f6faff" />Download
                 </Button>
             </>
         ) : (
