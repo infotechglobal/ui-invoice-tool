@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import { loginImage, Francepay, email_icon, pass } from '../../../../../public/assets/assets.js';
+import { loginImage, Francepay, emailIcon, pass } from '../../../../../public/assets/assets.js';
 import Image from 'next/image';
 import { Poppins } from 'next/font/google';
 import axios from 'axios';
@@ -31,7 +31,8 @@ function LoginPage() {
   // Handler function for form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    router.push('/admin/Invoices')
+    return;
     console.log('Form Data:', formData);
 
     try {
@@ -58,6 +59,8 @@ function LoginPage() {
 
 
   };
+
+
 
   return (
     <div className='flex w-full h-screen'>
@@ -88,7 +91,7 @@ function LoginPage() {
           <form action="POST" className={`${poppins.className} mx-auto w-[472px]`} onSubmit={handleSubmit}>
             <div className="mb-5 relative">
               <Image
-                src={email_icon}
+                src={emailIcon}
                 width={25}
                 height={20}
                 alt="Email icon"
