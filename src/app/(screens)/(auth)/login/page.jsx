@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import { loginImage, Francepay, emailIcon, pass } from '../../../../../public/assets/assets.js';
+import { loginImage, Francepay, Email, pass } from '../../../../../public/assets/assets.js';
 import Image from 'next/image';
 import { Poppins } from 'next/font/google';
 import axios from 'axios';
@@ -91,7 +91,7 @@ function LoginPage() {
           <form action="POST" className={`${poppins.className} mx-auto w-[472px]`} onSubmit={handleSubmit}>
             <div className="mb-5 relative">
               <Image
-                src={emailIcon}
+                src={Email}
                 width={25}
                 height={20}
                 alt="Email icon"
