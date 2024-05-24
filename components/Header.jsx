@@ -1,7 +1,8 @@
 import React from 'react'
-import { ArrowUp, Mail,ArrowLeft,Download } from "lucide-react"
+import { ArrowUp, Mail,ArrowLeft,Download, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DatePicker } from './DatePicker'
+
 
 function Header({isInvoice}) {
   return (
@@ -31,7 +32,8 @@ function Header({isInvoice}) {
     </div>
     {/* search bar, date picker, download invoice */}
     <div className='mt-3 flex justify-between relative'>
-        <input className='w-[400px] h-7 rounded-lg border-2  border-bunker-neutrals-100 bg-white-custom' placeholder='Recherche'></input>
+    <Search className='absolute top-1 left-3'  size={18} color="#403A44" strokeWidth={1.75} />
+        <input className='searchField' placeholder='Recherche'></input>
 
         {isInvoice ? (
             <>
