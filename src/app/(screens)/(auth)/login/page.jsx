@@ -31,7 +31,7 @@ function LoginPage() {
   // Handler function for form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    router.push('/admin/Invoices')
+    router.push('/admin/uploads')
     return;
     console.log('Form Data:', formData);
 
