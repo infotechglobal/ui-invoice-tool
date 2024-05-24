@@ -74,7 +74,7 @@ function AdminProfile({ params }) {
                                     <h4 className='text-VioletGray-900 font-Archivo text-14px font-medium non-italic'>{item.transactionName}</h4>
                                     <div className='flex flex-col mr-7'>
                                     <ArrowLeftRight className='w-max place-self-end' color="#908b89" strokeWidth={1.25} />
-                                    <h3 className='text-VioletGray-900 font-Archivo text-10px font-normal non-italic'>{item.time}</h3>
+                                    <h3 className='text-VioletGray-500 font-Archivo text-10px font-normal non-italic'>{item.time}</h3>
                                     </div>
                                 </div>
                             );
