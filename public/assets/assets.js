@@ -1103,7 +1103,7 @@ export { default as loginImage } from './LoginPagePicure.png';
 export { default as pic } from './pic.png';
 export { default as BrandLogo } from './BrandLogo.png';
 export { default as Francepay } from './FrancePay.png';
-export { default as emailIcon } from './emailIcon.png';
+export { default as Email } from './Email.png';
 export { default as pass } from './password.png';
 
 
