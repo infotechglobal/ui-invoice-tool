@@ -26,6 +26,12 @@
     @apply px-11 text-gray-900 text-base rounded-md drop-shadow-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:border-gray-600 dark:placeholder-gray-400 dark:text-black dark:focus:ring-blue-500 dark:focus:border-blue-500;
   }
 
+
+  /* header */
+  .searchField{
+    @apply w-[365px] h-7 rounded-lg border-2  border-bunker-neutrals-100 bg-white-custom px-9 
+  }
+
   /* table css */
   .T-head {
     @apply text-[12px] font-archivo font-semibold leading-[18px];
@@ -64,3 +70,13 @@
 }
 
 @tailwind utilities;
+
+
+.no-scrollbar::-webkit-scrollbar{
+  display: none;
+}
+
+.no-scrollbar{
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
