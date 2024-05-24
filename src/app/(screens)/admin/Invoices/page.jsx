@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button"
 import { SelectScrollable } from '../../../../../components/Select'
 import { CustomTable } from '../../../../../components/Table'
 import Header from '../../../../../components/Header'
+import { Navigation } from 'lucide-react'
+
 function Dashboard() {
 
     return (
@@ -18,7 +20,9 @@ function Dashboard() {
                     <SelectScrollable />
 
                     {/* //button with img */}
-                    <Button variant="downloadBtn" size="icon">i</Button>
+                    <Button variant="downloadBtn" size="icon">
+                    <Navigation size={48} color="#403A44" strokeWidth={1.75} />
+                    </Button>
                     {/* //download button */}
                     <Button variant="downloadBtn">Télécharger</Button>
                     {/* //upload to drive */}
