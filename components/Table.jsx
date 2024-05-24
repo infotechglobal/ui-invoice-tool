@@ -16,12 +16,14 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination"
 
+
 import { UserData } from "../public/assets/assets";
 import { useState } from "react";
+import Link from "next/link";
 
 export function CustomTable() {
   console.log(UserData.length);
-  const rowPerPage = 8;
+  const rowPerPage = 7;
   const [pageNo, setPageNo] = useState(1);
   const [startIndex, setStartIndex] = useState(0);
   const [endIndex, setEndIndex] = useState(rowPerPage);
@@ -43,9 +45,13 @@ export function CustomTable() {
                   </TableRow>
               </TableHeader>
               <TableBody>
-                  {UserData.slice(startIndex, endIndex).map((user) => (
-                      <TableRow key={user.UserID + Math.random()}>
-                          <TableCell className="T-data">{user.UserID}</TableCell>
+                  {UserData.slice(startIndex, endIndex).map((user,index) => (
+                      <TableRow key={index}>
+                          <TableCell className="T-data">
+                            <Link href={"/admin/profile/a001"}>
+                            {user.UserID}
+                            </Link>
+                            </TableCell>
                           <TableCell className="T-data-name">{user.NomClient}</TableCell>
                           <TableCell className="T-data-name">{user.PrenomClient}</TableCell>
                           <TableCell className="T-data">{user.CodeProduit}</TableCell>
