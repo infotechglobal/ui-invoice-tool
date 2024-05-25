@@ -1103,8 +1103,8 @@ export { default as loginImage } from './../../public/assets/LoginPagePicure.png
 export { default as pic } from './../../public/assets/pic.png';
 export { default as BrandLogo } from './../../public/assets/BrandLogo.png';
 export { default as Francepay } from './../../public/assets/FrancePay.png';
-//export { default as Email } from './../../public/assets/Email.png';
 export { default as pass } from './../../public/assets/password.png';
+export { default as email } from './../../public/assets/Email.png';
 
 
 
