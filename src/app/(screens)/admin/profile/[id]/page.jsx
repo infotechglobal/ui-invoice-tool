@@ -1,9 +1,9 @@
 import React from 'react'
 import Header from '../../../../../../components/Header'
-import { pic } from '../../../../../../public/assets/assets'
+import { pic } from '../../../../../../src/lib/assets'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
-import { transactions } from '../../../../../../public/assets/assets'
+import { transactions } from '../../../../../../src/lib/assets'
 import { ArrowLeftRight } from 'lucide-react'
 
 function AdminProfile({ params }) {
