@@ -1,7 +1,7 @@
 import React from 'react'
 import Header from '../../../../../components/Header'
 import { ArrowLeft, ArrowUp, Download, Search, Trash2 } from 'lucide-react'
-import { sampleFiles } from '../../../../../public/assets/assets'
+import { sampleFiles } from '../../../../../src/lib/assets'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { DatePicker } from '../../../../../components/DatePicker'

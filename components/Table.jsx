@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/pagination"
 
 
-import { UserData } from "../public/assets/assets";
+import { UserData } from "../src/lib/assets";
 import { useState } from "react";
 import Link from "next/link";
 

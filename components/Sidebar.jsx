@@ -1,5 +1,5 @@
 import React from 'react'
-import { BrandLogo, sampleFiles } from '../public/assets/assets'
+import { BrandLogo, sampleFiles } from '../src/lib/assets'
 import Image from 'next/image'
 import { File } from 'lucide-react'
 import Link from 'next/link'

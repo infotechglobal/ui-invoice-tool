@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import { loginImage, Francepay, Email, pass } from '../../../../../public/assets/assets.js';
+import { loginImage, Francepay, Email, pass } from '../../../../../src/lib/assets.js';
 import Image from 'next/image';
 import { Poppins } from 'next/font/google';
 import axios from 'axios';
