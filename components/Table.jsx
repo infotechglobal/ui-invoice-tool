@@ -18,7 +18,7 @@ import {
 
 
 import { UserData } from "../src/lib/assets";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
 export function CustomTable() {
@@ -27,12 +27,30 @@ export function CustomTable() {
   const [pageNo, setPageNo] = useState(1);
   const [startIndex, setStartIndex] = useState(0);
   const [endIndex, setEndIndex] = useState(rowPerPage);
+  const [fileData,setFileData] = useState([]);
+  useEffect(() => {
+    // Check if `window` is defined and `localStorage` is available
+    if (typeof window !== 'undefined' && localStorage.getItem('fileData')) {
+      const item = localStorage.getItem('fileData');
+      if (item) {
+        setFileData(JSON.parse(item));
+      }
+    }
+  }, []);
 
   return (
       <>
           <Table>
               <TableHeader>
                   <TableRow>
+                    {/* {
+                        fileData.length>0 && fileData[0].length>0 &&
+                        fileData[0]?.map((item,index)=>{
+                            return (
+                                <TableHead className="T-head" key={index}>{item}</TableHead>
+                            )
+                        })
+                    } */}
                       <TableHead className="T-head">User Id</TableHead>
                       <TableHead className="T-head">Nom client</TableHead>
                       <TableHead className="T-head">Prénom client</TableHead>
