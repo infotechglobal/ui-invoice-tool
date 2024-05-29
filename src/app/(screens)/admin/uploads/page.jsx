@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useRef, useEffect } from 'react'
+import React, { useRef, useEffect, useState } from 'react'
 import Header from '../../../../../components/Header'
 import { ArrowLeft, ArrowUp, Download, Search, Trash2, Upload } from 'lucide-react'
 import { sampleFiles } from '../../../../../src/lib/assets'
@@ -8,11 +8,14 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { DatePicker } from '../../../../../components/DatePicker'
 import {useFileStore, usefileAlert} from '../../../../../store'
+import axios from 'axios'
+
 
  
 
 
 function Uploads({ isInvoice = true }) {
+  const [newFile, setNewFile] = useState();
   const addFile = useFileStore((state) => state.addNewFile)
   const toggleLoad= usefileAlert((state)=>state.toggleState)
   const uploadedFiles = useFileStore((state) => state.uploadedFiles)
@@ -24,35 +27,71 @@ function Uploads({ isInvoice = true }) {
     }
   };
 
-  const processFile = async (event) => {
+
+
+  const processFile = async () => {
+
+    try {
+
+      console.log(newFile);
+      const formData = new FormData();
+      formData.append("file",newFile);
+      console.log(formData);
+      const { data } = await axios.post('http://localhost:5000/upload/savefile/', formData);
+      // console.log(data);
+      // alert(data.message);
+      
+      
+      // if(data.status == true){
+      //   router.push('/admin/Invoices')
+         
+      // }
+
+    } catch (error) {
+      // console.log(error)
+      // const errMsg= error.response.data.error;
+      // alert(errMsg);
+    }
+
+    
+    
+    // const fileContent = await selectedFile.text();
+    // const fileData = fileContent.split("\n"); // Split the file content by new lines
+
+    // const finalContent = fileData.map(row => row.split(",")); // Map each row to an array of values
+    // console.log(finalContent);
+
+    // const newFile = {
+    //   name: selectedFile.name,
+    //   data: finalContent.slice(1), // Exclude the header row
+    //   lastModified: selectedFile.lastModifiedDate
+    // }
+
+
+    // addFile(newFile);
+    // toggleLoad();
+    // setTimeout(() => {
+    //   toggleLoad()
+    // }, 2000);
+
+  };
+
+  const handleChange= async (event)=>{
     const selectedFile = event.target.files?.[0];
     console.log("file ",selectedFile);
     if (!selectedFile) {
       console.log("No file selected.");
       return;
     }
-
-    const fileContent = await selectedFile.text();
-    const fileData = fileContent.split("\n"); // Split the file content by new lines
-  
-
-    const finalContent = fileData.map(row => row.split(",")); // Map each row to an array of values
-    console.log(finalContent);
-
-    const newFile = {
-      name: selectedFile.name,
-      data: finalContent.slice(1), // Exclude the header row
-      lastModified: selectedFile.lastModifiedDate
-    }
+    setNewFile(selectedFile)
+    // processFile()
+  }
 
 
-    addFile(newFile);
-    toggleLoad();
-    setTimeout(() => {
-      toggleLoad()
-    }, 2000);
-
-  };
+  useEffect(()=>{
+    if(newFile)
+    processFile();
+  },[newFile])
 
   useEffect(() => {
     console.log("Updated uploadedFiles state: ", uploadedFiles);
@@ -86,7 +125,7 @@ function Uploads({ isInvoice = true }) {
             id="inputFile"
             className='hidden'
             ref={inputFileRef}
-            onChange={processFile}
+            onChange={handleChange}
             accept=".csv"
           />
         </div>
