@@ -34,7 +34,7 @@ function LoginPage() {
    
     console.log('Form Data:', formData);
     try {
-      const { data } = await axios.post('http://localhost:5000/auth/login/', {
+      const { data } = await axios.post('https://api.dev.european-pay.fr/auth/login/', {
         email: formData.email,
         password:formData.password
       }, {
