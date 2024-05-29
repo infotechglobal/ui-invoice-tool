@@ -37,6 +37,7 @@ module.exports = {
         'VioletGray-500': 'var(--VioletGray-500, #908B93)',
         'bunker-neutrals-100': 'var(--Bunker-Neutrals-100, #DCDDDD)',
         'white-custom': 'var(--White, #FFF)',
+        'alert-success': "#00A96E",
         downloadButton:{
           200: '#4568DC'
         },
