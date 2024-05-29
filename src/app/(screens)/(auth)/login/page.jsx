@@ -31,10 +31,8 @@ function LoginPage() {
   // Handler function for form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    router.push('/admin/uploads')
-    return;
+   
     console.log('Form Data:', formData);
-
     try {
       const { data } = await axios.post('http://localhost:5000/auth/login/', {
         email: formData.email,
@@ -43,12 +41,13 @@ function LoginPage() {
 
       }
       )
-
       console.log(data);
-      
       alert(data.message);
-      if(data.status=='true'){
-          router.push('/admin/Invoices')
+      
+      
+      if(data.status == true){
+        router.push('/admin/Invoices')
+         
       }
 
     } catch (error) {
