@@ -46,7 +46,7 @@ function LoginPage() {
       
       
       if(data.status == true){
-        router.push('/admin/Invoices')
+        router.push('/admin/uploads')
          
       }
 
