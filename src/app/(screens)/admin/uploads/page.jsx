@@ -7,7 +7,7 @@ import { sampleFiles } from '../../../../../src/lib/assets'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { DatePicker } from '../../../../../components/DatePicker'
-import { useFileStore, usefileAlert,useAlertMessage } from '../../../../../store'
+import { useFileStore, usefileAlert, useAlertMessage } from '../../../../../store'
 import axios from 'axios'
 
 
@@ -26,7 +26,7 @@ function Uploads({ isInvoice = true }) {
     }
   };
 
- 
+
   const processFile = async () => {
     try {
       const formData = new FormData();
@@ -34,7 +34,7 @@ function Uploads({ isInvoice = true }) {
       const { data } = await axios.post('http://localhost:5000/upload/savefile/', formData);
       console.log(data);
       addFile(data.allFiles);
-      showAlert(data.message,"success");
+      showAlert(data.message, "success");
       toggleLoad();
     } catch (error) {
       console.log(error);
@@ -51,13 +51,13 @@ function Uploads({ isInvoice = true }) {
     setNewFile(selectedFile);
   };
 
-  const fetchData= async()=>{
-    const {data} = await axios.get('http://localhost:5000/auth/getallfiles');
+  const fetchData = async () => {
+    const { data } = await axios.get('http://localhost:5000/auth/getallfiles');
     console.log(data.allFiles);
-   
+
     addFile(data.allFiles)
-   console.log(uploadedFiles);
-}
+    console.log(uploadedFiles);
+  }
 
   useEffect(() => {
     if (newFile) {
@@ -69,9 +69,9 @@ function Uploads({ isInvoice = true }) {
     console.log("Updated uploadedFiles state: ", uploadedFiles);
   }, [uploadedFiles]);
 
-  useEffect(()=>{
-      fetchData();
-  },[])
+  useEffect(() => {
+    fetchData();
+  }, [])
 
   return (
     <div className='pt-2 pr-2 pl-3 flex flex-col '>
@@ -92,7 +92,7 @@ function Uploads({ isInvoice = true }) {
             className="rounded-xl px-2 py-1 bg-uploadContainerBg-200 flex justify-center items-center text-black font-semibold mr-7 cursor-pointer"
             onClick={handleUploadClick}
           >
-            Upload 
+            Téléverser un fichier
             <Upload className="" size={16} />
             <input
               type="file"
@@ -122,7 +122,7 @@ function Uploads({ isInvoice = true }) {
               <div className='space-y-2'>
                 <h1 className='text-white font-archivo text-lg font-semibold leading-6'>{item.filename}</h1>
                 <h2 className='text-white font-syne text-base font-normal leading-4'>
-                  last modified {item.createdAt}
+                dernière modification {item.createdAt}
                 </h2>
                 <a
                   href={item.driveLink}
@@ -130,7 +130,8 @@ function Uploads({ isInvoice = true }) {
                   rel="noopener noreferrer"
                   className='text-white font-archivo text-sm font-normal leading-4 underline'
                 >
-                  Open in Drive
+
+                  Ouvrir dans Drive
                 </a>
               </div>
               <Link href='/admin/Invoices' className='text-white font-archivo text-sm font-normal leading-4 underline'>
