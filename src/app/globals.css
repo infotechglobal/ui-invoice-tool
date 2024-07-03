@@ -11,14 +11,14 @@
 }
 
 /* Custom font family utility */
-@layer base {
+/* @layer base {
   @font-face {
     font-family: 'Archivo';
     font-style: normal;
     font-weight: 400;
     src: url('/path/to/archivo-regular.woff2') format('woff2');
   }
-}
+} */
 
 @layer components {
   /* login */
