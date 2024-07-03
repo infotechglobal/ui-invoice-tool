@@ -4,7 +4,9 @@ import { BrandLogo, sampleFiles } from '../src/lib/assets'
 import Image from 'next/image'
 import { CircleCheck, CircleX, File } from 'lucide-react'
 import Link from 'next/link'
-import { useFileStore, usefileAlert, useAlertMessage } from '../store'
+import {usefileAlert, useAlertMessage } from '../store/alertStore'
+import { useFileStore } from '../store/uploadedFilesStore'
+
 
 import {
   Alert,
