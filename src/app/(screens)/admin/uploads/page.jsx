@@ -7,8 +7,11 @@ import { sampleFiles } from '../../../../../src/lib/assets'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { DatePicker } from '../../../../../components/DatePicker'
-import { useFileStore, usefileAlert, useAlertMessage } from '../../../../../store'
+import { usefileAlert, useAlertMessage } from '../../../../../store/alertStore'
+import { useFileStore } from '../../../../../store/uploadedFilesStore'
+import { useInvoiceData } from '../../../../../store/invoiceDataStore'
 import axios from 'axios'
+import { useRouter } from 'next/navigation';
 
 
 
@@ -19,6 +22,9 @@ function Uploads({ isInvoice = true }) {
   const showAlert = useAlertMessage((state) => state.showAlert);
   const uploadedFiles = useFileStore((state) => state.uploadedFiles);
   const inputFileRef = useRef(null);
+  const { invoiceData, setInvoiceData } = useInvoiceData();
+  const router = useRouter(); // Initialize the useRouter hook
+
 
   const handleUploadClick = () => {
     if (inputFileRef.current) {
@@ -31,7 +37,7 @@ function Uploads({ isInvoice = true }) {
     try {
       const formData = new FormData();
       formData.append("file", newFile);
-      const { data } = await axios.post('http://localhost:5000/upload/savefile/', formData);
+      const { data } = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/upload/savefile/`, formData);
       console.log(data);
       addFile(data.allFiles);
       showAlert(data.message, "success");
@@ -52,12 +58,32 @@ function Uploads({ isInvoice = true }) {
   };
 
   const fetchData = async () => {
-    const { data } = await axios.get('http://localhost:5000/auth/getallfiles');
+    const { data } = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/getallfiles`);
     console.log(data.allFiles);
 
     addFile(data.allFiles)
     console.log(uploadedFiles);
   }
+
+  const handlePreview = async (driveId, fileName) => {
+    try {
+      const { data } = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/invoices/process/${driveId}`, { fileName });
+      console.log(data);
+
+      const summary = data.summary; // Extracting the summary array
+
+      if (data.statusCode === 200) {
+        showAlert(data.message);
+        setInvoiceData(summary); // Setting the invoice data to the summary array
+        router.push(`/admin/invoice/${driveId}`);
+      } else {
+        showAlert(data.message, 'error');
+      }
+    } catch (error) {
+      console.log(error);
+      showAlert('Failed to process the file', 'error');
+    }
+  };
 
   useEffect(() => {
     if (newFile) {
@@ -122,7 +148,7 @@ function Uploads({ isInvoice = true }) {
               <div className='space-y-2'>
                 <h1 className='text-white font-archivo text-lg font-semibold leading-6'>{item.filename}</h1>
                 <h2 className='text-white font-syne text-base font-normal leading-4'>
-                dernière modification {item.createdAt}
+                  dernière modification {item.createdAt}
                 </h2>
                 <a
                   href={item.driveLink}
@@ -134,9 +160,9 @@ function Uploads({ isInvoice = true }) {
                   Ouvrir dans Drive
                 </a>
               </div>
-              <Link href='/admin/Invoices' className='text-white font-archivo text-sm font-normal leading-4 underline'>
+              <button onClick={() => handlePreview(item.driveId, item.filename)} className='text-white font-archivo text-sm font-normal leading-4 underline'>
                 Aperçu
-              </Link>
+              </button>
             </div>
             <div className="icons">
               <Trash2 size={20} color="#6f6a73" strokeWidth={2.25} />
