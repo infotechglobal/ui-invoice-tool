@@ -19,41 +19,45 @@ const downloadData = async (fileName, parentFolderId, csvFolderId, pdfFolderId) 
 
         const blob = new Blob([response.data], { type: 'application/zip' });
 
-        if ('showSaveFilePicker' in window) {
-            try {
-                const handle = await window.showSaveFilePicker({
-                    suggestedName: fileName+`.zip`,
-                    types: [{
-                        description: 'ZIP Archive',
-                        accept: { 'application/zip': ['.zip'] },
-                    }],
-                });
-
-                const writable = await handle.createWritable();
-                await writable.write(blob);
-                await writable.close();
-
-                console.log('File saved successfully');
-            } catch (err) {
-                console.log('Save cancelled or failed:', err);
-                // Fallback to the traditional method if showSaveFilePicker fails
-                fallbackDownload(blob);
-            }
-        } else {
-            // Fallback for browsers that don't support showSaveFilePicker
-            fallbackDownload(blob);
-        }
+        // Call saveFile directly within the downloadData function
+        saveFile(blob, fileName);
 
     } catch (error) {
         console.error('Error downloading data:', error);
     }
 };
 
-const fallbackDownload = (blob) => {
+const saveFile = async (blob, fileName) => {
+    if ('showSaveFilePicker' in window) {
+        try {
+            const handle = await window.showSaveFilePicker({
+                suggestedName: `${fileName}.zip`,
+                types: [{
+                    description: 'ZIP Archive',
+                    accept: { 'application/zip': ['.zip'] },
+                }],
+            });
+
+            const writable = await handle.createWritable();
+            await writable.write(blob);
+            await writable.close();
+
+            console.log('File saved successfully');
+        } catch (err) {
+            console.log('Save cancelled or failed:', err);
+            fallbackDownload(blob, fileName);
+        }
+    } else {
+        console.log('showSaveFilePicker not supported');
+        fallbackDownload(blob, fileName);
+    }
+};
+
+const fallbackDownload = (blob, fileName) => {
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `test2Xpollens.zip`;
+    link.download = `${fileName}.zip`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -67,23 +71,45 @@ function Header({ isInvoice }) {
     const { pdfFolderId } = usePdfFolderIdStore();
 
     const handleDownload = useCallback(() => {
+        // Invoke downloadData directly in the user gesture handler
         downloadData(fileName, parentFolderId, csvFolderId, pdfFolderId);
     }, [fileName, parentFolderId, csvFolderId, pdfFolderId]);
 
     return (
         <div className="header flex flex-col">
-            {/* ... (rest of your JSX remains the same) ... */}
-            {isInvoice ? (
-                <>
-                    <div className='flex relative right-40'>
-                        <DatePicker className={"h-4"} />
-                    </div>
-                    <Button className="bg-downloadButton-200 h-7" onClick={handleDownload}>
-                        <Download className='mr-2 mt-0' size={16} color="#f6faff" />Télécharger des données
+            <div className='flex justify-between'>
+                <div>
+                    <h3 className="text-violet-gray-900 font-archivo text-[28px] font-bold leading-[32px] normal-font-style">
+                        {fileName}
+                    </h3>
+                </div>
+                <div className='flex items-end'>
+                    <Button size="btn" className="bg-downloadButton-200 h-6">
+                        <ArrowUp className='mr-2 mt-0' size={16} color="#f6faff" strokeWidth={3} />
+                        Dernière mise à jour : 8 mai 2024 à 13h00
                     </Button>
-                </>
-            ) : null}
-            {/* ... */}
+                    <Button size="btn" className="bg-downloadButton-200 h-6 ml-3">
+                        <ArrowLeft className='mr-2 mt-0' size={16} color="#f6faff" />Retourner
+                    </Button>
+                </div>
+            </div>
+            <div className='mt-1'>
+                <h3 className='text-violet-gray-800 font-archivo text-custom-18 font-normal leading-custom-24'>Sélectionnez Client pour afficher les détails</h3>
+            </div>
+            <div className='mt-3 flex justify-between relative'>
+                <Search className='absolute top-1 left-3' size={18} color="#403A44" strokeWidth={1.75} />
+                <input className='searchField' placeholder='Recherche'></input>
+                {isInvoice ? (
+                    <>
+                        <div className='flex relative right-40'>
+                            <DatePicker className={"h-4"} />
+                        </div>
+                        <Button className="bg-downloadButton-200 h-7" onClick={handleDownload}>
+                            <Download className='mr-2 mt-0' size={16} color="#f6faff" />Télécharger des données
+                        </Button>
+                    </>
+                ) : null}
+            </div>
         </div>
     );
 }
