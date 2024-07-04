@@ -1,56 +1,94 @@
+// components/Dashboard.jsx
 'use client'
-import React, {useState, useEffect } from 'react'
-import { Button } from "@/components/ui/button"
-import { SelectScrollable } from '../../../../../../components/Select'
-import { CustomTable } from '../../../../../../components/Table'
-import Header from '../../../../../../components/Header'
-import { Navigation } from 'lucide-react'
+import React, { useEffect,useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { SelectScrollable } from '../../../../../../components/Select';
+import { CustomTable } from '../../../../../../components/Table';
+import Header from '../../../../../../components/Header';
+import { Navigation } from 'lucide-react';
+import axios from 'axios';
+import { useFileNameStore, useParentFolderIdStore, useCsvFolderIdStore, usePdfFolderIdStore } from '../../../../../../store/invoiceIdsStore';
+import { useParams } from 'next/navigation';
 import { useInvoiceData } from '../../../../../../store/invoiceDataStore'
 
+
 function Dashboard() {
-const { invoiceData, setInvoiceData } = useInvoiceData();
-const[fileName,setFileName]=useState('');
-const[parentFolderId,setParentFolderId]=useState('');
-const[csvfolderId,setCsvFolderId]=useState('');
-const[pdfFolderId,setPdfFolderId]=useState('');
+    const { invoiceData, setInvoiceData } = useInvoiceData();
+     // Default driveId
+    // const driveId = '1C7G0DzU1929PaQNqb6fTIDZwOFbAdZ1q'; // Default driveId
 
-// console.log("invoiceData",invoiceData);
+    const params = useParams();
+    const driveId = params.id;
+    console.log('driveId in id page is ', driveId);
 
-useEffect(() => {
-//fectch the filename, parentFolderId, csvfolderId, pdfFolderId from the database
-//store in the state
 
-}, []);
+    const { fileName, setFileName } = useFileNameStore();
+    const { parentFolderId, setParentFolderId } = useParentFolderIdStore();
+    const { csvFolderId, setCsvFolderId } = useCsvFolderIdStore();
+    const { pdfFolderId, setPdfFolderId } = usePdfFolderIdStore();
+
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                console.log('Fetching invoice info...');
+                const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/getInvoiceInfo`, {
+                    driveId: driveId
+                });
+                console.log('response', response.data);
+                const fileName = response.data.filename;
+                const parentFolderId = response.data.parentFolderId;
+                const csvFolderId = response.data.csvFolderId;
+                const pdfFolderId = response.data.pdfFolderId;
+
+                // Store in Zustand stores
+                setFileName(fileName);
+                setParentFolderId(parentFolderId);
+                setCsvFolderId(csvFolderId);
+                setPdfFolderId(pdfFolderId);
+
+                console.log('Invoice info fetched successfully');
+
+
+
+            } catch (error) {
+                console.error('Error fetching invoice info:', error);
+            }
+        };
+
+        fetchData();
+    }, [driveId]);
 
     return (
-        <div className='pt-2 pr-2 pl-3 flex flex-col '>
-            {/* header  */}
-        <Header isInvoice={true}/>
-            {/* main */}
-            <div className='main flex flex-col pt-5 '>
-                {/* dropdown, download, upload to drive button */}
-                <div className='dropdowns flex gap-x-5 '>
-                    {/* //dropdown */}
+        <div className='pt-2 pr-2 pl-3 flex flex-col'>
+            {/* Header */}
+            <Header
+                isInvoice={true}
+            />
+
+            {/* Main content */}
+            <div className='main flex flex-col pt-5'>
+                {/* Dropdown, download, upload to drive button */}
+                <div className='dropdowns flex gap-x-5'>
+                    {/* Dropdown */}
                     <SelectScrollable />
 
-                    {/* //button with img */}
+                    {/* Button with icon */}
                     <Button variant="downloadBtn" size="icon">
-                    <Navigation size={48} color="#403A44" strokeWidth={1.75} />
+                        <Navigation size={48} color="#403A44" strokeWidth={1.75} />
                     </Button>
-                    {/* //download button */}
+                    {/* Download button */}
                     <Button variant="downloadBtn">Télécharger</Button>
-                    {/* //upload to drive */}
+                    {/* Upload to drive button */}
                     <Button variant="downloadBtn">Télécharger dans Drive</Button>
-
                 </div>
-                {/*table  */}
+                {/* Table */}
                 <section className='mt-6'>
-                    <CustomTable invoiceData={invoiceData}/>
+                    <CustomTable invoiceData={invoiceData} />
                 </section>
             </div>
-
         </div>
-    )
+    );
 }
 
-export default Dashboard
+export default Dashboard;
