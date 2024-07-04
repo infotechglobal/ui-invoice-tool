@@ -20,7 +20,7 @@ const downloadData = async (fileName, parentFolderId, csvFolderId, pdfFolderId) 
         const blob = new Blob([response.data], { type: 'application/zip' });
 
         // Call saveFile directly within the downloadData function
-        saveFile(blob, fileName);
+        await saveFile(blob, fileName);
 
     } catch (error) {
         console.error('Error downloading data:', error);
@@ -29,6 +29,7 @@ const downloadData = async (fileName, parentFolderId, csvFolderId, pdfFolderId) 
 
 const saveFile = async (blob, fileName) => {
     if ('showSaveFilePicker' in window) {
+      
         try {
             const handle = await window.showSaveFilePicker({
                 suggestedName: `${fileName}.zip`,
@@ -37,10 +38,16 @@ const saveFile = async (blob, fileName) => {
                     accept: { 'application/zip': ['.zip'] },
                 }],
             });
-
+            console.log("checkpoint1")
             const writable = await handle.createWritable();
+           
+
             await writable.write(blob);
+            
+
             await writable.close();
+            
+
 
             console.log('File saved successfully');
         } catch (err) {
@@ -54,6 +61,7 @@ const saveFile = async (blob, fileName) => {
 };
 
 const fallbackDownload = (blob, fileName) => {
+    console.log('Falling back to anchor download');
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
