@@ -22,7 +22,7 @@ const downloadData = async (fileName, parentFolderId, csvFolderId, pdfFolderId) 
         if ('showSaveFilePicker' in window) {
             try {
                 const handle = await window.showSaveFilePicker({
-                    suggestedName: `xollensInvoice.zip`,
+                    suggestedName: fileName+`.zip`,
                     types: [{
                         description: 'ZIP Archive',
                         accept: { 'application/zip': ['.zip'] },
