@@ -3,16 +3,31 @@ import axios from 'axios';
 import { ArrowUp, ArrowLeft, Download, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from './DatePicker';
+import { useFileNameStore,useCsvFolderIdStore,useParentFolderIdStore,usePdfFolderIdStore } from '../store/invoiceIdsStore';
 
-function Header({ isInvoice, fileName, parentFolderId, csvFolderId, pdfFolderId }) {
+function Header({ isInvoice}) {
+    const{fileName} = useFileNameStore();
+    const{parentFolderId} = useParentFolderIdStore();
+    const{csvFolderId} = useCsvFolderIdStore();
+    const{pdfFolderId} = usePdfFolderIdStore();
+    console.log('fileName',fileName)
+    console.log('parentFolderId',parentFolderId)
+    console.log('csvFolderId',csvFolderId)
+    console.log('pdfFolderId',pdfFolderId)
+
+
+
+
     const downloadData = async () => {
         try {
             console.log('Downloading data...');
             const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/invoices/download`, {
-                fileName: 'test2-xpollens',
-                parentFolderId: '123456',
-                csvFolderId: '1mVpswEqMugnyulMwneG3rOQeeR4kffL4',
-                pdfFolderId: '1Xz6juuZOeWgMbYVmnPt8YuA0HbVS_NZg',
+                
+                    fileName: fileName,
+                    parentFolderId:parentFolderId,
+                    csvFolderId: csvFolderId,
+                    pdfFolderId: pdfFolderId,
+                  
             }, {
                 responseType: 'blob',
             });
@@ -96,9 +111,3 @@ function Header({ isInvoice, fileName, parentFolderId, csvFolderId, pdfFolderId 
 }
 
 export default Header;
-
-
-// fileName: 'test2-xpollens',
-// parentFolderId: '123456',
-// csvFolderId: '1mVpswEqMugnyulMwneG3rOQeeR4kffL4',
-// pdfFolderId: '1Xz6juuZOeWgMbYVmnPt8YuA0HbVS_NZg',
