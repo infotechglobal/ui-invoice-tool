@@ -1,3 +1,4 @@
+'use client'
 import React from 'react'
 import Header from '../../../../../../components/Header'
 import { pic } from '../../../../../../src/lib/assets'
