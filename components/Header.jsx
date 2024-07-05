@@ -4,9 +4,19 @@ import { ArrowUp, ArrowLeft, Download, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from './DatePicker';
 import { useFileNameStore, useCsvFolderIdStore, useParentFolderIdStore, usePdfFolderIdStore } from '../store/invoiceIdsStore';
+import useLoaderStore from '../store/loaderStore';
+import { useAlertMessage } from '../store/alertStore';
 
-const downloadData = async (fileName, parentFolderId, csvFolderId, pdfFolderId) => {
+const downloadData = async () => {
+    const { fileName } = useFileNameStore.getState();
+    const { parentFolderId } = useParentFolderIdStore.getState();
+    const { csvFolderId } = useCsvFolderIdStore.getState();
+    const { pdfFolderId } = usePdfFolderIdStore.getState();
+    const { showLoader, hideLoader } = useLoaderStore.getState();
+    const { showAlert, hideAlert } = useAlertMessage.getState();
+
     try {
+        showLoader('Télécharger des factures...');
         console.log('Downloading data...');
         const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/invoices/download`, {
             fileName,
@@ -18,18 +28,20 @@ const downloadData = async (fileName, parentFolderId, csvFolderId, pdfFolderId) 
         });
 
         const blob = new Blob([response.data], { type: 'application/zip' });
-
-        // Call saveFile directly within the downloadData function
         await saveFile(blob, fileName);
 
     } catch (error) {
         console.error('Error downloading data:', error);
+        showAlert('Error downloading data', 'Error');
+        setTimeout(hideAlert, 3000);
+    } finally {
+        hideLoader();
     }
 };
 
 const saveFile = async (blob, fileName) => {
+    const { showAlert, hideAlert } = useAlertMessage.getState();
     if ('showSaveFilePicker' in window) {
-      
         try {
             const handle = await window.showSaveFilePicker({
                 suggestedName: `${fileName}.zip`,
@@ -38,18 +50,12 @@ const saveFile = async (blob, fileName) => {
                     accept: { 'application/zip': ['.zip'] },
                 }],
             });
-            console.log("checkpoint1")
             const writable = await handle.createWritable();
-           
-
             await writable.write(blob);
-            
-
             await writable.close();
-            
-
-
             console.log('File saved successfully');
+            showAlert('Invoice Downloaded Successfully', "Success");
+            setTimeout(hideAlert, 3000);
         } catch (err) {
             console.log('Save cancelled or failed:', err);
             fallbackDownload(blob, fileName);
@@ -61,7 +67,10 @@ const saveFile = async (blob, fileName) => {
 };
 
 const fallbackDownload = (blob, fileName) => {
+    const { showAlert, hideAlert } = useAlertMessage.getState();
     console.log('Falling back to anchor download');
+    showAlert('Invoice Downloaded Successfully', "Success");
+    setTimeout(hideAlert, 3000);
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -74,14 +83,12 @@ const fallbackDownload = (blob, fileName) => {
 
 function Header({ isInvoice }) {
     const { fileName } = useFileNameStore();
-    const { parentFolderId } = useParentFolderIdStore();
-    const { csvFolderId } = useCsvFolderIdStore();
-    const { pdfFolderId } = usePdfFolderIdStore();
+    const { showLoader, hideLoader } = useLoaderStore();
+    const { showAlert, hideAlert } = useAlertMessage();
 
     const handleDownload = useCallback(() => {
-        // Invoke downloadData directly in the user gesture handler
-        downloadData(fileName, parentFolderId, csvFolderId, pdfFolderId);
-    }, [fileName, parentFolderId, csvFolderId, pdfFolderId]);
+        downloadData();
+    }, [fileName]);
 
     return (
         <div className="header flex flex-col">
@@ -112,7 +119,7 @@ function Header({ isInvoice }) {
                         <div className='flex relative right-40'>
                             <DatePicker className={"h-4"} />
                         </div>
-                        <Button className="bg-downloadButton-200 h-7" onClick={handleDownload}>
+                        <Button className="bg-downloadButton-200 h-7" onClick={handleDownload} disabled={useLoaderStore((state) => state.isLoading)}>
                             <Download className='mr-2 mt-0' size={16} color="#f6faff" />Télécharger des données
                         </Button>
                     </>
