@@ -2,26 +2,24 @@ import { create } from 'zustand'
 
 const useAlertMessage = create((set) => ({
   message:"",
-  satus:"",
-
+  status:"",
+  isLoading:false,
   showAlert: (message, status) => set((state) => ({
     message: message,
     status: status,
+    isLoading: true
   })),
+  hideAlert: () => set((state) => ({
+    message: "",
+    status: "",
+    isLoading: false
+  }))
 }))
  
 
 
 
-const usefileAlert = create((set) => ({
-  isLoading:false,
-  
-
-  toggleState: () => set((state) => ({
-    isLoading: !state.isLoading
-  })),
-}))
 
 
 
-export  {usefileAlert,useAlertMessage}
+export  {useAlertMessage}
