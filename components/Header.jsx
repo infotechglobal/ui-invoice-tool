@@ -3,21 +3,28 @@ import axios from 'axios';
 import { ArrowUp, ArrowLeft, Download, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from './DatePicker';
-import { useFileNameStore, useCsvFolderIdStore, useParentFolderIdStore, usePdfFolderIdStore } from '../store/invoiceIdsStore';
+import { useFileNameStore, useCsvFolderIdStore, useParentFolderIdStore, usePdfFolderIdStore, useUpdatedInvoiceTime } from '../store/invoiceIdsStore';
 import useLoaderStore from '../store/loaderStore';
 import { useAlertMessage } from '../store/alertStore';
+import { useRouter } from 'next/navigation';
 
 const downloadData = async () => {
     const { fileName } = useFileNameStore.getState();
     const { parentFolderId } = useParentFolderIdStore.getState();
     const { csvFolderId } = useCsvFolderIdStore.getState();
     const { pdfFolderId } = usePdfFolderIdStore.getState();
+    
     const { showLoader, hideLoader } = useLoaderStore.getState();
     const { showAlert, hideAlert } = useAlertMessage.getState();
 
     try {
         showLoader('Télécharger des factures...');
         console.log('Downloading data...');
+        console.log('fileName:', fileName);
+        console.log('parentFolderId:', parentFolderId);
+        console.log('csvFolderId:', csvFolderId);
+        console.log('pdfFolderId:', pdfFolderId);
+        
         const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/invoices/download`, {
             fileName,
             parentFolderId,
@@ -27,17 +34,32 @@ const downloadData = async () => {
             responseType: 'blob',
         });
 
+        if (response.status !== 200) {
+            const errorBlob = response.data;
+            const errorText = await errorBlob.text();
+            const errorJson = JSON.parse(errorText);
+            showAlert(errorJson.message, 'Error');
+            setTimeout(hideAlert, 3000);
+            return;
+        }
+
         const blob = new Blob([response.data], { type: 'application/zip' });
         await saveFile(blob, fileName);
 
     } catch (error) {
         console.error('Error downloading data:', error);
-        showAlert('Error downloading data', 'Error');
+        if (error.response && error.response.data) {
+            const errorJson = JSON.parse(await error.response.data.text());
+            showAlert(errorJson.message, 'Error');
+        } else {
+            showAlert('Error downloading data', 'Error');
+        }
         setTimeout(hideAlert, 3000);
     } finally {
         hideLoader();
     }
 };
+
 
 const saveFile = async (blob, fileName) => {
     const { showAlert, hideAlert } = useAlertMessage.getState();
@@ -85,6 +107,21 @@ function Header({ isInvoice }) {
     const { fileName } = useFileNameStore();
     const { showLoader, hideLoader } = useLoaderStore();
     const { showAlert, hideAlert } = useAlertMessage();
+    const { updatedAt, setupdatedAt } = useUpdatedInvoiceTime();
+    const router = useRouter();
+
+    // Function to format the date
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const year = date.getFullYear(); // Use full year instead of slicing
+        return `${month}/${day}/${year}`;
+    };
+    const handleBack = () => {
+        router.push('/admin/uploads');
+    };
+
 
     const handleDownload = useCallback(() => {
         downloadData();
@@ -101,9 +138,9 @@ function Header({ isInvoice }) {
                 <div className='flex items-end'>
                     <Button size="btn" className="bg-downloadButton-200 h-6">
                         <ArrowUp className='mr-2 mt-0' size={16} color="#f6faff" strokeWidth={3} />
-                        Dernière mise à jour : 8 mai 2024 à 13h00
+                        Dernière mise à jour : {formatDate(updatedAt)}
                     </Button>
-                    <Button size="btn" className="bg-downloadButton-200 h-6 ml-3">
+                    <Button size="btn" className="bg-downloadButton-200 h-6 ml-3" onClick={handleBack}>
                         <ArrowLeft className='mr-2 mt-0' size={16} color="#f6faff" />Retourner
                     </Button>
                 </div>
