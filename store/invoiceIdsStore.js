@@ -20,4 +20,9 @@ const usePdfFolderIdStore = create((set) => ({
   setPdfFolderId: (newPdfFolderId) => set({ pdfFolderId: newPdfFolderId }),
 }));
 
-export { useFileNameStore, useParentFolderIdStore, useCsvFolderIdStore, usePdfFolderIdStore };
+const useUpdatedInvoiceTime = create((set) => ({
+  updatedAt: null,
+  setUpdatedAt: (newUpdatedAt) => set({ updatedAt: newUpdatedAt}),
+  }));
+
+export { useFileNameStore, useParentFolderIdStore, useCsvFolderIdStore, usePdfFolderIdStore,useUpdatedInvoiceTime };
