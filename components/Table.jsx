@@ -22,8 +22,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 
 export function CustomTable({ invoiceData, fileName, parentFolderId, csvfolderId, pdfFolderId}) {
-    console.log(invoiceData);
-    console.log(typeof invoiceData);
     const rowPerPage = 7;
     const [pageNo, setPageNo] = useState(1);
     const [startIndex, setStartIndex] = useState(0);
