@@ -16,7 +16,6 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 
 function Uploads({ isInvoice = true }) {
-  console.log(driveIcon)
   const [newFile, setNewFile] = useState();
   const addFile = useFileStore((state) => state.addNewFiles);
   const { showAlert, hideAlert } = useAlertMessage();
@@ -36,7 +35,7 @@ function Uploads({ isInvoice = true }) {
     try {
       const formData = new FormData();
       formData.append("file", newFile);
-      showLoader("Uploading files, please wait....");
+      showLoader("Téléchargement du fichier, veuillez patienter...");
       const { data } = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/upload/savefile/`, formData);
       console.log(data);
       addFile(data.allFiles);
@@ -46,10 +45,11 @@ function Uploads({ isInvoice = true }) {
         hideAlert();
       }, 3000);
     } catch (error) {
-      showAlert(error.message, "Error");
+      console.log("err",error);
+      showAlert(error.response.data.message, "Error");
       setTimeout(() => {
         hideAlert();
-      }, 3000);
+      }, 5000);
     } finally {
       hideLoader();
     }
@@ -65,37 +65,69 @@ function Uploads({ isInvoice = true }) {
     setNewFile(selectedFile);
   };
 
-  const fetchData = async () => {
-    const { data } = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/getallfiles`);
-    console.log(data.allFiles);
-    addFile(data.allFiles);
-    console.log(uploadedFiles);
-  }
+  // const fetchData = async () => {
+  //   const { data } = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/getallfiles`);
+  //   console.log(data.allFiles);
+  //   addFile(data.allFiles);
+  //   console.log(uploadedFiles);
+  // }
+
+  const handleDelete = async (driveId) => {
+    showLoader('Suppression du fichier. Cela prendra quelques minutes...');
+    try {
+      const { data } = await axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/upload/deletefile/${driveId}`);
+      console.log(data);
+      if (data.statusCode === 200) {
+        showAlert(data.message, "Success");
+        setTimeout(() => {
+          hideAlert();
+        }, 3000);
+        addFile(data.allFiles);
+
+      } else {
+        showAlert(data.message, "Error");
+        }
+    }
+    catch (error) {
+      console.log(error);
+      showAlert(error.response.data.message, "Error");
+    } finally {
+      setTimeout(() => {
+        hideAlert();
+      }, 3000);
+
+      hideLoader();
+    }
+  };
 
   const handlePreview = async (driveId, fileName) => {
-    console.log("processing file");
-    showLoader('Processing file, This will take a few minutes...')
+
+    showLoader('Traitement du fichier. Cela prendra quelques minutes...')
     try {
       const { data } = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/invoices/process/${driveId}`, { fileName });
-      console.log(data);
+      console.log("processed data", data)
       const summary = data.summary; // Extracting the summary array
 
       if (data.statusCode === 200) {
         showAlert(data.message, "Success");
         setTimeout(() => {
           hideAlert();
-        }, 3000);
+        }, 6200);
         setInvoiceData(summary); // Setting the invoice data to the summary array
         router.push(`/admin/invoice/${driveId}`);
       } else {
         showAlert(data.message, 'Error');
         setTimeout(() => {
           hideAlert();
-        }, 3000);
+        }, 5000);
       }
     } catch (error) {
       console.log(error);
       showAlert(error.message, "Error");
+      setTimeout(() => {
+        hideAlert();
+      }, 5000);
+
     } finally {
       hideLoader();
     }
@@ -112,13 +144,11 @@ function Uploads({ isInvoice = true }) {
     }
   }, [newFile]);
 
-  useEffect(() => {
-    console.log("Updated uploadedFiles state: ", uploadedFiles);
-  }, [uploadedFiles]);
+  // useEffect(() => {
+  //   console.log("Updated uploadedFiles state: ", uploadedFiles);
+  // }, [uploadedFiles]);
 
-  useEffect(() => {
-    fetchData();
-  }, [])
+
 
   return (
     <div className='pt-2 pr-2 pl-3 flex flex-col '>
@@ -170,7 +200,7 @@ function Uploads({ isInvoice = true }) {
           <div key={index} className="flex items-center gap-7 self-stretch files mt-[20px]">
             <div className='flex flex-col w-[1150px] bg-uploadContainerBg-200 rounded-lg p-2 space-y-4 border-black shadow-custom'>
               <div className='space-y-2'>
-                <h1 className='text-white font-archivo text-lg font-semibold leading-6'>{item.filename}</h1>
+                <h1 className='text-white font-archivo text-lg font-semibold leading-6'>{item.fileName}</h1>
                 <h2 className='text-white font-syne text-base font-normal leading-4'>
                   dernière modification {item.createdAt}
                 </h2>
@@ -184,16 +214,22 @@ function Uploads({ isInvoice = true }) {
                 </a>
               </div>
               <button
-                onClick={() => handlePreview(item.driveId, item.filename)}
+                onClick={() => handlePreview(item.driveId, item.fileName)}
                 className='text-white font-archivo text-sm font-normal leading-4 underline'
                 disabled={isLoading}
               >
                 Aperçu
               </button>
             </div>
-            <div className="icons">
-              <Trash2 size={20} color="#6f6a73" strokeWidth={2.25} />
-            </div>
+            {!item.isProcessed && (
+                <button onClick={()=>handleDelete(item.driveId)}  className="icons" disabled={ isLoading}>
+                <Trash2 size={20} color="#6f6a73" strokeWidth={2.25} />
+              </button>
+
+              )}
+           {/* <button onClick={()=>handleDelete(item.driveId)}  className="icons" disabled={ isLoading}>
+                <Trash2 size={20} color="#6f6a73" strokeWidth={2.25} />
+              </button> */}
           </div>
         ))}
       </div>
