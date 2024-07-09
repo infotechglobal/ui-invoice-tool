@@ -1,5 +1,5 @@
 'use client'
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import Header from '../../../../../components/Header';
 import { ArrowLeft, ArrowUp, Download, Search, Trash2, Upload } from 'lucide-react';
 import { sampleFiles } from '../../../../../src/lib/assets';
@@ -31,7 +31,7 @@ function Uploads({ isInvoice = true }) {
     }
   };
 
-  const processFile = async () => {
+  const processFile = useCallback(async () => {
     try {
       const formData = new FormData();
       formData.append("file", newFile);
@@ -53,7 +53,7 @@ function Uploads({ isInvoice = true }) {
     } finally {
       hideLoader();
     }
-  };
+  }, [newFile, addFile, showLoader, hideLoader, showAlert, hideAlert]);
 
   const handleChange = (event) => {
     const selectedFile = event.target.files?.[0];
@@ -64,13 +64,6 @@ function Uploads({ isInvoice = true }) {
     }
     setNewFile(selectedFile);
   };
-
-  // const fetchData = async () => {
-  //   const { data } = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/getallfiles`);
-  //   console.log(data.allFiles);
-  //   addFile(data.allFiles);
-  //   console.log(uploadedFiles);
-  // }
 
   const handleDelete = async (driveId) => {
     showLoader('Suppression du fichier. Cela prendra quelques minutes...');
@@ -83,10 +76,9 @@ function Uploads({ isInvoice = true }) {
           hideAlert();
         }, 3000);
         addFile(data.allFiles);
-
       } else {
         showAlert(data.message, "Error");
-        }
+      }
     }
     catch (error) {
       console.log(error);
@@ -95,13 +87,11 @@ function Uploads({ isInvoice = true }) {
       setTimeout(() => {
         hideAlert();
       }, 3000);
-
       hideLoader();
     }
   };
 
   const handlePreview = async (driveId, fileName) => {
-
     showLoader('Traitement du fichier. Cela prendra quelques minutes...')
     try {
       const { data } = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/invoices/process/${driveId}`, { fileName });
@@ -127,7 +117,6 @@ function Uploads({ isInvoice = true }) {
       setTimeout(() => {
         hideAlert();
       }, 5000);
-
     } finally {
       hideLoader();
     }
@@ -135,20 +124,13 @@ function Uploads({ isInvoice = true }) {
 
   const openInDrive = () => {
     window.open(`https://drive.google.com/drive/folders/1gCTxY8KsOkMPGT5K-WUoTxS2rQypV2Je`);
-
   };
 
   useEffect(() => {
     if (newFile) {
       processFile();
     }
-  }, [newFile]);
-
-  // useEffect(() => {
-  //   console.log("Updated uploadedFiles state: ", uploadedFiles);
-  // }, [uploadedFiles]);
-
-
+  }, [newFile, processFile]);
 
   return (
     <div className='pt-2 pr-2 pl-3 flex flex-col '>
@@ -225,11 +207,7 @@ function Uploads({ isInvoice = true }) {
                 <button onClick={()=>handleDelete(item.driveId)}  className="icons" disabled={ isLoading}>
                 <Trash2 size={20} color="#6f6a73" strokeWidth={2.25} />
               </button>
-
               )}
-           {/* <button onClick={()=>handleDelete(item.driveId)}  className="icons" disabled={ isLoading}>
-                <Trash2 size={20} color="#6f6a73" strokeWidth={2.25} />
-              </button> */}
           </div>
         ))}
       </div>

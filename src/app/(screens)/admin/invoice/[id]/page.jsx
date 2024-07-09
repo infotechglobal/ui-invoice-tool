@@ -1,4 +1,4 @@
-'use client'
+'use client';
 import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { SelectScrollable } from '../../../../../../components/Select';
@@ -23,13 +23,6 @@ function Dashboard() {
     const { pdfFolderId, setPdfFolderId } = usePdfFolderIdStore();
     const { updatedAt, setUpdatedAt } = useUpdatedInvoiceTime();
     const addFile = useFileStore((state) => state.addNewFiles);
-
-
-    const fetchData = async () => {
-      const { data } = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/getallfiles`);
-      console.log(data.allFiles);
-      addFile(data.allFiles);
-    }
 
     const openInDrive = () => {
         if (parentFolderId !== null) {
@@ -89,11 +82,15 @@ function Dashboard() {
         }
     }, [driveId, fileName, setInvoiceData, showLoader, hideLoader]);
 
-   
     useEffect(() => {
-      console.log("fetching uploaded files in invoice/id page");
-      fetchData();
-    }, [])
+        const fetchData = async () => {
+            const { data } = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/getallfiles`);
+            console.log(data.allFiles);
+            addFile(data.allFiles);
+        };
+        console.log("fetching uploaded files in invoice/id page");
+        fetchData();
+    }, [addFile]);
 
     return (
         <div className='pt-2 pr-2 pl-3 flex flex-col'>

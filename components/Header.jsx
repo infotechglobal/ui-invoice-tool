@@ -109,6 +109,7 @@ function Header({ isInvoice }) {
     const { showAlert, hideAlert } = useAlertMessage();
     const { updatedAt, setupdatedAt } = useUpdatedInvoiceTime();
     const router = useRouter();
+    const isLoading = useLoaderStore((state) => state.isLoading); // Moved outside of JSX
 
     // Function to format the date
     const formatDate = (dateString) => {
@@ -125,7 +126,7 @@ function Header({ isInvoice }) {
 
     const handleDownload = useCallback(() => {
         downloadData();
-    }, [fileName]);
+    }, []); 
 
     return (
         <div className="header flex flex-col">
@@ -156,7 +157,7 @@ function Header({ isInvoice }) {
                         <div className='flex relative right-40'>
                             <DatePicker className={"h-4"} />
                         </div>
-                        <Button className="bg-downloadButton-200 h-7" onClick={handleDownload} disabled={useLoaderStore((state) => state.isLoading)}>
+                        <Button className="bg-downloadButton-200 h-7" onClick={handleDownload} disabled={isLoading}>
                             <Download className='mr-2 mt-0' size={16} color="#f6faff" />Télécharger des données
                         </Button>
                     </>
