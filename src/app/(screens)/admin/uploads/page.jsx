@@ -123,7 +123,7 @@ function Uploads({ isInvoice = true }) {
   };
 
   const openInDrive = () => {
-    window.open(`https://drive.google.com/drive/folders/1gCTxY8KsOkMPGT5K-WUoTxS2rQypV2Je`);
+    window.open(`https://drive.google.com/drive/folders/1q83H2RcUy2nEfTYhrd9dNC1f96jtBwyt`);
   };
 
   useEffect(() => {
