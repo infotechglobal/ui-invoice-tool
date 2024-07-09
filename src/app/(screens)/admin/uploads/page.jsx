@@ -113,7 +113,7 @@ function Uploads({ isInvoice = true }) {
       }
     } catch (error) {
       console.log(error);
-      showAlert(error.message, "Error");
+      showAlert(error.response.data.message, "Error");
       setTimeout(() => {
         hideAlert();
       }, 5000);
