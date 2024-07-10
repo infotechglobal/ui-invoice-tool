@@ -13,7 +13,7 @@ const downloadData = async () => {
     const { parentFolderId } = useParentFolderIdStore.getState();
     const { csvFolderId } = useCsvFolderIdStore.getState();
     const { pdfFolderId } = usePdfFolderIdStore.getState();
-    
+
     const { showLoader, hideLoader } = useLoaderStore.getState();
     const { showAlert, hideAlert } = useAlertMessage.getState();
 
@@ -131,9 +131,12 @@ function Header({ isInvoice }) {
     return (
         <div className="header flex flex-col">
             <div className='flex justify-between'>
-                <div>
-                    <h3 className="text-violet-gray-900 font-archivo text-[28px] font-bold leading-[32px] normal-font-style">
+                <div className='flex items-end min-w-[600px] justify-between'>
+                    <h3 className="text-violet-gray-900 font-archivo text-[35px] font-bold leading-[32px] normal-font-style">
                         {fileName}
+                    </h3>
+                    <h3 className='font-archivo ml-3 mt-1 text-lg font-semibold'>
+                        Résumé de la facture
                     </h3>
                 </div>
                 <div className='flex items-end'>

@@ -69,7 +69,7 @@ function Sidebar() {
         </header>
 
         <section className='pl-2'>
-          <h2 className='text-violet-gray-900 font-Archivo font-bold text-sm leading-4 w-max'>Tous les fichiers</h2>
+          <h2 className='text-violet-gray-900 font-Archivo font-bold text-sm leading-4 w-max'>fichiers facturés</h2>
           <div className="flex flex-col space-y-1 files ml-3 mt-3 w-max">
             {uploadedFiles?.map((item, index) => (
               item.isProcessed && (
