@@ -9,6 +9,7 @@ import { useAlertMessage } from '../store/alertStore';
 import { useRouter } from 'next/navigation';
 import { useInvoiceData } from '../store/invoiceDataStore';
 import useFilteredInvoiceDataStore from '../store/FilteredInvoiceStore.js';
+import { useDateStore } from '../store/filteredDateStore';
 
 const downloadData = async () => {
     const { fileName } = useFileNameStore.getState();
@@ -110,9 +111,9 @@ function Header({ isInvoice }) {
     const { setFilteredInvoiceData } = useFilteredInvoiceDataStore();
     const router = useRouter();
     const isLoading = useLoaderStore((state) => state.isLoading);
+    const {date, setDate} = useDateStore();
 
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedDate, setSelectedDate] = useState(null);
 
     // Function to format the date
     const formatDate = (dateString) => {
@@ -133,44 +134,49 @@ function Header({ isInvoice }) {
 
     const handleSearch = (e) => {
         setSearchTerm(e.target.value);
-        filterInvoices(e.target.value, selectedDate);
+        filterInvoices(e.target.value,date);
     };
 
-    const handleDatePick = (date) => {
-        console.log('Selected date:', date);
-        setSelectedDate(date);
+
+    const filterbyDate= (date)=>{
+
         filterInvoices(searchTerm, date);
-    };
+    }
 
     const filterInvoices = (searchTerm, selectedDate) => {
         if (!invoiceData) return;
         
         let filteredData = invoiceData;
         
-      if (searchTerm) {
-    const searchTermNumber = Number(searchTerm);
-    filteredData = filteredData.filter(invoice => 
-        invoice.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        invoice.accountNo === searchTermNumber ||
-        invoice.codePennylane.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        invoice.designation.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        invoice.Transactiondate.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        invoice.TVA.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
-        invoice.HT.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
-        invoice.TTC.toString().toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-        }
-
-        if (selectedDate) {
+        if (searchTerm) {
+            const searchTermLower = searchTerm.toLowerCase();
+            const searchTermNumber = Number(searchTerm);
             filteredData = filteredData.filter(invoice => 
-                new Date(invoice.date).toDateString() === new Date(selectedDate).toDateString()
+                invoice.customerName.toLowerCase().includes(searchTermLower) ||
+                invoice.accountNo === searchTermNumber ||
+                invoice.codePennylane.toLowerCase().includes(searchTermLower) ||
+                invoice.designation.toLowerCase().includes(searchTermLower) ||
+                invoice.Transactiondate.toLowerCase().includes(searchTermLower) ||
+                invoice.TVA.toString().toLowerCase().includes(searchTermLower) ||
+                invoice.HT.toString().toLowerCase().includes(searchTermLower) ||
+                invoice.TTC.toString().toLowerCase().includes(searchTermLower)
             );
         }
-
+    
+        if (selectedDate && selectedDate.from && selectedDate.to) {
+            const fromDate = new Date(selectedDate.from);
+            const toDate = new Date(selectedDate.to);
+            
+            filteredData = filteredData.filter(invoice => {
+                const transactionDate = new Date(invoice.Transactiondate);
+                // Adjust the transaction date to match the time zone of fromDate and toDate
+                transactionDate.setHours(0, 0, 0, 0);
+                return transactionDate >= fromDate && transactionDate <= toDate;
+            });
+        }
+    
         setFilteredInvoiceData(filteredData);
     };
-
     return (
         <div className="header flex flex-col">
             <div className='flex justify-between'>
@@ -206,7 +212,7 @@ function Header({ isInvoice }) {
                 {isInvoice ? (
                     <>
                         <div className='flex relative right-40'>
-                            <DatePicker className={"h-4"} onDateChange={handleDatePick} />
+                            <DatePicker className={"h-4"} filter={filterbyDate} />
                         </div>
                         <Button className="bg-downloadButton-200 h-7" onClick={handleDownload} disabled={isLoading}>
                             <Download className='mr-2 mt-0' size={16} color="#f6faff" />Télécharger des données
