@@ -11,9 +11,14 @@ import { useParams } from 'next/navigation';
 import { useInvoiceData } from '../../../../../../store/invoiceDataStore';
 import useLoaderStore from '../../../../../../store/loaderStore';
 import { useFileStore } from '../../../../../../store/uploadedFilesStore';
+import useFilteredInvoiceDataStore from '../../../../../../store/FilteredInvoiceStore';
+import { useAlertMessage } from '../../../../../../store/alertStore';
+
 
 function Dashboard() {
     const { invoiceData, setInvoiceData } = useInvoiceData();
+    const { showAlert,hideAlert } = useAlertMessage();
+    const {filteredInvoiceData, setFilteredInvoiceData} = useFilteredInvoiceDataStore();
     const { showLoader, hideLoader } = useLoaderStore();
     const params = useParams();
     const driveId = params.id;
@@ -48,6 +53,17 @@ function Dashboard() {
 
                 console.log('Invoice info fetched successfully');
             } catch (error) {
+                if(error?.response?.data?.message){
+                    showAlert(error.response.data.message, 'Error');
+                }
+                else{
+                    showAlert('Error fetching invoice info', 'Error');
+
+                }
+                setTimeout(() => {
+                    hideAlert();
+                }, 5000);
+
                 console.error('Error fetching invoice info:', error);
             } finally {
                 hideLoader();
@@ -66,12 +82,25 @@ function Dashboard() {
                 });
                 if (response.data.statusCode === 200) {
                     setInvoiceData(response.data.summary);
+                    setFilteredInvoiceData(response.data.summary);
                     console.log('File processed successfully');
                 } else {
+                    showAlert('Error processing file', 'Error');
                     console.error('Error processing file:', response.data.message);
                 }
             } catch (error) {
                 console.error('Error processing file:', error);
+                if(error?.response?.status==401){
+                    showAlert("Please Authorize to google drive", "Error"); 
+                    
+                  }
+                  else{
+            
+                    showAlert("Something went wrong while processing the file", "Error");                 
+                  }
+                  setTimeout(() => {
+                    hideAlert();
+                  }, 5000);
             } finally {
                 hideLoader();
             }
@@ -80,7 +109,7 @@ function Dashboard() {
         if (fileName) {
             processFile();
         }
-    }, [driveId, fileName, setInvoiceData, showLoader, hideLoader]);
+    }, [driveId, fileName, setInvoiceData, showLoader, hideLoader,setFilteredInvoiceData]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -104,17 +133,12 @@ function Dashboard() {
                     {/* Dropdown */}
                     <SelectScrollable />
 
-                    {/* Button with icon */}
-                    <Button variant="downloadBtn" size="icon">
-                        <Navigation size={48} color="#403A44" strokeWidth={1.75} />
-                    </Button>
-
                     {/* Upload to drive button */}
                     <Button onClick={openInDrive} variant="downloadBtn">Ouvrir dans Drive</Button>
                 </div>
                 {/* Table */}
                 <section className='mt-6'>
-                    <CustomTable invoiceData={invoiceData} />
+                    <CustomTable invoiceData={filteredInvoiceData} />
                 </section>
             </div>
         </div>
