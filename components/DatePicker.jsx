@@ -1,11 +1,8 @@
 'use client';
 
 import * as React from 'react';
-import { addDays, format } from 'date-fns';
+import { format } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
-import { DateRange } from 'react-day-picker';
-
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -13,26 +10,29 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { useDateStore } from '../store/filteredDateStore'; // import the Zustand store
 
-export function DatePicker({
-  className,
-}) {
-  const [date, setDate] = React.useState({
-    from: new Date(2022, 0, 20),
-    to: addDays(new Date(2022, 0, 20), 20),
-  });
+export function DatePicker({ className, filter }) {
+  const { date, setDate } = useDateStore(); // use the Zustand store
+
+  const handleDateSelect = (selectedDate) => {
+    console.log("selectedDate", selectedDate)
+    setDate(selectedDate);
+    if (filter) {
+      filter(selectedDate); // Call the filter function with the updated date
+    }
+  };
 
   return (
-    <div className={cn('grid gap-2 ', className)}>
+    <div className={`grid gap-2 ${className}`}>
       <Popover>
         <PopoverTrigger asChild>
           <Button
             id="date"
-            variant={'outline'}
-            className={cn(
-              'w-[300px] justify-start text-left font-normal h-[75%]',
-              !date && 'text-muted-foreground' 
-            )}
+            variant="outline"
+            className={`w-[300px] justify-start text-left font-normal h-[75%] ${
+              !date && 'text-muted-foreground'
+            }`}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
             {date?.from ? (
@@ -55,7 +55,7 @@ export function DatePicker({
             mode="range"
             defaultMonth={date?.from}
             selected={date}
-            onSelect={setDate}
+            onSelect={handleDateSelect}
             numberOfMonths={2}
           />
         </PopoverContent>
