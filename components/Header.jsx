@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import axios from 'axios';
 import { ArrowUp, ArrowLeft, Download, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,13 +7,14 @@ import { useFileNameStore, useCsvFolderIdStore, useParentFolderIdStore, usePdfFo
 import useLoaderStore from '../store/loaderStore';
 import { useAlertMessage } from '../store/alertStore';
 import { useRouter } from 'next/navigation';
+import { useInvoiceData } from '../store/invoiceDataStore';
+import useFilteredInvoiceDataStore from '../store/FilteredInvoiceStore.js';
 
 const downloadData = async () => {
     const { fileName } = useFileNameStore.getState();
     const { parentFolderId } = useParentFolderIdStore.getState();
     const { csvFolderId } = useCsvFolderIdStore.getState();
     const { pdfFolderId } = usePdfFolderIdStore.getState();
-
     const { showLoader, hideLoader } = useLoaderStore.getState();
     const { showAlert, hideAlert } = useAlertMessage.getState();
 
@@ -24,7 +25,7 @@ const downloadData = async () => {
         console.log('parentFolderId:', parentFolderId);
         console.log('csvFolderId:', csvFolderId);
         console.log('pdfFolderId:', pdfFolderId);
-        
+
         const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/invoices/download`, {
             fileName,
             parentFolderId,
@@ -59,7 +60,6 @@ const downloadData = async () => {
         hideLoader();
     }
 };
-
 
 const saveFile = async (blob, fileName) => {
     const { showAlert, hideAlert } = useAlertMessage.getState();
@@ -105,28 +105,71 @@ const fallbackDownload = (blob, fileName) => {
 
 function Header({ isInvoice }) {
     const { fileName } = useFileNameStore();
-    const { showLoader, hideLoader } = useLoaderStore();
-    const { showAlert, hideAlert } = useAlertMessage();
     const { updatedAt, setupdatedAt } = useUpdatedInvoiceTime();
+    const { invoiceData } = useInvoiceData();
+    const { setFilteredInvoiceData } = useFilteredInvoiceDataStore();
     const router = useRouter();
-    const isLoading = useLoaderStore((state) => state.isLoading); // Moved outside of JSX
+    const isLoading = useLoaderStore((state) => state.isLoading);
+
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedDate, setSelectedDate] = useState(null);
 
     // Function to format the date
     const formatDate = (dateString) => {
         const date = new Date(dateString);
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
-        const year = date.getFullYear(); // Use full year instead of slicing
+        const year = date.getFullYear();
         return `${month}/${day}/${year}`;
     };
+
     const handleBack = () => {
         router.push('/admin/uploads');
     };
 
-
     const handleDownload = useCallback(() => {
         downloadData();
-    }, []); 
+    }, []);
+
+    const handleSearch = (e) => {
+        setSearchTerm(e.target.value);
+        filterInvoices(e.target.value, selectedDate);
+    };
+
+    const handleDatePick = (date) => {
+        console.log('Selected date:', date);
+        setSelectedDate(date);
+        filterInvoices(searchTerm, date);
+    };
+
+    const filterInvoices = (searchTerm, selectedDate) => {
+        if (!invoiceData) return;
+        
+        let filteredData = invoiceData;
+        
+      if (searchTerm) {
+    const searchTermNumber = Number(searchTerm);
+    filteredData = filteredData.filter(invoice => 
+        invoice.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        invoice.accountNo === searchTermNumber ||
+        invoice.codePennylane.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        invoice.designation.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        invoice.Transactiondate.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        invoice.TVA.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+        invoice.HT.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+        invoice.TTC.toString().toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+        }
+
+        if (selectedDate) {
+            filteredData = filteredData.filter(invoice => 
+                new Date(invoice.date).toDateString() === new Date(selectedDate).toDateString()
+            );
+        }
+
+        setFilteredInvoiceData(filteredData);
+    };
 
     return (
         <div className="header flex flex-col">
@@ -154,11 +197,16 @@ function Header({ isInvoice }) {
             </div>
             <div className='mt-3 flex justify-between relative'>
                 <Search className='absolute top-1 left-3' size={18} color="#403A44" strokeWidth={1.75} />
-                <input className='searchField' placeholder='Recherche'></input>
+                <input 
+                    className='searchField' 
+                    placeholder='Recherche'
+                    value={searchTerm}
+                    onChange={handleSearch}
+                />
                 {isInvoice ? (
                     <>
                         <div className='flex relative right-40'>
-                            <DatePicker className={"h-4"} />
+                            <DatePicker className={"h-4"} onDateChange={handleDatePick} />
                         </div>
                         <Button className="bg-downloadButton-200 h-7" onClick={handleDownload} disabled={isLoading}>
                             <Download className='mr-2 mt-0' size={16} color="#f6faff" />Télécharger des données
