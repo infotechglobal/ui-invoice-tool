@@ -21,7 +21,8 @@ import {
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
-export function CustomTable({ invoiceData, fileName, parentFolderId, csvfolderId, pdfFolderId}) {
+export function CustomTable({ invoiceData}) {
+    console.log("invoiceData", invoiceData)
     const rowPerPage = 7;
     const [pageNo, setPageNo] = useState(1);
     const [startIndex, setStartIndex] = useState(0);
@@ -62,7 +63,7 @@ export function CustomTable({ invoiceData, fileName, parentFolderId, csvfolderId
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {invoiceData.slice(startIndex, endIndex).map((user, index) => (
+                    {invoiceData?.slice(startIndex, endIndex).map((user, index) => (
                         <TableRow key={index}>
                             <TableCell className="T-data">
                                 <Link href={"/admin/profile/a001"}>
@@ -106,10 +107,10 @@ export function CustomTable({ invoiceData, fileName, parentFolderId, csvfolderId
                     </PaginationItem>
                     <PaginationItem>
                         <PaginationNext
-                            className={endIndex >= invoiceData.length ? "pointer-events-none opacity-50" : undefined}
+                            className={endIndex >= invoiceData?.length ? "pointer-events-none opacity-50" : undefined}
                             onClick={() => {
                                 console.log("next clicked", startIndex, endIndex);
-                                if (endIndex < invoiceData.length) {
+                                if (endIndex < invoiceData?.length) {
                                     setPageNo(pageNo + 1);
                                 }
                                 setStartIndex(startIndex + rowPerPage);
