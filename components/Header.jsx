@@ -104,7 +104,7 @@ const fallbackDownload = (blob, fileName) => {
     window.URL.revokeObjectURL(url);
 };
 
-function Header({ isInvoice }) {
+function Header({ isInvoice}) {
     const { fileName } = useFileNameStore();
     const { updatedAt, setupdatedAt } = useUpdatedInvoiceTime();
     const { invoiceData } = useInvoiceData();
