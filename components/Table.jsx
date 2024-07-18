@@ -21,7 +21,7 @@ import {
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
-export function CustomTable({ invoiceData}) {
+export function CustomTable({ invoiceData }) {
     console.log("invoiceData", invoiceData)
     const rowPerPage = 7;
     const [pageNo, setPageNo] = useState(1);
@@ -64,12 +64,13 @@ export function CustomTable({ invoiceData}) {
                 </TableHeader>
                 <TableBody>
                     {invoiceData?.slice(startIndex, endIndex).map((user, index) => (
-                        <TableRow key={index}>
+                        <TableRow key={index} onClick={() => window.location.href = `/admin/profile/${user.accountNo}`}>
                             <TableCell className="T-data">
-                                <Link href={"/admin/profile/a001"}>
+                                <Link href={`/admin/profile/${user.accountNo}`}>
                                     {user.accountNo}
                                 </Link>
                             </TableCell>
+
                             <TableCell className="T-data-name">{user.customerName}</TableCell>
                             <TableCell className="T-data-name">{user.customerName.split(' ')[0]}</TableCell>
                             <TableCell className="T-data">{user.codePennylane}</TableCell>
