@@ -76,6 +76,7 @@ function Uploads({ isInvoice = true }) {
   const handleUploadClick = () => {
     if (inputFileRef.current) {
       inputFileRef.current.click();
+      inputFileRef.current.value = null;
     }
   };
 
@@ -83,6 +84,7 @@ function Uploads({ isInvoice = true }) {
     try {
       const formData = new FormData();
       formData.append("file", newFile);
+      hideAlert();
       showLoader("Téléchargement du fichier, veuillez patienter...");
       const { data } = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/upload/savefile/`, formData);
       console.log(data);
@@ -94,12 +96,19 @@ function Uploads({ isInvoice = true }) {
       }, 3000);
     } catch (error) {
       console.log("err", error);
-      showAlert(error.response.message, "Error");
+      if (error.response?.status == 401) {
+        showAlert("Please authorize to Gooole Drive", "Error");
+      }
+      else{
+        showAlert("Network Error, Please Try Again Later", "Error");
+      }
       setTimeout(() => {
         hideAlert();
       }, 5000);
     } finally {
       hideLoader();
+      setNewFile(null);
+
     }
   }, [newFile, addFile, showLoader, hideLoader, showAlert, hideAlert]);
 
@@ -114,6 +123,7 @@ function Uploads({ isInvoice = true }) {
   };
 
   const handleDelete = async (driveId) => {
+    hideAlert();
     showLoader('Suppression du fichier. Cela prendra quelques minutes...');
     try {
       const { data } = await axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/upload/deletefile/${driveId}`);
@@ -137,8 +147,12 @@ function Uploads({ isInvoice = true }) {
       hideLoader();
     }
   };
+  const authenticate = () => {
+    window.open(`${process.env.NEXT_PUBLIC_BACKEND_URL}/upload/auth/google`);
+  };
 
   const handlePreview = async (driveId, fileName) => {
+    hideAlert();
     showLoader('Traitement du fichier. Cela prendra quelques minutes...')
     try {
       const { data } = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/invoices/process/${driveId}`, { fileName });
@@ -160,13 +174,13 @@ function Uploads({ isInvoice = true }) {
       }
     } catch (error) {
       console.log(error);
-      if(error?.response?.status==401){
-        showAlert("Please Authorize to google drive", "Error"); 
-        
-      }
-      else{
+      if (error?.response?.status == 401) {
+        showAlert("Please Authorize to google drive", "Error");
 
-        showAlert("Something went wrong while processing the file", "Error");                 
+      }
+      else {
+
+        showAlert("Something went wrong while processing the file", "Error");
       }
       setTimeout(() => {
         hideAlert();
@@ -274,6 +288,7 @@ function Uploads({ isInvoice = true }) {
           <h3 className='text-violet-gray-800 font-archivo text-custom-18 font-normal leading-custom-24'>
             Cliquez sur Aperçu pour afficher les détails de la facture
           </h3>
+          <button onClick={authenticate} className='relative left-40  rounded-lg border-2 p-2 border-violet-gray-100  w-fit bg-white text-violet-gray-900 font-archivo font-semibold'>Authenticate</button>
           <button
             className=" relative right-14 rounded-xl px-2 py-1 bg-uploadContainerBg-200 flex justify-center items-center text-white font-semibold  cursor-pointer"
             onClick={handleUploadClick}
@@ -295,11 +310,11 @@ function Uploads({ isInvoice = true }) {
         {/* search bar, date picker, download invoice */}
         <div className='mt-3 h-14 flex justify-between relative pr-7'>
           <Search className='absolute top-1 left-3' size={18} color="#403A44" strokeWidth={1.75} />
-          <input 
-            className='searchField h-8' 
-            placeholder='Recherche' 
-            disabled={isLoading} 
-            value={searchTerm} 
+          <input
+            className='searchField h-8'
+            placeholder='Recherche'
+            disabled={isLoading}
+            value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)} // Update search term on change
           />
 
@@ -363,15 +378,16 @@ function Uploads({ isInvoice = true }) {
               </button>
             </div>
 
-            {!item.isProcessed && (
-              <button onClick={() => handleDelete(item.driveId)} className="icons" disabled={isLoading}>
-                <Trash2 size={20} color="#6f6a73" strokeWidth={2.25} />
-              </button>
-            )}
+            
+            <button onClick={() => handleDelete(item.driveId)} className="icons" disabled={isLoading}>
+              <Trash2 size={20} color="#6f6a73" strokeWidth={2.25} />
+            </button>
+          
           </div>
         ))}
       </div>
     </div>
+
   )
 }
 
