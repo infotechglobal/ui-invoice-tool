@@ -51,8 +51,6 @@ function Sidebar() {
           <Link href={'/admin/uploads'}>
             <Image
               src={BrandLogo}
-              width={132}
-              height={24}
               alt='Picture of the Login page'
               quality={100}
               className='mt-8 mb-10 ml-6'
