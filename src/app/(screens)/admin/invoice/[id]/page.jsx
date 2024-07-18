@@ -73,7 +73,7 @@ function Dashboard() {
         };
 
         fetchInvoiceInfo();
-    }, [driveId, setFileName, setParentFolderId, setCsvFolderId, setPdfFolderId, setUpdatedAt, showLoader, hideLoader]);
+    }, [driveId, setFileName, setParentFolderId, setCsvFolderId, setPdfFolderId, setUpdatedAt, showLoader, hideLoader, showAlert, hideAlert]);
 
     useEffect(() => {
         const processFile = async () => {
@@ -111,7 +111,8 @@ function Dashboard() {
         if (fileName) {
             processFile();
         }
-    }, [driveId, fileName, setInvoiceData, showLoader, hideLoader, setFilteredInvoiceData]);
+    }, [driveId, fileName, setInvoiceData, showLoader, hideLoader, setFilteredInvoiceData, showAlert, hideAlert]);
+
 
     useEffect(() => {
         const fetchData = async () => {
