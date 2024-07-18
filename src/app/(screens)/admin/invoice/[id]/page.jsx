@@ -13,12 +13,14 @@ import useLoaderStore from '../../../../../../store/loaderStore';
 import { useFileStore } from '../../../../../../store/uploadedFilesStore';
 import useFilteredInvoiceDataStore from '../../../../../../store/FilteredInvoiceStore';
 import { useAlertMessage } from '../../../../../../store/alertStore';
+import { usePageLocationStore } from '../../../../../../store/uploadedFilesStore';
 
 
 function Dashboard() {
     const { invoiceData, setInvoiceData } = useInvoiceData();
-    const { showAlert,hideAlert } = useAlertMessage();
-    const {filteredInvoiceData, setFilteredInvoiceData} = useFilteredInvoiceDataStore();
+    const { showAlert, hideAlert } = useAlertMessage();
+    const { setPageLocation } = usePageLocationStore();
+    const { filteredInvoiceData, setFilteredInvoiceData } = useFilteredInvoiceDataStore();
     const { showLoader, hideLoader } = useLoaderStore();
     const params = useParams();
     const driveId = params.id;
@@ -53,10 +55,10 @@ function Dashboard() {
 
                 console.log('Invoice info fetched successfully');
             } catch (error) {
-                if(error?.response?.data?.message){
+                if (error?.response?.data?.message) {
                     showAlert(error.response.data.message, 'Error');
                 }
-                else{
+                else {
                     showAlert('Error fetching invoice info', 'Error');
 
                 }
@@ -90,17 +92,17 @@ function Dashboard() {
                 }
             } catch (error) {
                 console.error('Error processing file:', error);
-                if(error?.response?.status==401){
-                    showAlert("Please Authorize to google drive", "Error"); 
-                    
-                  }
-                  else{
-            
-                    showAlert("Something went wrong while processing the file", "Error");                 
-                  }
-                  setTimeout(() => {
+                if (error?.response?.status == 401) {
+                    showAlert("Please Authorize to google drive", "Error");
+
+                }
+                else {
+
+                    showAlert("Something went wrong while processing the file", "Error");
+                }
+                setTimeout(() => {
                     hideAlert();
-                  }, 5000);
+                }, 5000);
             } finally {
                 hideLoader();
             }
@@ -109,7 +111,7 @@ function Dashboard() {
         if (fileName) {
             processFile();
         }
-    }, [driveId, fileName, setInvoiceData, showLoader, hideLoader,setFilteredInvoiceData]);
+    }, [driveId, fileName, setInvoiceData, showLoader, hideLoader, setFilteredInvoiceData]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -117,9 +119,14 @@ function Dashboard() {
             console.log(data.allFiles);
             addFile(data.allFiles);
         };
+
         console.log("fetching uploaded files in invoice/id page");
         fetchData();
     }, [addFile]);
+
+    useEffect(() => {
+        setPageLocation(`/admin/invoice/${driveId}`);
+    }, [driveId, setPageLocation]);
 
     return (
         <div className='pt-2 pr-2 pl-3 flex flex-col'>
