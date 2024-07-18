@@ -1,90 +1,171 @@
 'use client'
-import React from 'react'
-import Header from '../../../../../../components/Header'
-import { pic } from '../../../../../../src/lib/assets'
-import Image from 'next/image'
-import { Button } from '@/components/ui/button'
-import { transactions } from '../../../../../../src/lib/assets'
-import { ArrowLeftRight } from 'lucide-react'
+import React, { useEffect, useState } from 'react';
+import Header from '../../../../../../components/Header';
+import { pic } from '../../../../../../src/lib/assets';
+import Image from 'next/image';
+import { Button } from '@/components/ui/button';
+import { ArrowLeftRight, ArrowLeft, Search } from 'lucide-react';
+import axios from 'axios';
+import { useRouter } from 'next/navigation';
+import { usePageLocationStore } from '../../../../../../store/uploadedFilesStore';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 function AdminProfile({ params }) {
-    const fractures = [
-        { name: "jon" },
-        { name: "xyz" },
-        { name: "abc" },
-        { name: "adawd" },
-        { name: "adawd" },
+    const { pageLocation, setPageLocation } = usePageLocationStore();
+    const router = useRouter();
+    const [userData, setUserData] = useState({});
+    const [transactions, setTransactions] = useState([]);
+    const [factures, setFactures] = useState([]);
+    const userId = params.id;
 
-    ]
+    useEffect(() => {
+        const fetchUserData = async () => {
+            try {
+                const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/getUserInfo/${userId}`);
+                const { message, transactions } = response.data;
+                
+                if (message === 'User transactions fetched successfully' && transactions && transactions.length > 0) {
+                    const user = transactions[0]; // Assuming you are fetching a single user based on userId
+                    setUserData(user);
+                    const uniqueInvoices = filterUniqueInvoices(user.transactions || []);
+                    setTransactions(user.transactions || []);
+                    setFactures(uniqueInvoices);
+                } else {
+                    console.error('User data not found or empty.');
+                }
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+            }
+        };
+
+        fetchUserData();
+    }, [userId]);
+
+
+
+    const filterUniqueInvoices = (transactions) => {
+        const uniqueInvoices = [];
+        const seenInvoiceNumbers = new Set();
+
+        transactions.forEach(item => {
+            if (!seenInvoiceNumbers.has(item.invoiceNo)) {
+                seenInvoiceNumbers.add(item.invoiceNo);
+                uniqueInvoices.push(item);
+            }
+        });
+
+        return uniqueInvoices;
+    };
+
+    const handleBack = () => {
+        console.log(pageLocation)
+      router.push(pageLocation);
+    };
+
+    const openInvoice = (pdfDriveLink) => {
+        // Open invoice in a new tab
+        return () => {
+            window.open(pdfDriveLink);
+        };
+    };
+
     return (
-        <div className='pt-2 pr-8 pl-8 flex flex-col pb-7'>
-            <Header isInvoice={false} />
+        <div className='pt-2 pr-8 pl-8 flex flex-col max-h-[100vh]'>
+            <div className="header flex flex-col">
+                <div className='flex justify-between'>
+                    <div className='flex items-end min-w-[600px] justify-between'>
+                        <h3 className="text-violet-gray-900 font-archivo text-[35px] font-bold leading-[32px] normal-font-style">
+                           Détails du client
+                        </h3>
+                    </div>
+                    <div className='flex items-end'>
+                        <Button size="btn" className="bg-downloadButton-200 h-6 ml-3" onClick={handleBack}>
+                            <ArrowLeft className='mr-2 mt-0' size={16} color="#f6faff" />Retourner
+                        </Button>
+                    </div>
+                </div>
+                <div className='mt-3 flex justify-between relative'>
+                    <Search className='absolute top-1 left-3' size={18} color="#403A44" strokeWidth={1.75} />
+                    <input 
+                        className='searchField' 
+                        placeholder='Recherche'
+                    />
+                </div>
+            </div>
 
-            {/*main*/}
-            <section className='flex mt-[14px] h-[100%]'>
+            {/* Main section */}
+            <section className='flex mt-[14px]'>
                 <div className="userDetails w-[535px]">
-                    {/* profile pic */}
+                    {/* Header with profile pic and details */}
                     <header className='flex w-[535px] h-[346px] justify-between items-center'>
-                        {/* customerName */}
-                        {/* mt-48 ml-10 h-max' */}
+                        {/* Customer details */}
                         <div className='mt-20 ml-9 h-max'>
                             <h3 className='customerName'>
-                                Saurav Gupta
+                                {userData.customerName || 'Saurav Gupta'}
                             </h3>
                             <h4 className='customerIBM'>
-                                IBN - 0000000000
+                                {userData.ibanNo || 'IBN - 0000000000'}
                             </h4>
                         </div>
-                        {/* customer pic */}
-                        {/* relative left-20 top-5 h-max */}
+                        {/* Profile pic */}
                         <div className='h-max mr-4'>
                             <Image
-                                src={pic}
+                                src={pic} // Use userData.imgLink if available, otherwise default pic
                                 width={270}
                                 height={270}
-                                alt="Picture of the Login page"
+                                alt="Profile Picture"
                                 quality={100}
                                 className=""
                             />
                         </div>
-
-
                     </header>
 
-                    {/* fractures */}
+                    {/* Invoices section */}
                     <main className='mt-3'>
                         <h1 className='customerName text-left'>Factures</h1>
-                        {fractures.map((item, index) => {
-                            return (
+                        <div className='invoiceDetails h-44 overflow-y-scroll no-scrollbar'>
+                            {factures?.map((item, index) => (
                                 <div key={index} className="flex justify-between border-2 border-gray-200 rounded p-2">
-                                    <h4 className='text-VioletGray-900 font-Archivo text-base font-medium'>{item.name}</h4>
-                                    <Button variant="downloadBtn">Télécharger</Button>
+                                    <h4 className='text-VioletGray-900 font-Archivo text-base font-medium'>{item.invoiceNo}</h4>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="downloadBtn">
+Aperçu</Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent>
+                                            <DropdownMenuItem onSelect={openInvoice(item.csvDriveLink)}>Facture Excel</DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={openInvoice(item.pdfDriveLink)}>Facture PDF</DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </div>
-                            );
-                        })}
-
-
+                            ))}
+                        </div>
                     </main>
                 </div>
+
+                {/* Transactions section */}
                 <div className="transactions px-3 py-3 flex-1">
                     <h1 className='customerName text-left mb-3'>Transactions</h1>
-
-                    {transactions.map((item, index) => {
-                            return (
-                                <div key={index} className="flex justify-between border-2 border-gray-200 rounded-lg gap-y-6 p-2">
-                                    <h4 className='text-VioletGray-900 font-Archivo text-14px font-medium non-italic'>{item.transactionName}</h4>
-                                    <div className='flex flex-col mr-7'>
+                    <div className="transactionDetails h-[550px] overflow-y-scroll no-scrollbar">
+                        {transactions?.map((item, index) => (
+                            <div key={index} className="flex justify-between border-2 border-gray-200 rounded-lg gap-y-6 p-2">
+                                <h4 className='text-VioletGray-900 font-Archivo text-14px font-medium non-italic'>{item.designation}  ({item.fileName})</h4>
+                                <div className='flex flex-col mr-7'>
                                     <ArrowLeftRight className='w-max place-self-end' color="#908b89" strokeWidth={1.25} />
-                                    <h3 className='text-VioletGray-500 font-Archivo text-10px font-normal non-italic'>{item.time}</h3>
-                                    </div>
+                                    <h3 className='text-VioletGray-500 font-Archivo text-10px font-normal non-italic'>{item.transactionDate}</h3>
                                 </div>
-                            );
-                        })}
-
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </section>
         </div>
-    )
+    );
 }
 
-export default AdminProfile
+export default AdminProfile;
