@@ -288,7 +288,7 @@ function Uploads({ isInvoice = true }) {
           <h3 className='text-violet-gray-800 font-archivo text-custom-18 font-normal leading-custom-24'>
             Cliquez sur Aperçu pour afficher les détails de la facture
           </h3>
-          <button onClick={authenticate} className='relative left-40  rounded-lg border-2 p-2 border-violet-gray-100  w-fit bg-white text-violet-gray-900 font-archivo font-semibold'>Authenticate</button>
+          <button onClick={authenticate} className='relative left-40  rounded-lg border-2 p-2 border-violet-gray-100  w-fit bg-white text-violet-gray-900 font-archivo font-semibold'>Authentifier</button>
           <button
             className=" relative right-14 rounded-xl px-2 py-1 bg-uploadContainerBg-200 flex justify-center items-center text-white font-semibold  cursor-pointer"
             onClick={handleUploadClick}
