@@ -12,7 +12,7 @@ const ErrorPage = () => {
         <div className="absolute text-white text-9xl" style={{ left: '60%', top: '8%' }}>3</div>
         <div className="absolute text-center text-white text-xl" style={{ left: '16%', top: '45%', width: '75%' }}>
           Unauthorized!
-          <p>Let's go <Link className="underline hover:no-underline" href="/login">Login</Link> and try from there.</p>
+          <p>Let&apos;s go <Link className="underline hover:no-underline" href="/login">Login</Link> and try from there.</p>
         </div>
       </div>
     </div>
