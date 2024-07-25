@@ -377,12 +377,14 @@ function Uploads({ isInvoice = true }) {
                 <Download size={20} color="#ffffff" strokeWidth={2.25} />
               </button>
             </div>
+            {
+              !item.isProcessed && (
+                <button onClick={() => handleDelete(item.driveId)} className="icons" disabled={isLoading}>
+                  <Trash2 size={20} color="#6f6a73" strokeWidth={2.25} />
+                </button>
+              )}
 
-            
-            <button onClick={() => handleDelete(item.driveId)} className="icons" disabled={isLoading}>
-              <Trash2 size={20} color="#6f6a73" strokeWidth={2.25} />
-            </button>
-          
+
           </div>
         ))}
       </div>
