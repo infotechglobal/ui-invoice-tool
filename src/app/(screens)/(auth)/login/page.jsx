@@ -38,7 +38,7 @@ function LoginPage() {
         email: formData.email,
         password:formData.password
       }, {
-
+        withCredentials: true
       }
       )
       console.log(data);
@@ -52,7 +52,7 @@ function LoginPage() {
 
     } catch (error) {
       console.log(error)
-      const errMsg= error.response.data.error;
+      const errMsg= error.message;  
       alert(errMsg);
     }
 
