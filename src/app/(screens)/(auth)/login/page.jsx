@@ -38,7 +38,8 @@ function LoginPage() {
         email: formData.email,
         password:formData.password
       }, {
-        withCredentials: true
+        withCredentials: true,
+        credentials: 'include',
       }
       )
       console.log(data);

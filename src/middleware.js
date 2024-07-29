@@ -6,6 +6,7 @@ export function middleware(request) {
 
   // Get the token from the cookies
   const token = request.cookies.get('token')?.value
+  console.log("token", token);
 
   if (!token) {
     console.warn('Token not found in cookies')
