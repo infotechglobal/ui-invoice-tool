@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Poppins } from 'next/font/google';
 import axios from 'axios';
 import { useRouter } from 'next/navigation'
+import { setCookie } from 'cookies-next';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -47,6 +48,8 @@ function LoginPage() {
       
       
       if(data.status == true){
+        const token = data.token;
+        setCookie('token', token, { maxAge: 60 * 60 * 24 })
         router.push('/admin/uploads')
          
       }

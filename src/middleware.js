@@ -1,34 +1,27 @@
-import { NextResponse } from 'next/server'
+  import { NextResponse } from 'next/server'
+  import { cookies } from 'next/headers'
 
+  export function middleware(request) {
+    const cookieStore = cookies()
+    const token = cookieStore.get('token')
+    console.log("token ", token);
+    if (!token) {
+      console.warn('Token not found in cookies')
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
 
-export function middleware(request) {
-  console.log('Middleware:', request.url.pathname)
-  const path = request.nextUrl.pathname
-  const cookies = request.cookies.getAll();
-  console.log('Cookies:', cookies); 
-  cookies.forEach(cookie => {
-    console.log(`${cookie.name}: ${cookie.value}`);
-  });
+    try {
+      // console.log("next ", NextResponse);
+      return NextResponse.next()
+    } catch (error) {
 
-  // Get the token from the cookies
-  const token = request.cookies.get('token')?.value
-  console.log("token", token);
-
-  // if (!token) {
-  //   console.warn('Token not found in cookies')
-  //   return NextResponse.redirect(new URL('/login', request.url))
-  // }
-
-  try {
-    return NextResponse.next()
-  } catch (error) {
-    // If verification fails, redirect to login
-    console.error('Token verification failed:', error)
-    return NextResponse.redirect(new URL('/login', request.url))
+      // If verification fails, redirect to login
+      console.error('Token verification failed:', error)
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
   }
-}
 
-// Configure which routes use this middleware
-export const config = {
-  matcher: ['/admin/:path*'],
-}
+  // Configure which routes use this middleware
+  export const config = {
+    matcher: ['/admin/:path*'],
+  }
