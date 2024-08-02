@@ -4,7 +4,6 @@
   export function middleware(request) {
     const cookieStore = cookies()
     const token = cookieStore.get('token')
-    console.log("token ", token);
     if (!token) {
       console.warn('Token not found in cookies')
       return NextResponse.redirect(new URL('/login', request.url))
