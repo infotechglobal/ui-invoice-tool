@@ -14,7 +14,6 @@ export default function ScreensLayout({ children }) {
   }, [addFile]);
 
   useEffect(() => {
-    console.log("fetching data in Layout");
     fetchData();
   }, [fetchData]);
 
