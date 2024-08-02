@@ -2,10 +2,10 @@
 import React, { useEffect } from 'react';
 import { BrandLogo } from '../src/lib/assets';
 import Image from 'next/image';
-import { CircleCheck, CircleX, File, TriangleAlert } from 'lucide-react';
+import { CircleCheck, CircleX, File, LogOut, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-
+import { deleteCookie } from 'cookies-next';
 import { useAlertMessage } from '../store/alertStore';
 import { useFileStore } from '../store/uploadedFilesStore';
 import Loader from '../src/components/ui/loader.jsx';
@@ -13,7 +13,6 @@ import useLoaderStore from '../store/loaderStore';
 import axios from 'axios';
 import { useInvoiceData } from '../store/invoiceDataStore';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-
 function Sidebar() {
   const uploadedFiles = useFileStore((state) =>
     state.uploadedFiles?.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
@@ -43,7 +42,11 @@ function Sidebar() {
       hideLoader();
     }
   };
-
+  const handleLogout = () => {
+    deleteCookie('token');
+    alert('Vous avez été déconnecté avec succès');
+    router.push('/login');
+  }
   return (
     <div className='mr-10 flex flex-col w-full h-full justify-between'>
       <div>
@@ -58,11 +61,11 @@ function Sidebar() {
           </Link>
         </header>
 
-        <section className='pl-2 border-b border-blue-100 '>
+        <section className='pl-2'>
           <h2 className='text-violet-gray-900 font-Archivo font-bold text-sm leading-4 w-max'>
             fichiers facturés
           </h2>
-          <div className='flex flex-col space-y-1 files ml-3 mt-3 w-max h-[425px] overflow-y-scroll no-scrollbar'>
+          <div className='flex flex-col space-y-1 files ml-3 mt-3 w-max h-[400px] overflow-y-scroll no-scrollbar'>
             {uploadedFiles?.map(
               (item, index) =>
                 item.isProcessed && (
@@ -101,7 +104,15 @@ function Sidebar() {
             <AlertDescription>{message}</AlertDescription>
           </Alert>
         )}
+       <div className='mb-1 flex justify-center mt-2 w-full'>
+        <button onClick={handleLogout} className=' max-w-xs w-full rounded-xl px-2 py-1 bg-uploadContainerBg-200 flex items-center justify-center text-white font-semibold'>
+          <LogOut color="#ffffff" className='mr-3' />
+          Se déconnecter
+        </button>
+      </div>
+
       </footer>
+ 
     </div>
   );
 }
