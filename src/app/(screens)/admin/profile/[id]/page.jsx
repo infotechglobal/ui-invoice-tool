@@ -7,16 +7,15 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeftRight, ArrowLeft, Search } from 'lucide-react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
-import { usePageLocationStore } from '../../../../../../store/uploadedFilesStore';
+
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
 function AdminProfile({ params }) {
-    const { pageLocation, setPageLocation } = usePageLocationStore();
     const router = useRouter();
     const [userData, setUserData] = useState({});
     const [transactions, setTransactions] = useState([]);
@@ -28,7 +27,7 @@ function AdminProfile({ params }) {
             try {
                 const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/getUserInfo/${userId}`);
                 const { message, transactions } = response.data;
-                
+
                 if (message === 'User transactions fetched successfully' && transactions && transactions.length > 0) {
                     const user = transactions[0]; // Assuming you are fetching a single user based on userId
                     setUserData(user);
@@ -62,9 +61,11 @@ function AdminProfile({ params }) {
         return uniqueInvoices;
     };
 
+
     const handleBack = () => {
-        console.log(pageLocation)
-      router.push(pageLocation);
+
+        localStorage.getItem('pageLocation') ? router.push(localStorage.getItem('pageLocation')) : router.push('/admin/uplads');
+
     };
 
     const openInvoice = (pdfDriveLink) => {
@@ -80,7 +81,7 @@ function AdminProfile({ params }) {
                 <div className='flex justify-between'>
                     <div className='flex items-end min-w-[600px] justify-between'>
                         <h3 className="text-violet-gray-900 font-archivo text-[35px] font-bold leading-[32px] normal-font-style">
-                           Détails du client
+                            Détails du client
                         </h3>
                     </div>
                     <div className='flex items-end'>
@@ -91,8 +92,8 @@ function AdminProfile({ params }) {
                 </div>
                 <div className='mt-3 flex justify-between relative'>
                     <Search className='absolute top-1 left-3' size={18} color="#403A44" strokeWidth={1.75} />
-                    <input 
-                        className='searchField' 
+                    <input
+                        className='searchField'
                         placeholder='Recherche'
                     />
                 </div>
@@ -106,10 +107,10 @@ function AdminProfile({ params }) {
                         {/* Customer details */}
                         <div className='mt-20 ml-9 h-max'>
                             <h3 className='customerName'>
-                                {userData.customerName || 'Saurav Gupta'}
+                                {userData.customerName || 'XXXXXXX'}
                             </h3>
                             <h4 className='customerIBM'>
-                                {userData.ibanNo || 'IBN - 0000000000'}
+                                {`IBN - ${userData.ibanNo}` || 'IBN - 0000000000'}
                             </h4>
                         </div>
                         {/* Profile pic */}
@@ -135,7 +136,7 @@ function AdminProfile({ params }) {
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button variant="downloadBtn">
-Aperçu</Button>
+                                                Ouvrir</Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent>
                                             <DropdownMenuItem onSelect={openInvoice(item.csvDriveLink)}>Facture Excel</DropdownMenuItem>
