@@ -39,9 +39,10 @@ function Dashboard() {
 
     useEffect(() => {
         const fetchInvoiceInfo = async () => {
-            if(!isLoading){
-                showLoader('chargement de la facture...');
-            }
+                // hideLoader();
+                
+                // showLoader('chargement de la facture...');
+           
             try {
                 const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/getInvoiceInfo`, {
                     driveId: driveId
@@ -75,7 +76,7 @@ function Dashboard() {
         };
 
         fetchInvoiceInfo();
-    }, [driveId, setFileName, setParentFolderId, setCsvFolderId, setPdfFolderId, setUpdatedAt, showLoader, hideLoader, showAlert, hideAlert, isLoading]);
+    }, [driveId, setFileName, setParentFolderId, setCsvFolderId, setPdfFolderId, setUpdatedAt, showLoader, hideLoader, showAlert, hideAlert]);
 
     useEffect(() => {
         const processFile = async () => {
