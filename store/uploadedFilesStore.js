@@ -8,12 +8,13 @@ const useFileStore = create((set) => ({
     })),
   }))
 
-  const usePageLocationStore = create((set) => ({
-    pageLocation: null,
-    setPageLocation: (newLocation) => set((state) => ({
-      pageLocation: newLocation
-    })),
-  }))
+  // const usePageLocationStore = create((set) => ({
+  //   pageLocation: null,
+  //   setPageLocation: (newLocation) => set((state) => ({
+  //     pageLocation: newLocation
+  //   })),
+  // }))
 
 
-  export {useFileStore, usePageLocationStore}
+  export {useFileStore}
+  // export {useFileStore, usePageLocationStore}
