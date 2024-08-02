@@ -13,15 +13,15 @@ import useLoaderStore from '../../../../../../store/loaderStore';
 import { useFileStore } from '../../../../../../store/uploadedFilesStore';
 import useFilteredInvoiceDataStore from '../../../../../../store/FilteredInvoiceStore';
 import { useAlertMessage } from '../../../../../../store/alertStore';
-import { usePageLocationStore } from '../../../../../../store/uploadedFilesStore';
+
 
 
 function Dashboard() {
     const { invoiceData, setInvoiceData } = useInvoiceData();
     const { showAlert, hideAlert } = useAlertMessage();
-    const { setPageLocation } = usePageLocationStore();
+
     const { filteredInvoiceData, setFilteredInvoiceData } = useFilteredInvoiceDataStore();
-    const { showLoader, hideLoader } = useLoaderStore();
+    const {isLoading, showLoader, hideLoader } = useLoaderStore();
     const params = useParams();
     const driveId = params.id;
     const { fileName, setFileName } = useFileNameStore();
@@ -39,7 +39,9 @@ function Dashboard() {
 
     useEffect(() => {
         const fetchInvoiceInfo = async () => {
-            showLoader('Fetching invoice info...');
+            if(!isLoading){
+                showLoader('chargement de la facture...');
+            }
             try {
                 const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/getInvoiceInfo`, {
                     driveId: driveId
@@ -59,7 +61,7 @@ function Dashboard() {
                     showAlert(error.response.data.message, 'Error');
                 }
                 else {
-                    showAlert('Error fetching invoice info', 'Error');
+                    showAlert('Erreur lors de la récupération de la facture', 'Error');
 
                 }
                 setTimeout(() => {
@@ -73,11 +75,11 @@ function Dashboard() {
         };
 
         fetchInvoiceInfo();
-    }, [driveId, setFileName, setParentFolderId, setCsvFolderId, setPdfFolderId, setUpdatedAt, showLoader, hideLoader, showAlert, hideAlert]);
+    }, [driveId, setFileName, setParentFolderId, setCsvFolderId, setPdfFolderId, setUpdatedAt, showLoader, hideLoader, showAlert, hideAlert, isLoading]);
 
     useEffect(() => {
         const processFile = async () => {
-            showLoader('Processing file...');
+            // showLoader('Processing file...');
             try {
                 const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/invoices/process/${driveId}`, {
                     fileName: fileName
@@ -126,9 +128,16 @@ function Dashboard() {
     }, [addFile]);
 
     useEffect(() => {
-        setPageLocation(`/admin/invoice/${driveId}`);
-    }, [driveId, setPageLocation]);
-
+        // Get the current page location from localStorage
+        const currentLocation = localStorage.getItem('pageLocation');
+        const newLocation = `/admin/invoice/${driveId}`;
+    
+        // Check if the current location is different from the new location
+        if (currentLocation !== newLocation) {
+            localStorage.setItem('pageLocation', newLocation);
+        }
+    }, [driveId]);
+    
     return (
         <div className='pt-2 pr-2 pl-3 flex flex-col'>
             {/* Header */}
@@ -139,7 +148,7 @@ function Dashboard() {
                 {/* Dropdown, download, upload to drive button */}
                 <div className='dropdowns flex gap-x-5'>
                     {/* Dropdown */}
-                    <SelectScrollable />
+                    {/* <SelectScrollable /> */}
 
                     {/* Upload to drive button */}
                     <Button onClick={openInDrive} variant="downloadBtn">Ouvrir dans Drive</Button>
