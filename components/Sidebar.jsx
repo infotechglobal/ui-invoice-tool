@@ -77,7 +77,7 @@ function Sidebar() {
                     <div className='icon'>
                       <File className='mt-1' size={16} color='#6f6a73' strokeWidth={2.25} />
                     </div>
-                    <div className='text-VioletGray-600 font-Archivo text-sm leading-6 w-max'>
+                    <div className='text-VioletGray-600 font-Archivo text-sm  font-semibold leading-6 w-max'>
                       {item.fileName}
                     </div>
                   </button>
@@ -104,8 +104,8 @@ function Sidebar() {
             <AlertDescription>{message}</AlertDescription>
           </Alert>
         )}
-       <div className='mb-1 flex justify-center mt-2 w-full'>
-        <button onClick={handleLogout} className=' max-w-xs w-full rounded-xl px-2 py-1 bg-uploadContainerBg-200 flex items-center justify-center text-white font-semibold'>
+       <div className='mb-1 flex justify-center mt-2 '>
+        <button onClick={handleLogout} className=' max-w-xs w-60 rounded-xl px-2 py-1 bg-uploadContainerBg-200 flex items-center justify-center text-white font-semibold'>
           <LogOut color="#ffffff" className='mr-3' />
           Se déconnecter
         </button>
