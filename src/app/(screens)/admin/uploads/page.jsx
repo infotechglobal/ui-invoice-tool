@@ -79,7 +79,6 @@ function Uploads({ isInvoice = true }) {
       inputFileRef.current.value = null;
     }
   };
-
   const processFile = useCallback(async () => {
     try {
       const formData = new FormData();
@@ -89,18 +88,24 @@ function Uploads({ isInvoice = true }) {
       const { data } = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/upload/savefile/`, formData);
       console.log(data);
       addFile(data.allFiles);
-
+  
       showAlert(data.message, "Success");
       setTimeout(() => {
         hideAlert();
       }, 3000);
     } catch (error) {
       console.log("err", error);
-      if (error.response?.status == 401) {
-        showAlert("Please authorize to Gooole Drive", "Error");
-      }
-      else{
-        showAlert("Network Error, Please Try Again Later", "Error");
+      if (error.response) {
+        // Check if the error is due to a duplicate file
+        if (error.response.status === 400 ) {
+          showAlert("Le fichier a déjà été téléchargé.", "Error");
+        } else if (error.response.status === 401) {
+          showAlert("Please authorize to Google Drive", "Error");
+        } else {
+          showAlert("Erreur de serveur, veuillez réessayer plus tard", "Error");
+        }
+      } else {
+        showAlert("Erreur réseau, veuillez réessayer plus tard", "Error");
       }
       setTimeout(() => {
         hideAlert();
@@ -108,9 +113,9 @@ function Uploads({ isInvoice = true }) {
     } finally {
       hideLoader();
       setNewFile(null);
-
     }
   }, [newFile, addFile, showLoader, hideLoader, showAlert, hideAlert]);
+  
 
   const handleChange = (event) => {
     const selectedFile = event.target.files?.[0];
