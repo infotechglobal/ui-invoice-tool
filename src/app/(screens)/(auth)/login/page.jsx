@@ -4,8 +4,11 @@ import { loginImage, Francepay, pass, EmailIcon } from '../../../../../src/lib/a
 import Image from 'next/image';
 import { Poppins } from 'next/font/google';
 import axios from 'axios';
-import { useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation';
 import { setCookie } from 'cookies-next';
+import { HashLoader } from 'react-spinners';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -13,8 +16,8 @@ const poppins = Poppins({
 });
 
 function LoginPage() {
-  const router = useRouter()
-  // Initialize state for form inputs
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -32,38 +35,61 @@ function LoginPage() {
   // Handler function for form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-   
+
     console.log('Form Data:', formData);
     try {
+      setIsLoading(true);
       const { data } = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/login/`, {
         email: formData.email,
-        password:formData.password
+        password: formData.password
       }, {
         withCredentials: true,
         credentials: 'include',
-      }
-      )
+      });
+
       console.log(data);
-      alert(data.message);
-      
-      
-      if(data.status == true){
+
+      if (data.status === true) {
         const token = data.token;
-        setCookie('token', token, { maxAge: 60 * 60 * 24 })
-        router.push('/admin/uploads')
-         
+        setCookie('token', token, { maxAge: 60 * 60 * 24 });
+        setTimeout(() => {
+          router.push('/admin/uploads');
+        }, 500); // Delay of 1.5 seconds before redirecting
+        toast.success(data.message, {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+        });
+      } else {
+        toast.error(data.message, {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+        });
       }
-
     } catch (error) {
-      console.log(error)
-      const errMsg= error.message;  
-      alert(errMsg);
+      console.log(error);
+      toast.error(error.message, {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
+    } finally {
+      setIsLoading(false);
     }
-
-
   };
-
-
 
   return (
     <div className='flex w-full h-screen'>
@@ -93,7 +119,7 @@ function LoginPage() {
           </div>
           <form action="POST" className={`${poppins.className} mx-auto w-[472px]`} onSubmit={handleSubmit}>
             <div className="mb-5 relative">
-                  <Image
+              <Image
                 src={EmailIcon}
                 width={25}
                 height={20}
@@ -105,7 +131,7 @@ function LoginPage() {
                 type="email"
                 id="email"
                 name="email"
-                value={formData.email} // Corrected this line
+                value={formData.email}
                 onChange={handleChange}
                 className="loginForm"
                 placeholder="Email"
@@ -128,19 +154,40 @@ function LoginPage() {
                 value={formData.password}
                 onChange={handleChange}
                 className="loginForm"
-                placeholder="Mot de passe" // Corrected the placeholder
+                placeholder="Mot de passe"
                 required
               />
             </div>
             <button
               type="submit"
-              className="text-white  bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-extrabold rounded-lg text-base w-full px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+              className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-extrabold rounded-lg text-base w-full px-5 py-2.5 flex justify-center items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
             >
-              Se connecter
+              {isLoading ? (
+                <div className='flex gap-x-4'>
+                  <HashLoader
+                    color="white"
+                    loading={true}
+                    cssOverride={{
+                      display: "block",
+                      margin: "auto",
+                      borderColor: "green",
+                      padding: "3px",
+                    }}
+                    size={20}
+                    aria-label="Loading Spinner"
+                    data-testid="loader"
+                    speedMultiplier={1.5}
+                  />
+                  <span>Connexion </span>
+                </div>
+              ) : (
+                "Se connecter"
+              )}
             </button>
           </form>
         </div>
       </div>
+      <ToastContainer />
     </div>
   );
 }
