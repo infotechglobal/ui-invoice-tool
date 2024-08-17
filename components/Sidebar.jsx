@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect } from 'react';
+import React from 'react';
 import { BrandLogo } from '../src/lib/assets';
 import Image from 'next/image';
 import { CircleCheck, CircleX, File, LogOut, TriangleAlert } from 'lucide-react';
@@ -13,6 +13,9 @@ import useLoaderStore from '../store/loaderStore';
 import axios from 'axios';
 import { useInvoiceData } from '../store/invoiceDataStore';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 function Sidebar() {
   const uploadedFiles = useFileStore((state) =>
     state.uploadedFiles?.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
@@ -42,11 +45,23 @@ function Sidebar() {
       hideLoader();
     }
   };
+
   const handleLogout = () => {
     deleteCookie('token');
-    alert('Vous avez été déconnecté avec succès');
-    router.push('/login');
+    toast.success('Vous avez été déconnecté avec succès', {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+    });
+    setTimeout(() => {
+      router.push('/login');
+    }, 1500); // Delay redirect by 1.5 seconds to allow alert to be visible
   }
+
   return (
     <div className='mr-10 flex flex-col w-full h-full justify-between'>
       <div>
@@ -104,15 +119,15 @@ function Sidebar() {
             <AlertDescription>{message}</AlertDescription>
           </Alert>
         )}
-       <div className='mb-1 flex justify-center mt-2 '>
-        <button onClick={handleLogout} className=' max-w-xs w-60 rounded-xl px-2 py-1 bg-uploadContainerBg-200 flex items-center justify-center text-white font-semibold'>
-          <LogOut color="#ffffff" className='mr-3' />
-          Se déconnecter
-        </button>
-      </div>
 
+        <div className='mb-1 flex justify-center mt-2 '>
+          <button onClick={handleLogout} className=' max-w-xs w-60 rounded-xl px-2 py-1 bg-uploadContainerBg-200 flex items-center justify-center text-white font-semibold'>
+            <LogOut color="#ffffff" className='mr-3' />
+            Se déconnecter
+          </button>
+        </div>
+      <ToastContainer  />
       </footer>
- 
     </div>
   );
 }
