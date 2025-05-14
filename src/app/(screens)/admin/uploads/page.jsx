@@ -202,7 +202,7 @@ function Uploads({ isInvoice = true }) {
     const { pdfFolderId } = item;
     const { isProcessed } = item;
     if (!isProcessed) {
-      showAlert("Veuillez traiter le fichier avant de le télécharger", 'Error');
+      showAlert("Veuillez prévisualiser le fichier avant de le télécharger", 'Error');
       setTimeout(() => {
         hideAlert();
       }, 3000);
@@ -293,9 +293,10 @@ function Uploads({ isInvoice = true }) {
           <h3 className='text-violet-gray-800 font-archivo text-custom-18 font-normal leading-custom-24'>
             Cliquez sur Aperçu pour afficher les détails de la facture
           </h3>
-          <button onClick={authenticate} className='relative left-40  rounded-lg border-2 p-2 border-violet-gray-100  w-fit bg-white text-violet-gray-900 font-archivo font-semibold'>Authentifier</button>
+          <div className="flex gap-5 mr-8">
+          <button onClick={authenticate} className='  rounded-lg border-2 p-2 border-violet-gray-100  w-fit bg-white text-violet-gray-900 font-archivo font-semibold'>Authentifier</button>
           <button
-            className=" relative right-14 rounded-xl px-2 py-1 bg-uploadContainerBg-200 flex justify-center items-center text-white font-semibold  cursor-pointer"
+            className="rounded-xl px-2 py-1 bg-uploadContainerBg-200 flex justify-center items-center text-white font-semibold  cursor-pointer"
             onClick={handleUploadClick}
             disabled={isLoading}
           >
@@ -311,38 +312,57 @@ function Uploads({ isInvoice = true }) {
               accept=".csv"
             />
           </button>
+          </div>
         </div>
         {/* search bar, date picker, download invoice */}
-        <div className='mt-3 h-14 flex justify-between relative pr-7'>
-          <Search className='absolute top-1 left-3' size={18} color="#403A44" strokeWidth={1.75} />
-          <input
-            className='searchField h-8'
-            placeholder='Recherche'
-            disabled={isLoading}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)} // Update search term on change
-          />
+      <div className="mt-3 h-14 flex items-center justify-between gap-4">
+  {/* Search Input with Icon */}
+  <div className="relative flex items-center w-1/3 min-w-[200px]">
+    <Search className="absolute left-3" size={18} color="#403A44" strokeWidth={1.75} />
+    <input
+      className="searchField h-8 pl-9 w-full"
+      placeholder="Recherche"
+      disabled={isLoading}
+      value={searchTerm}
+      onChange={(e) => setSearchTerm(e.target.value)}
+    />
+  </div>
 
-          {/* filters */}
-          <div className="text-lg flex self-start gap-4 relative right-32">
-            <select className='selectFilter' onChange={(e) => setSelectedYear(e.target.value)} disabled={isLoading}>
-              <option className='font-semibold' value="all">Tous les ans</option>
-              {[...new Set(uploadedFiles?.map(file => dayjs(file.updatedAt).year()))].map(year => (
-                <option key={year} value={year}>{year}</option>
-              ))}
-            </select>
-            <select className='selectFilter' onChange={(e) => setSelectedMonth(e.target.value)} disabled={isLoading}>
-              <option className='font-semibold' value="all">Tous les mois</option>
-              {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
-                <option key={month} value={month}>{dayjs().month(month - 1).format('MMMM')}</option>
-              ))}
-            </select>
-          </div>
-          <Button onClick={openInDrive} className="relative right-8 rounded-lg border-2 border-violet-gray-100 h-8 w-fit bg-white text-violet-gray-900 text-sm hover:bg-slate-50 pointer" disabled={isLoading}>
-            <Image src={driveIcon} alt="Drive Icon" className="w-5 h-5 mr-1" />
-            Afficher tous les fichiers dans Drive
-          </Button>
-        </div>
+  {/* Filters */}
+  <div className="flex items-center gap-4 mr-32">
+    <select
+      className="selectFilter"
+      onChange={(e) => setSelectedYear(e.target.value)}
+      disabled={isLoading}
+    >
+      <option className="font-semibold" value="all">Tous les ans</option>
+      {[...new Set(uploadedFiles?.map(file => dayjs(file.updatedAt).year()))].map(year => (
+        <option key={year} value={year}>{year}</option>
+      ))}
+    </select>
+    <select
+      className="selectFilter"
+      onChange={(e) => setSelectedMonth(e.target.value)}
+      disabled={isLoading}
+    >
+      <option className="font-semibold" value="all">Tous les mois</option>
+      {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
+        <option key={month} value={month}>{dayjs().month(month - 1).format('MMMM')}</option>
+      ))}
+    </select>
+  </div>
+
+  {/* Drive Button */}
+  <Button
+    onClick={openInDrive}
+    className="rounded-lg border-2 mr-6 border-violet-gray-100 h-8 bg-white text-violet-gray-900 text-sm hover:bg-slate-50 flex items-center px-3"
+    disabled={isLoading}
+  >
+    <Image src={driveIcon} alt="Drive Icon" className="w-5 h-5 mr-2" />
+    Afficher tous les fichiers dans Drive
+  </Button>
+</div>
+
 
       </div>
       {/* files */}
