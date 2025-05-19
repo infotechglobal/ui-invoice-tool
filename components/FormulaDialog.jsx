@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import { set } from 'date-fns'
-import { initialFormulas } from '../src/lib/utils' // Assuming you have a data file with initial formulas
+import { initialFormulas } from '@/lib/utils'
 
 const emptyFormula = {
+_id: null,
   codePennylane: "",
   TVA: "",
   HT: "",
@@ -19,35 +19,27 @@ const FormulaDialog = ({ open = true, onClose }) => {
   const [form, setForm] = useState(emptyFormula)
   const [showForm, setShowForm] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
 
-  const API_BASE = '/api/formulas'
 
   // Fetch formulas on mount
   useEffect(() => {
-    if (open) {
-    
-      setLoading(true)
-      setError(null)
-      // Fetch initial formulas from the API
-      try{
-        const response = axios.get(`process.env.NEXT_PUBLIC_API_URL}/formulas`);
-        const data = response.data;
-        setFormulas(data);
-
-
+    const fetchFormulasAPI = async () => {
+      if (open) {
+        setLoading(true)
+        try {
+          const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/formula/getAllFormulas`);
+          console.log(response.data)
+          setFormulas(response.data)
+        } catch (error) {
+          // setFormulas([])
+          console.error('Error fetching formulas:', error)
+          toast.error('Failed to fetch formulas')
+        } finally {
+          setLoading(false)
+        }
       }
-      catch (error) {
-        console.error("Error fetching formulas:", error);
-        
-        setError("Failed to fetch formulas");
-      }
-      finally {
-        setLoading(false);
-      }
-      
     }
-
+    fetchFormulasAPI()
   }, [open])
 
   const handleEdit = (idx) => {
@@ -58,15 +50,22 @@ const FormulaDialog = ({ open = true, onClose }) => {
 
   const handleDelete = async (idx) => {
     const formula = formulas[idx]
+    console.log('Deleting formula:', formula)
     setLoading(true)
-    setError(null)
     try {
-      await axios.delete(`${API_BASE}/${formula.id}`)
-      setFormulas(formulas.filter((_, i) => i !== idx))
-      if (editingIndex === idx) setShowForm(false)
-      toast.success('Formula deleted successfully!')
+      const response =await axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/formula/deleteFormula`, {
+  data: { id: formula._id }
+});
+      if (response.status === 200) {
+        setFormulas(formulas.filter((_, i) => i !== idx))
+        if (editingIndex === idx) setShowForm(false)
+        toast.success('Formula deleted successfully!')
+      }
+      else {
+        toast.error('Failed to delete formula')
+      }
     } catch (e) {
-      setError('Failed to delete formula')
+      console.error('Error deleting formula:', e)
       toast.error('Failed to delete formula')
     }
     setLoading(false)
@@ -77,34 +76,62 @@ const FormulaDialog = ({ open = true, onClose }) => {
     setForm({ ...form, [name]: value })
   }
 
-  const handleSave = async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      if (editingIndex !== null) {
-        // Update
-        const formula = formulas[editingIndex]
-        const res = await axios.put(`${API_BASE}/${formula.id}`, form)
-        const updatedFormula = res.data
-        const updated = formulas.map((f, i) => (i === editingIndex ? updatedFormula : f))
-        setFormulas(updated)
-        toast.success('Formula updated successfully!')
-      } else {
-        // Create
-        const res = await axios.post(API_BASE, form)
-        const newFormula = res.data
-        setFormulas([...formulas, newFormula])
-        toast.success('Formula added successfully!')
+const handleSave = async () => {
+  setLoading(true);
+  console.log('Saving formula:', form);
+
+
+  try {
+    let res;
+
+    if (editingIndex !== null) {
+      // Updating an existing formula
+      res = await axios.put(`${process.env.NEXT_PUBLIC_BACKEND_URL}/formula/updateFormula`, form);
+      console.log(res)
+      if (res.status === 200) {
+        const updatedFormula = res.data;
+        const updatedFormulas = formulas.map((f, i) =>
+          i === editingIndex ? updatedFormula : f
+        );
+        setFormulas(updatedFormulas);
+        toast.success('Formula updated successfully!');
+      } 
+      else if(res.status == 400) {
+        toast.error(res?.data?.message || 'Failed to update formula');
+        
       }
-      setShowForm(false)
-      setForm(emptyFormula)
-      setEditingIndex(null)
-    } catch (e) {
-      setError('Failed to save formula')
-      toast.error('Failed to save formula')
+      else {
+        toast.error('Failed to update formula');
+      }
+
+    } else {
+      // Adding a new formula
+      res = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/formula/createFormula`, form);
+
+      if (res.status === 200) {
+        const newFormula = res.data;
+        setFormulas([...formulas, newFormula]);
+        toast.success('Formula added successfully!');
+        setShowForm(false);
+        setForm(emptyFormula);
+        setEditingIndex(null);
+      }
+      else if(res.status == 400) {
+        toast.error(res?.data?.message || 'Failed to add formula');
+      } 
+       else {
+        toast.error('Failed to add formula');
+        console.error('Error adding formula:', res);
+      }
     }
-    setLoading(false)
+  } catch (error) {
+    console.error('Error saving formula:', error);
+    toast.error(error?.response?.data?.message || 'Failed to save formula');  
+  } finally {
+    setLoading(false);
   }
+};
+
 
   const handleAddNew = () => {
     setForm(emptyFormula)
@@ -115,78 +142,152 @@ const FormulaDialog = ({ open = true, onClose }) => {
   if (!open) return null
 
   return (
-    <div style={{
-      position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
-      background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
-    }}>
+    <div className="fixed top-0 left-0 w-screen h-screen bg-black bg-opacity-30 flex items-center justify-center z-[1000]">
       <ToastContainer position="top-right" autoClose={2500} />
-      <div style={{
-        background: '#fff', borderRadius: 8, minWidth: 350, maxWidth: 700, width: '90%',
-        padding: 24, boxShadow: '0 2px 16px rgba(0,0,0,0.2)', position: 'relative'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <h2 style={{ margin: 0 }}>Formula</h2>
-          <button onClick={onClose} style={{ fontSize: 18, background: 'none', border: 'none', cursor: 'pointer' }}>✕</button>
+      <div className="bg-white rounded-lg min-w-[350px] max-w-[700px] w-[90%] p-6 shadow-lg relative">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="m-0 text-xl font-semibold">Formula</h2>
+          <button
+            onClick={onClose}
+            className="text-xl bg-transparent border-none cursor-pointer"
+          >✕</button>
         </div>
-        {loading && <div style={{ marginBottom: 12 }}>Loading...</div>}
-        {error && <div style={{ color: 'red', marginBottom: 12 }}>{error}</div>}
+        {loading && <div className="mb-3 text-gray-600">Loading...</div>}
         <div
-          style={{
-            overflowY: 'auto',
-            maxHeight: 350,
-            border: '1px solid #eee',
-            borderRadius: 6,
-            marginBottom: 16,
-            background: '#fafafa'
-          }}
+          className="overflow-y-auto max-h-[350px] border border-gray-200 rounded-md mb-4 bg-gray-50"
         >
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <table className="w-full border-collapse">
             <thead>
-              <tr style={{ background: '#f5f5f5', position: 'sticky', top: 0 }}>
-                <th>Code</th>
-                <th>TVA</th>
-                <th>HT</th>
-                <th>Prix TTC</th>
-                <th>Designation</th>
-                <th>Actions</th>
+              <tr className="bg-gray-100 sticky top-0">
+                <th className="py-2 px-2 text-left">Code</th>
+                <th className="py-2 px-2 text-left">TVA</th>
+                <th className="py-2 px-2 text-left">HT</th>
+                <th className="py-2 px-2 text-left">Prix TTC</th>
+                <th className="py-2 px-2 text-left">Designation</th>
+                <th className="py-2 px-2 text-left">Actions</th>
               </tr>
             </thead>
             <tbody>
               {formulas.map((f, idx) => (
-                <tr key={f.id || idx}>
-                  <td><input type="text" value={f.codePennylane} disabled style={{ width: 80 }}/></td>
-                  <td><input type="number" value={f.TVA} disabled style={{ width: 60 }}/></td>
-                  <td><input type="number" value={f.HT} disabled style={{ width: 80 }}/></td>
-                  <td><input type="number" value={f.PrixTTC} disabled style={{ width: 80 }}/></td>
-                  <td><input type="text" value={f.designation} disabled style={{ width: 180 }}/></td>
+                <tr key={f.id || idx} className="even:bg-white odd:bg-gray-50">
                   <td>
-                    <button onClick={() => handleEdit(idx)} style={{ marginRight: 8 }}>Edit</button>
-                    <button onClick={() => handleDelete(idx)} style={{ color: 'red' }}>Delete</button>
+                    <input
+                      type="text"
+                      value={f.codePennylane}
+                      disabled
+                      className="w-20 px-2 py-1 bg-gray-100 rounded border border-gray-200"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      value={f.TVA}
+                      disabled
+                      className="w-16 px-2 py-1 bg-gray-100 rounded border border-gray-200"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      value={f.HT}
+                      disabled
+                      className="w-20 px-2 py-1 bg-gray-100 rounded border border-gray-200"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      value={f.PrixTTC}
+                      disabled
+                      className="w-20 px-2 py-1 bg-gray-100 rounded border border-gray-200"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="text"
+                      value={f.designation}
+                      disabled
+                      className="w-44 px-2 py-1 bg-gray-100 rounded border border-gray-200"
+                    />
+                  </td>
+                  <td>
+                    <button
+                      onClick={() => handleEdit(idx)}
+                      className="mr-2 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(idx)}
+                      className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <button onClick={handleAddNew} style={{ marginBottom: 16, background: '#1976d2', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: 4, cursor: 'pointer' }}>
+        <button
+          onClick={handleAddNew}
+          className="mb-4 bg-blue-700 text-white border-none px-4 py-2 rounded hover:bg-blue-800"
+        >
           + New Formula
         </button>
         {showForm && (
-          <div style={{
-            background: '#f9f9f9', padding: 16, borderRadius: 6, marginBottom: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.08)'
-          }}>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 12 }}>
-              <input name="codePennylane" placeholder="Code" value={form.codePennylane} onChange={handleChange} style={{ flex: '1 1 80px' }} />
-              <input name="TVA" placeholder="TVA" type="number" value={form.TVA} onChange={handleChange} style={{ flex: '1 1 60px' }} />
-              <input name="HT" placeholder="HT" type="number" value={form.HT} onChange={handleChange} style={{ flex: '1 1 80px' }} />
-              <input name="PrixTTC" placeholder="Prix TTC" type="number" value={form.PrixTTC} onChange={handleChange} style={{ flex: '1 1 80px' }} />
-              <input name="designation" placeholder="Designation" value={form.designation} onChange={handleChange} style={{ flex: '2 1 180px' }} />
+          <div className="bg-gray-100 p-4 rounded mb-4 shadow">
+            <div className="flex flex-wrap gap-3 mb-3">
+              <input
+                name="codePennylane"
+                placeholder="Code"
+                value={form.codePennylane}
+                onChange={handleChange}
+                className="flex-1 min-w-[80px] px-2 py-1 border border-gray-300 rounded"
+              />
+              <input
+                name="TVA"
+                placeholder="TVA"
+                type="number"
+                value={form.TVA}
+                onChange={handleChange}
+                className="flex-1 min-w-[60px] px-2 py-1 border border-gray-300 rounded"
+              />
+              <input
+                name="HT"
+                placeholder="HT"
+                type="number"
+                value={form.HT}
+                onChange={handleChange}
+                className="flex-1 min-w-[80px] px-2 py-1 border border-gray-300 rounded"
+              />
+              <input
+                name="PrixTTC"
+                placeholder="Prix TTC"
+                type="number"
+                value={form.PrixTTC}
+                onChange={handleChange}
+                className="flex-1 min-w-[80px] px-2 py-1 border border-gray-300 rounded"
+              />
+              <input
+                name="designation"
+                placeholder="Designation"
+                value={form.designation}
+                onChange={handleChange}
+                className="flex-2 min-w-[180px] px-2 py-1 border border-gray-300 rounded"
+              />
             </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={handleSave} style={{ background: '#388e3c', color: '#fff', border: 'none', padding: '6px 16px', borderRadius: 4, cursor: 'pointer' }}>
+            <div className="flex gap-3">
+              <button
+                onClick={handleSave}
+                className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800"
+              >
                 {editingIndex !== null ? 'Update' : 'Add'}
               </button>
-              <button onClick={() => { setShowForm(false); setEditingIndex(null); }} style={{ background: '#eee', border: 'none', padding: '6px 16px', borderRadius: 4, cursor: 'pointer' }}>
+              <button
+                onClick={() => { setShowForm(false); setEditingIndex(null); }}
+                className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
+              >
                 Cancel
               </button>
             </div>
