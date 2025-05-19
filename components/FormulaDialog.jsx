@@ -3,9 +3,10 @@ import axios from 'axios'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { initialFormulas } from '@/lib/utils'
+import ConfirmDialog from './ConfirmDialog'
 
 const emptyFormula = {
-_id: null,
+  _id: null,
   codePennylane: "",
   TVA: "",
   HT: "",
@@ -19,13 +20,24 @@ const FormulaDialog = ({ open = true, onClose }) => {
   const [form, setForm] = useState(emptyFormula)
   const [showForm, setShowForm] = useState(false)
   const [loading, setLoading] = useState(false)
-
+  const [confirm, setConfirm] = useState({
+    open: false,
+    action: null,
+    idx: null,
+    form: null,
+    message: "",
+    title: "",
+  });
+   const openConfirm = ({ action, idx = null, form = null, title, message }) => {
+    setConfirm({ open: true, action, idx, form, title, message });
+  };
 
   // Fetch formulas on mount
   useEffect(() => {
     const fetchFormulasAPI = async () => {
       if (open) {
         setLoading(true)
+       const infoId= toast.info('Fetching formulas...')
         try {
           const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/formula/getAllFormulas`);
           console.log(response.data)
@@ -33,9 +45,11 @@ const FormulaDialog = ({ open = true, onClose }) => {
         } catch (error) {
           // setFormulas([])
           console.error('Error fetching formulas:', error)
+          toast.dismiss(infoId);
           toast.error('Failed to fetch formulas')
         } finally {
           setLoading(false)
+
         }
       }
     }
@@ -48,90 +62,128 @@ const FormulaDialog = ({ open = true, onClose }) => {
     setShowForm(true)
   }
 
-  const handleDelete = async (idx) => {
-    const formula = formulas[idx]
-    console.log('Deleting formula:', formula)
-    setLoading(true)
+  // Handler for confirmation
+  const handleConfirm = async () => {
+    setConfirm((c) => ({ ...c, open: false }));
+    if (confirm.action === "delete") {
+      await doDelete(confirm.idx);
+    } else if (confirm.action === "save") {
+      await doSave(confirm.form, confirm.idx);
+    }
+  };
+
+  // Handler for cancel
+  const handleCancel = () => setConfirm((c) => ({ ...c, open: false }));
+
+  // Actual delete logic
+  const doDelete = async (idx) => {
+    const formula = formulas[idx];
+     const infoId= toast.info('Deleting...')
+    setLoading(true);
     try {
-      const response =await axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/formula/deleteFormula`, {
-  data: { id: formula._id }
-});
+      const response = await axios.delete(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/formula/deleteFormula`,
+        { data: { id: formula._id } }
+      );
+      toast.dismiss(infoId);
       if (response.status === 200) {
-        setFormulas(formulas.filter((_, i) => i !== idx))
-        if (editingIndex === idx) setShowForm(false)
-        toast.success('Formula deleted successfully!')
-      }
-      else {
-        toast.error('Failed to delete formula')
+        setFormulas(formulas.filter((_, i) => i !== idx));
+        if (editingIndex === idx) setShowForm(false);
+        toast.success("Formula deleted successfully!");
+      } else {
+        toast.error("Failed to delete formula");
       }
     } catch (e) {
-      console.error('Error deleting formula:', e)
-      toast.error('Failed to delete formula')
+      toast.dismiss(infoId);
+      toast.error("Failed to delete formula");
     }
-    setLoading(false)
-  }
+    finally {
+      setLoading(false);
+    }
+
+  };
+
+  // Actual save logic
+  const doSave = async (formToSave, idx) => {
+    setLoading(true);
+    const infoId= toast.info('Saving...')
+    try {
+      let res;
+      if (idx !== null) {
+        // Update
+        res = await axios.put(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/formula/updateFormula`,
+          formToSave
+        );
+        toast.dismiss(infoId);
+        if (res.status === 200) {
+          const updatedFormula = res.data;
+          const updatedFormulas = formulas.map((f, i) =>
+            i === idx ? updatedFormula : f
+          );
+          setFormulas(updatedFormulas);
+          
+          toast.success("Formula updated successfully!");
+        } else if (res.status === 400) {
+          toast.error(res?.data?.message || "Failed to update formula");
+        } else {
+          toast.error("Failed to update formula");
+        }
+      } else {
+        // Add
+        res = await axios.post(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/formula/createFormula`,
+          formToSave
+        );
+        toast.dismiss(infoId);
+        if (res.status === 200) {
+          const newFormula = res.data;
+          setFormulas([...formulas, newFormula]);
+          toast.success("Formula added successfully!");
+          setShowForm(false);
+          setForm(emptyFormula);
+          setEditingIndex(null);
+        } else if (res.status === 400) {
+          toast.error(res?.data?.message || "Failed to add formula");
+        } else {
+          toast.error("Failed to add formula");
+        }
+      }
+    } catch (error) {
+      toast.dismiss(infoId);
+      toast.error(error?.response?.data?.message || "Failed to save formula");
+    } finally {
+      toast.dismiss(infoId);
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = (idx) => {
+    openConfirm({
+      action: "delete",
+      idx,
+      title: "Delete Formula",
+      message: "Are you sure you want to delete this formula?",
+    });
+  };
+
+  const handleSave = async () => {
+    openConfirm({
+      action: "save",
+      idx: editingIndex,
+      form,
+      title: editingIndex !== null ? "Update Formula" : "Add Formula",
+      message:
+        editingIndex !== null
+          ? "Are you sure you want to update this formula?"
+          : "Are you sure you want to add this formula?",
+    });
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target
     setForm({ ...form, [name]: value })
   }
-
-const handleSave = async () => {
-  setLoading(true);
-  console.log('Saving formula:', form);
-
-
-  try {
-    let res;
-
-    if (editingIndex !== null) {
-      // Updating an existing formula
-      res = await axios.put(`${process.env.NEXT_PUBLIC_BACKEND_URL}/formula/updateFormula`, form);
-      console.log(res)
-      if (res.status === 200) {
-        const updatedFormula = res.data;
-        const updatedFormulas = formulas.map((f, i) =>
-          i === editingIndex ? updatedFormula : f
-        );
-        setFormulas(updatedFormulas);
-        toast.success('Formula updated successfully!');
-      } 
-      else if(res.status == 400) {
-        toast.error(res?.data?.message || 'Failed to update formula');
-        
-      }
-      else {
-        toast.error('Failed to update formula');
-      }
-
-    } else {
-      // Adding a new formula
-      res = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/formula/createFormula`, form);
-
-      if (res.status === 200) {
-        const newFormula = res.data;
-        setFormulas([...formulas, newFormula]);
-        toast.success('Formula added successfully!');
-        setShowForm(false);
-        setForm(emptyFormula);
-        setEditingIndex(null);
-      }
-      else if(res.status == 400) {
-        toast.error(res?.data?.message || 'Failed to add formula');
-      } 
-       else {
-        toast.error('Failed to add formula');
-        console.error('Error adding formula:', res);
-      }
-    }
-  } catch (error) {
-    console.error('Error saving formula:', error);
-    toast.error(error?.response?.data?.message || 'Failed to save formula');  
-  } finally {
-    setLoading(false);
-  }
-};
-
 
   const handleAddNew = () => {
     setForm(emptyFormula)
@@ -144,7 +196,14 @@ const handleSave = async () => {
   return (
     <div className="fixed top-0 left-0 w-screen h-screen bg-black bg-opacity-30 flex items-center justify-center z-[1000]">
       <ToastContainer position="top-right" autoClose={2500} />
-      <div className="bg-white rounded-lg min-w-[350px] max-w-[700px] w-[90%] p-6 shadow-lg relative">
+      <ConfirmDialog
+        open={confirm.open}
+        title={confirm.title}
+        message={confirm.message}
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+      />
+      <div className="bg-white rounded-lg min-w-[350px] max-w-[900px] w-[90%] p-6 shadow-lg relative">
         <div className="flex justify-between items-center mb-4">
           <h2 className="m-0 text-xl font-semibold">Formula</h2>
           <button
@@ -156,7 +215,15 @@ const handleSave = async () => {
         <div
           className="overflow-y-auto max-h-[350px] border border-gray-200 rounded-md mb-4 bg-gray-50"
         >
-          <table className="w-full border-collapse">
+          <table className="min-w-full border-collapse table-fixed">
+            <colgroup>
+              <col style={{ width: '8%' }} />
+              <col style={{ width: '7%' }} />
+              <col style={{ width: '10%' }} />
+              <col style={{ width: '12%' }} />
+              <col style={{ width: '43%' }} />
+              <col style={{ width: '20%' }} />
+            </colgroup>
             <thead>
               <tr className="bg-gray-100 sticky top-0">
                 <th className="py-2 px-2 text-left">Code</th>
@@ -175,7 +242,7 @@ const handleSave = async () => {
                       type="text"
                       value={f.codePennylane}
                       disabled
-                      className="w-20 px-2 py-1 bg-gray-100 rounded border border-gray-200"
+                      className="w-20 px-1 py-1 bg-gray-100 rounded border border-gray-200"
                     />
                   </td>
                   <td>
@@ -183,7 +250,7 @@ const handleSave = async () => {
                       type="number"
                       value={f.TVA}
                       disabled
-                      className="w-16 px-2 py-1 bg-gray-100 rounded border border-gray-200"
+                      className="w-full px-2 py-1 bg-gray-100 rounded border border-gray-200"
                     />
                   </td>
                   <td>
@@ -191,7 +258,7 @@ const handleSave = async () => {
                       type="number"
                       value={f.HT}
                       disabled
-                      className="w-20 px-2 py-1 bg-gray-100 rounded border border-gray-200"
+                      className="w-full px-2 py-1 bg-gray-100 rounded border border-gray-200"
                     />
                   </td>
                   <td>
@@ -199,7 +266,7 @@ const handleSave = async () => {
                       type="number"
                       value={f.PrixTTC}
                       disabled
-                      className="w-20 px-2 py-1 bg-gray-100 rounded border border-gray-200"
+                      className="w-full px-2 py-1 bg-gray-100 rounded border border-gray-200"
                     />
                   </td>
                   <td>
@@ -207,7 +274,7 @@ const handleSave = async () => {
                       type="text"
                       value={f.designation}
                       disabled
-                      className="w-44 px-2 py-1 bg-gray-100 rounded border border-gray-200"
+                      className="w-full px-2 py-1 bg-gray-100 rounded border border-gray-200"
                     />
                   </td>
                   <td>
