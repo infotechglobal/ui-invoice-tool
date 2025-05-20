@@ -17,7 +17,10 @@ import Image from 'next/image';
 import dayjs from 'dayjs';
 import 'dayjs/locale/fr'; // Import French locale
 dayjs.locale('fr')
-
+import FormulaDialog from '../../../../../components/FormulaDialog';
+import { ToastContainer } from 'react-toastify';
+import { set } from 'date-fns';
+import UploadErrorsDialog from '../../../../../components/UploadErrorsDialog';
 const saveFile = async (blob, fileName) => {
   const { showAlert, hideAlert } = useAlertMessage.getState();
   if ('showSaveFilePicker' in window) {
@@ -69,10 +72,12 @@ function Uploads({ isInvoice = true }) {
   const { showAlert, hideAlert } = useAlertMessage();
   const uploadedFiles = useFileStore((state) => state.uploadedFiles);
   const inputFileRef = useRef(null);
+  const [uploadErrors, setUploadErrors] = useState([]);
   const { invoiceData, setInvoiceData } = useInvoiceData();
   const router = useRouter();
   const { showLoader, hideLoader, isLoading } = useLoaderStore();
-
+  const [showFormulaDialog, setShowFormulaDialog] = useState(false);
+  const [showErrorsDialog, setShowErrorsDialog] = useState(false);
   const handleUploadClick = () => {
     if (inputFileRef.current) {
       inputFileRef.current.click();
@@ -88,7 +93,6 @@ function Uploads({ isInvoice = true }) {
       const { data } = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/upload/savefile/`, formData);
       console.log(data);
       addFile(data.allFiles);
-  
       showAlert(data.message, "Success");
       setTimeout(() => {
         hideAlert();
@@ -97,15 +101,24 @@ function Uploads({ isInvoice = true }) {
       console.log("err", error);
       if (error.response) {
         // Check if the error is due to a duplicate file
-        if (error.response.status === 400 ) {
+        if (error.response.status === 400) {
           showAlert("Le fichier a déjà été téléchargé.", "Error");
         } else if (error.response.status === 401) {
           showAlert("Please authorize to Google Drive", "Error");
-        } else {
+        }
+        else if (error.response.status === 422) {
+          console.log("422 error", error.response.data.errors);
+          showAlert("Le fichier a déjà été téléchargé.", "Error");
+          setUploadErrors(error?.response?.data?.errors);
+          setShowErrorsDialog(true);
+        }
+        else {
           showAlert("Erreur de serveur, veuillez réessayer plus tard", "Error");
         }
+
       } else {
         showAlert("Erreur réseau, veuillez réessayer plus tard", "Error");
+
       }
       setTimeout(() => {
         hideAlert();
@@ -115,7 +128,6 @@ function Uploads({ isInvoice = true }) {
       setNewFile(null);
     }
   }, [newFile, addFile, showLoader, hideLoader, showAlert, hideAlert]);
-  
 
   const handleChange = (event) => {
     const selectedFile = event.target.files?.[0];
@@ -183,6 +195,10 @@ function Uploads({ isInvoice = true }) {
         showAlert("Please Authorize to google drive", "Error");
 
       }
+      else if (error?.response?.status == 500) {
+        showAlert(error.response.data?.cause ? error.response.data.cause : "Something went wrong while processing the file", "Error")
+      }
+
       else {
 
         showAlert("Something went wrong while processing the file", "Error");
@@ -294,74 +310,78 @@ function Uploads({ isInvoice = true }) {
             Cliquez sur Aperçu pour afficher les détails de la facture
           </h3>
           <div className="flex gap-5 mr-8">
-          <button onClick={authenticate} className='  rounded-lg border-2 p-2 border-violet-gray-100  w-fit bg-white text-violet-gray-900 font-archivo font-semibold'>Authentifier</button>
-          <button
-            className="rounded-xl px-2 py-1 bg-uploadContainerBg-200 flex justify-center items-center text-white font-semibold  cursor-pointer"
-            onClick={handleUploadClick}
-            disabled={isLoading}
-          >
-            Téléverser un fichier
-            <Upload className="ml-2" size={16} />
-            <input
-              type="file"
-              name=""
-              id="inputFile"
-              className='hidden'
-              ref={inputFileRef}
-              onChange={handleChange}
-              accept=".csv"
-            />
-          </button>
+            <button onClick={authenticate} className='  rounded-lg border-2 p-2 border-violet-gray-100  w-fit bg-white text-violet-gray-900 font-archivo font-semibold'>Authentifier</button>
+            <button
+              className="rounded-xl px-2 py-1 bg-uploadContainerBg-200 flex justify-center items-center text-white font-semibold  cursor-pointer"
+              onClick={handleUploadClick}
+              disabled={isLoading}
+            >
+              Téléverser un fichier
+              <Upload className="ml-2" size={16} />
+              <input
+                type="file"
+                name=""
+                id="inputFile"
+                className='hidden'
+                ref={inputFileRef}
+                onChange={handleChange}
+                accept=".csv"
+              />
+            </button>
           </div>
         </div>
         {/* search bar, date picker, download invoice */}
-      <div className="mt-3 h-14 flex items-center justify-between gap-4">
-  {/* Search Input with Icon */}
-  <div className="relative flex items-center w-1/3 min-w-[200px]">
-    <Search className="absolute left-3" size={18} color="#403A44" strokeWidth={1.75} />
-    <input
-      className="searchField h-8 pl-9 w-full"
-      placeholder="Recherche"
-      disabled={isLoading}
-      value={searchTerm}
-      onChange={(e) => setSearchTerm(e.target.value)}
-    />
-  </div>
+        <div className="mt-3 h-14 flex items-center justify-between gap-4">
+          {/* Search Input with Icon */}
+          <div className="relative flex items-center w-1/3 min-w-[200px]">
+            <Search className="absolute left-3" size={18} color="#403A44" strokeWidth={1.75} />
+            <input
+              className="searchField h-8 pl-9 w-full"
+              placeholder="Recherche"
+              disabled={isLoading}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
 
-  {/* Filters */}
-  <div className="flex items-center gap-4 mr-32">
-    <select
-      className="selectFilter"
-      onChange={(e) => setSelectedYear(e.target.value)}
-      disabled={isLoading}
-    >
-      <option className="font-semibold" value="all">Tous les ans</option>
-      {[...new Set(uploadedFiles?.map(file => dayjs(file.updatedAt).year()))].map(year => (
-        <option key={year} value={year}>{year}</option>
-      ))}
-    </select>
-    <select
-      className="selectFilter"
-      onChange={(e) => setSelectedMonth(e.target.value)}
-      disabled={isLoading}
-    >
-      <option className="font-semibold" value="all">Tous les mois</option>
-      {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
-        <option key={month} value={month}>{dayjs().month(month - 1).format('MMMM')}</option>
-      ))}
-    </select>
-  </div>
+          {/* Filters */}
+          <div className="flex items-center gap-4 mr-32">
+            <select
+              className="selectFilter"
+              onChange={(e) => setSelectedYear(e.target.value)}
+              disabled={isLoading}
+            >
+              <option className="font-semibold" value="all">Tous les ans</option>
+              {[...new Set(uploadedFiles?.map(file => dayjs(file.updatedAt).year()))].map(year => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+            <select
+              className="selectFilter"
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              disabled={isLoading}
+            >
+              <option className="font-semibold" value="all">Tous les mois</option>
+              {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
+                <option key={month} value={month}>{dayjs().month(month - 1).format('MMMM')}</option>
+              ))}
+            </select>
+          </div>
+          <button
+            className='rounded-xl px-2 py-1 bg-uploadContainerBg-200 flex justify-center items-center text-white font-semibold  '
+            onClick={() => setShowFormulaDialog(true)} >Modify</button>
+          <FormulaDialog open={showFormulaDialog} onClose={() => setShowFormulaDialog(false)} />
 
-  {/* Drive Button */}
-  <Button
-    onClick={openInDrive}
-    className="rounded-lg border-2 mr-6 border-violet-gray-100 h-8 bg-white text-violet-gray-900 text-sm hover:bg-slate-50 flex items-center px-3"
-    disabled={isLoading}
-  >
-    <Image src={driveIcon} alt="Drive Icon" className="w-5 h-5 mr-2" />
-    Afficher tous les fichiers dans Drive
-  </Button>
-</div>
+          {/* Drive Button */}
+          <Button
+            onClick={openInDrive}
+            className="rounded-lg border-2 mr-6 border-violet-gray-100 h-8 bg-white text-violet-gray-900 text-sm hover:bg-slate-50 flex items-center px-3"
+            disabled={isLoading}
+          >
+            <Image src={driveIcon} alt="Drive Icon" className="w-5 h-5 mr-2" />
+            Afficher tous les fichiers dans Drive
+          </Button>
+        </div>
 
 
       </div>
@@ -413,6 +433,12 @@ function Uploads({ isInvoice = true }) {
           </div>
         ))}
       </div>
+      <ToastContainer position="top-right" autoClose={2500} />
+      <UploadErrorsDialog
+        errors={uploadErrors}
+        open={showErrorsDialog}
+        onClose={() => setShowErrorsDialog(false)}
+      />
     </div>
 
   )
