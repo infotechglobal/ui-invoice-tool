@@ -40,7 +40,7 @@ export function CustomTable({ invoiceData }) {
 
     return (
         <>
-            <Table>
+            <Table className="cursor-pointer">
                 <TableHeader>
                     <TableRow>
                         {/* {
