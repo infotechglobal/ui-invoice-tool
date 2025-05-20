@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
-import { ToastContainer, toast } from 'react-toastify'
+import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { initialFormulas } from '@/lib/utils'
 import ConfirmDialog from './ConfirmDialog'
-
+import { set } from 'date-fns'
 const emptyFormula = {
   _id: null,
   codePennylane: "",
@@ -17,6 +17,7 @@ const emptyFormula = {
 const FormulaDialog = ({ open = true, onClose }) => {
   const [formulas, setFormulas] = useState([])
   const [editingIndex, setEditingIndex] = useState(null)
+  const [isFeteching, setIsFetching] = useState(false)  
   const [form, setForm] = useState(emptyFormula)
   const [showForm, setShowForm] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -28,33 +29,35 @@ const FormulaDialog = ({ open = true, onClose }) => {
     message: "",
     title: "",
   });
-   const openConfirm = ({ action, idx = null, form = null, title, message }) => {
+  const openConfirm = ({ action, idx = null, form = null, title, message }) => {
     setConfirm({ open: true, action, idx, form, title, message });
   };
 
   // Fetch formulas on mount
-  useEffect(() => {
-    const fetchFormulasAPI = async () => {
-      if (open) {
-        setLoading(true)
-       const infoId= toast.info('Fetching formulas...')
-        try {
-          const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/formula/getAllFormulas`);
-          console.log(response.data)
-          setFormulas(response.data)
-        } catch (error) {
-          // setFormulas([])
-          console.error('Error fetching formulas:', error)
-          toast.dismiss(infoId);
-          toast.error('Failed to fetch formulas')
-        } finally {
-          setLoading(false)
-
-        }
+useEffect(() => {
+  const fetchFormulasAPI = async () => {
+    if (open) {
+      setIsFetching(true)
+      setLoading(true)
+      const infoId = toast.loading('Fetching formulas...')
+      try {
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/formula/getAllFormulas`);
+        setFormulas(response.data)
+        toast.dismiss(infoId)
+       
+      } catch (error) {
+        console.error('Error fetching formulas:', error)
+        toast.dismiss(infoId)
+        toast.error('Failed to fetch formulas')
+      } finally {
+        setLoading(false)
+        setIsFetching(false)
       }
     }
-    fetchFormulasAPI()
-  }, [open])
+  }
+  fetchFormulasAPI()
+}, [open])
+
 
   const handleEdit = (idx) => {
     setEditingIndex(idx)
@@ -78,7 +81,7 @@ const FormulaDialog = ({ open = true, onClose }) => {
   // Actual delete logic
   const doDelete = async (idx) => {
     const formula = formulas[idx];
-     const infoId= toast.info('Deleting...')
+    const infoId = toast.info('Deleting...')
     setLoading(true);
     try {
       const response = await axios.delete(
@@ -106,7 +109,7 @@ const FormulaDialog = ({ open = true, onClose }) => {
   // Actual save logic
   const doSave = async (formToSave, idx) => {
     setLoading(true);
-    const infoId= toast.info('Saving...')
+    const infoId = toast.info('Saving...')
     try {
       let res;
       if (idx !== null) {
@@ -122,7 +125,7 @@ const FormulaDialog = ({ open = true, onClose }) => {
             i === idx ? updatedFormula : f
           );
           setFormulas(updatedFormulas);
-          
+
           toast.success("Formula updated successfully!");
         } else if (res.status === 400) {
           toast.error(res?.data?.message || "Failed to update formula");
@@ -191,11 +194,26 @@ const FormulaDialog = ({ open = true, onClose }) => {
     setShowForm(true)
   }
 
+  // Calculate PrixTTC automatically when HT or TVA changes in the form
+  useEffect(() => {
+    const ht = parseFloat(form.HT);
+    const tva = parseFloat(form.TVA);
+    if (!isNaN(ht) && !isNaN(tva)) {
+      const prixTTC = ht + (tva / 100) * ht;
+      setForm((prev) => ({
+        ...prev,
+        PrixTTC: prixTTC,
+      }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.HT, form.TVA]);
+
   if (!open) return null
+ 
 
   return (
     <div className="fixed top-0 left-0 w-screen h-screen bg-black bg-opacity-30 flex items-center justify-center z-[1000]">
-      <ToastContainer position="top-right" autoClose={2500} />
+    
       <ConfirmDialog
         open={confirm.open}
         title={confirm.title}
@@ -211,7 +229,7 @@ const FormulaDialog = ({ open = true, onClose }) => {
             className="text-xl bg-transparent border-none cursor-pointer"
           >✕</button>
         </div>
-        {loading && <div className="mb-3 text-gray-600">Loading...</div>}
+        
         <div
           className="overflow-y-auto max-h-[350px] border border-gray-200 rounded-md mb-4 bg-gray-50"
         >
@@ -234,9 +252,10 @@ const FormulaDialog = ({ open = true, onClose }) => {
                 <th className="py-2 px-2 text-left">Actions</th>
               </tr>
             </thead>
+            { !isFeteching &&
             <tbody>
               {formulas.map((f, idx) => (
-                <tr key={f.id || idx} className="even:bg-white odd:bg-gray-50">
+                <tr key={f.id || f._id || idx} className="even:bg-white odd:bg-gray-50">
                   <td>
                     <input
                       type="text"
@@ -246,9 +265,19 @@ const FormulaDialog = ({ open = true, onClose }) => {
                     />
                   </td>
                   <td>
+                    <div className="flex items-center">
+                      <input
+                        type="text"
+                        value={`${Number(f.TVA).toFixed(2)}%`}
+                        disabled
+                        className="w-20 px-2 py-1 bg-gray-100 rounded border border-gray-200"
+                      />
+                    </div>
+                  </td>
+                  <td>
                     <input
                       type="number"
-                      value={f.TVA}
+                      value={Number(f.HT).toFixed(2)}
                       disabled
                       className="w-full px-2 py-1 bg-gray-100 rounded border border-gray-200"
                     />
@@ -256,15 +285,7 @@ const FormulaDialog = ({ open = true, onClose }) => {
                   <td>
                     <input
                       type="number"
-                      value={f.HT}
-                      disabled
-                      className="w-full px-2 py-1 bg-gray-100 rounded border border-gray-200"
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      value={f.PrixTTC}
+                      value={Number(f.PrixTTC).toFixed(2)}
                       disabled
                       className="w-full px-2 py-1 bg-gray-100 rounded border border-gray-200"
                     />
@@ -294,11 +315,13 @@ const FormulaDialog = ({ open = true, onClose }) => {
                 </tr>
               ))}
             </tbody>
+            }
           </table>
         </div>
         <button
           onClick={handleAddNew}
-          className="mb-4 bg-blue-700 text-white border-none px-4 py-2 rounded hover:bg-blue-800"
+          disabled={loading || isFeteching }
+          className="mb-4 bg-blue-700 text-white border-none px-4 py-2 rounded-lg hover:bg-blue-800"
         >
           + New Formula
         </button>
@@ -309,12 +332,14 @@ const FormulaDialog = ({ open = true, onClose }) => {
                 name="codePennylane"
                 placeholder="Code"
                 value={form.codePennylane}
+                required
                 onChange={handleChange}
                 className="flex-1 min-w-[80px] px-2 py-1 border border-gray-300 rounded"
               />
               <input
                 name="TVA"
                 placeholder="TVA"
+                required
                 type="number"
                 value={form.TVA}
                 onChange={handleChange}
@@ -324,6 +349,7 @@ const FormulaDialog = ({ open = true, onClose }) => {
                 name="HT"
                 placeholder="HT"
                 type="number"
+                required
                 value={form.HT}
                 onChange={handleChange}
                 className="flex-1 min-w-[80px] px-2 py-1 border border-gray-300 rounded"
@@ -331,14 +357,23 @@ const FormulaDialog = ({ open = true, onClose }) => {
               <input
                 name="PrixTTC"
                 placeholder="Prix TTC"
+                required
                 type="number"
-                value={form.PrixTTC}
-                onChange={handleChange}
-                className="flex-1 min-w-[80px] px-2 py-1 border border-gray-300 rounded"
+                value={
+                  form.HT && form.TVA
+                    ? (
+                      parseFloat(form.HT) +
+                      (parseFloat(form.TVA) / 100) * parseFloat(form.HT)
+                    ).toFixed(2)
+                    : ""
+                }
+                disabled
+                className="flex-1 min-w-[80px] px-2 py-1 border border-gray-300 rounded bg-gray-200 cursor-not-allowed"
               />
               <input
                 name="designation"
                 placeholder="Designation"
+                required
                 value={form.designation}
                 onChange={handleChange}
                 className="flex-2 min-w-[180px] px-2 py-1 border border-gray-300 rounded"
