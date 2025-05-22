@@ -164,11 +164,15 @@ function Header({ isInvoice }) {
     
         if (selectedDate && selectedDate.from && selectedDate.to) {
             const fromDate = new Date(selectedDate.from);
+            fromDate.setHours(0, 0, 0, 0);
+
             const toDate = new Date(selectedDate.to);
+            toDate.setHours(23, 59, 59, 999);
 
             filteredData = filteredData.filter(invoice => {
-                const transactionDate = new Date(invoice.Transactiondate);
-                // Adjust the transaction date to match the time zone of fromDate and toDate
+                // Parse DD/MM/YYYY to Date
+                const [day, month, year] = invoice.Transactiondate.split('/').map(Number);
+                const transactionDate = new Date(year, month - 1, day);
                 transactionDate.setHours(0, 0, 0, 0);
                 return transactionDate >= fromDate && transactionDate <= toDate;
             });
