@@ -147,7 +147,7 @@ function AdminProfile({ params }) {
                                             <h4 className='text-VioletGray-900 font-Archivo text-base font-medium'>
                                                 {item.invoiceNo}
                                             </h4>
-                                                <p className='text-VioletGray-500 font-Archivo text-10px font-normal non-italic'>{formatDateToFrench(item.transactionDate)}</p>
+                                                <p className='text-VioletGray-500 font-Archivo text-10px font-normal non-italic'>{item.transactionDate}</p>
                                                 </section>
                                             <div className="text-right">
                                                 <DropdownMenu>
