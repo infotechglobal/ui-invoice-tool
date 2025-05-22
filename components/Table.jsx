@@ -22,8 +22,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 
 export function CustomTable({ invoiceData }) {
-    console.log("invoiceData", invoiceData)
-    const rowPerPage = 7;
+    const rowPerPage = 6;
     const [pageNo, setPageNo] = useState(1);
     const [startIndex, setStartIndex] = useState(0);
     const [endIndex, setEndIndex] = useState(rowPerPage);
@@ -38,79 +37,85 @@ export function CustomTable({ invoiceData }) {
         }
     }, []);
 
+    const formatCurrency = (amount) => {
+        return new Intl.NumberFormat('fr-FR', {
+            style: 'currency',
+            currency: 'EUR',
+            minimumFractionDigits: 2
+        }).format(amount);
+    };
+
     return (
         <>
-            <Table className="cursor-pointer">
-                <TableHeader>
+            <Table className="w-full text-sm text-gray-700 border border-gray-200 shadow-md rounded-xl overflow-hidden">
+                <TableHeader className="bg-gray-100 text-gray-800 uppercase text-xs tracking-wider">
                     <TableRow>
-                        {/* {
-                        fileData.length>0 && fileData[0].length>0 &&
-                        fileData[0]?.map((item,index)=>{
-                            return (
-                                <TableHead className="T-head" key={index}>{item}</TableHead>
-                            )
-                        })
-                    } */}
-                        <TableHead className="T-head">User Id</TableHead>
-                        <TableHead className="T-head">Nom client</TableHead>
-                        <TableHead className="T-head">Prénom client</TableHead>
-                        <TableHead className="T-head">Code produit</TableHead>
-                        <TableHead className="T-head">Descriptifs pour chaque produit facturé</TableHead>
-                        <TableHead className="T-head">Date de réalisation de la prestation ou de l&apos;encaissement</TableHead>
-                        <TableHead className="T-head">Le montant H.T</TableHead>
-                        <TableHead className="T-head">Le taux de TVA</TableHead>
-                        <TableHead className="T-head">Le montant TTC</TableHead>
+                        <TableHead className="px-4 py-3">IBAN NO</TableHead>
+                        <TableHead className="px-4 py-3">Nom Client</TableHead>
+                        <TableHead className="px-4 py-3">Prénom Client</TableHead>
+                        <TableHead className="px-4 py-3">Code Tarifare</TableHead>
+                        <TableHead className="px-4 py-3">Descriptifs pour chaque produit facturé</TableHead>
+                        <TableHead className="px-4 py-3">Date de réalisation</TableHead>
+                        <TableHead className="px-4 py-3">Montant H.T</TableHead>
+                        <TableHead className="px-4 py-3">Taux de TVA</TableHead>
+                        <TableHead className="px-4 py-3">Montant TTC</TableHead>
                     </TableRow>
                 </TableHeader>
-                <TableBody>
+                <TableBody className="cursor-pointer">
                     {invoiceData?.slice(startIndex, endIndex).map((user, index) => (
-                        <TableRow key={index} onClick={() => window.location.href = `/admin/profile/${user.accountNo}`}>
-                            <TableCell className="T-data">
+                        <TableRow
+                            key={index}
+                            className="hover:bg-gray-50 transition-colors duration-200"
+                            onClick={() => window.location.href = `/admin/profile/${user.accountNo}`}
+                        >
+                            <TableCell className="px-4 py-3 font-medium text-blue-600 underline">
                                 <Link href={`/admin/profile/${user.accountNo}`}>
                                     {user.accountNo}
                                 </Link>
                             </TableCell>
-
-                            <TableCell className="T-data-name">{user.customerName}</TableCell>
-                            <TableCell className="T-data-name">{user.customerName.split(' ')[0]}</TableCell>
-                            <TableCell className="T-data">{user.codePennylane}</TableCell>
-                            <TableCell className="T-data">{user.designation}</TableCell>
-                            <TableCell className="T-data">{user.Transactiondate}</TableCell>
-                            <TableCell className="T-data">
-                                {Number.isInteger(user.HT) ? user.HT : user.HT.toFixed(2)}
+                            <TableCell className="px-4 py-3">{user.customerName}</TableCell>
+                            <TableCell className="px-4 py-3">{user.customerName.split(' ')[0]}</TableCell>
+                            <TableCell className="px-4 py-3">{user.codePennylane}</TableCell>
+                            <TableCell className="px-4 py-3">{user.designation}</TableCell>
+                            <TableCell className="px-4 py-3">{user.Transactiondate}</TableCell>
+                            <TableCell className="px-4 py-3">
+                                { formatCurrency(user.HT)}
                             </TableCell>
-                            <TableCell className="T-data">{user.TVA}</TableCell>
-                            <TableCell className="T-data">
-                                {Number.isInteger(user.TTC) ? user.TTC : user.TTC.toFixed(2)}
+                            <TableCell className="px-4 py-3"> {`${user.TVA}%`}</TableCell>   
+                            <TableCell className="px-4 py-3">
+                                { formatCurrency(user.TTC)}
                             </TableCell>
                         </TableRow>
                     ))}
                 </TableBody>
             </Table>
 
-            <Pagination>
-                <PaginationContent>
+            <Pagination className="mt-4">
+                <PaginationContent className="gap-2">
                     <PaginationItem>
                         <PaginationPrevious
-                            className={startIndex == 0 ? "pointer-events-none opacity-50" : undefined}
+                            className={`rounded-md px-3 py-1.5 text-sm border border-gray-300 ${startIndex == 0 ? "pointer-events-none opacity-50" : "hover:bg-gray-100"}`}
                             onClick={() => {
                                 if (startIndex > 0) {
                                     setPageNo(pageNo - 1);
                                 }
-                                console.log("prev clicked", startIndex, endIndex);
                                 setStartIndex(startIndex - rowPerPage);
                                 setEndIndex(endIndex - rowPerPage);
                             }}
                         />
                     </PaginationItem>
                     <PaginationItem>
-                        <PaginationLink href="#">{pageNo}</PaginationLink>
+                        <PaginationLink
+                            href="#"
+                            className="px-3 py-1.5 rounded-md border border-gray-300 bg-white text-sm"
+                        >
+                            {pageNo}
+                        </PaginationLink>
                     </PaginationItem>
                     <PaginationItem>
                         <PaginationNext
-                            className={endIndex >= invoiceData?.length ? "pointer-events-none opacity-50" : undefined}
+                            className={`rounded-md px-3 py-1.5 text-sm border border-gray-300 ${endIndex >= invoiceData?.length ? "pointer-events-none opacity-50" : "hover:bg-gray-100"}`}
                             onClick={() => {
-                                console.log("next clicked", startIndex, endIndex);
                                 if (endIndex < invoiceData?.length) {
                                     setPageNo(pageNo + 1);
                                 }
@@ -121,6 +126,7 @@ export function CustomTable({ invoiceData }) {
                     </PaginationItem>
                 </PaginationContent>
             </Pagination>
+
         </>
     );
 }
