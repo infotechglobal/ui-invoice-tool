@@ -369,7 +369,7 @@ function Uploads({ isInvoice = true }) {
           </div>
           <button
             className='rounded-xl px-2 py-1 bg-uploadContainerBg-200 flex justify-center items-center text-white font-semibold  '
-            onClick={() => setShowFormulaDialog(true)} >Modify</button>
+            onClick={() => setShowFormulaDialog(true)} >Modifier</button>
           <FormulaDialog open={showFormulaDialog} onClose={() => setShowFormulaDialog(false)} />
 
           {/* Drive Button */}
