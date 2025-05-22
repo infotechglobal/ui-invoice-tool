@@ -64,36 +64,101 @@ function Sidebar() {
 
   return (
     <div className='mr-10 flex flex-col w-full h-full justify-between'>
-      <div>
-        <header>
-          <Link href={'/admin/uploads'}>
+      <div className='flex-1'>
+        <header className='px-6 py-4 border-b border-gray-100'>
+          <Link href={'/admin/uploads'} className='block'>
             <Image
               src={BrandLogo}
               alt='Picture of the Login page'
               quality={100}
-              className='mt-8 mb-10 ml-6'
+              className='w-auto h-10 hover:opacity-80 transition-opacity duration-200'
             />
           </Link>
         </header>
 
-        <section className='pl-2'>
-          <h2 className='text-violet-gray-900 font-Archivo font-bold text-sm leading-4 w-max'>
-            fichiers facturés
-          </h2>
-          <div className='flex flex-col space-y-1 files ml-3 mt-3 w-max h-[400px] overflow-y-scroll no-scrollbar'>
+        <section className='px-4 py-6'>
+          <div className='mb-6'>
+            <h2 className='text-gray-800 font-Archivo font-bold text-base leading-5 mb-2 flex items-center'>
+              <File size={20} className='mr-2' style={{ color: 'rgb(69, 104, 220)' }} />
+              Fichiers Facturés
+            </h2>
+            <p className='text-gray-500 text-xs font-medium'>
+              Cliquez sur un fichier pour l'ouvrir
+            </p>
+          </div>
+          <div className='flex flex-col space-y-3 files h-[370px] overflow-y-auto overflow-x-hidden pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400'>
             {uploadedFiles?.map(
               (item, index) =>
                 item.isProcessed && (
                   <button
                     key={index}
                     onClick={() => handlePreview(item.driveId, item.fileName)}
-                    className='flex space-x-2 cursor-default'
+                    className='group flex items-start space-x-4 p-4 rounded-xl bg-white border border-gray-200 transition-all duration-300 cursor-pointer shadow-sm text-left w-full hover:shadow-lg hover:transform hover:-translate-y-0.5'
+                    style={{ 
+                      '--hover-bg': 'rgba(69, 104, 220, 0.05)',
+                      '--hover-border': 'rgba(69, 104, 220, 0.3)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'rgba(69, 104, 220, 0.05)';
+                      e.currentTarget.style.borderColor = 'rgba(69, 104, 220, 0.3)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'white';
+                      e.currentTarget.style.borderColor = 'rgb(229, 231, 235)';
+                    }}
                   >
-                    <div className='icon'>
-                      <File className='mt-1' size={16} color='#6f6a73' strokeWidth={2.25} />
+                    <div className='flex-shrink-0 mt-1'>
+                      <div 
+                        className='w-10 h-10 rounded-lg flex items-center justify-center transition-colors duration-300'
+                        style={{ backgroundColor: 'rgba(69, 104, 220, 0.1)' }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = 'rgba(69, 104, 220, 0.2)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'rgba(69, 104, 220, 0.1)';
+                        }}
+                      >
+                        <File 
+                          size={20} 
+                          style={{ color: 'rgb(69, 104, 220)' }}
+                          strokeWidth={2} 
+                        />
+                      </div>
                     </div>
-                    <div className='text-VioletGray-600 font-Archivo text-sm  font-semibold leading-6 w-max'>
-                      {item.fileName}
+                    <div className='flex-1 min-w-0'>
+                      <div 
+                        className='font-Archivo text-sm font-semibold leading-5 break-words mb-1 transition-colors duration-300'
+                        style={{ color: 'rgb(55, 65, 81)' }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.color = 'rgb(69, 104, 220)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.color = 'rgb(55, 65, 81)';
+                        }}
+                      >
+                        {item.fileName.length > 25 ? 
+                          `${item.fileName.substring(0, 25)}...` : 
+                          item.fileName
+                        }
+                      </div>
+                      <div 
+                        className='text-xs transition-colors duration-300'
+                        style={{ color: 'rgb(107, 114, 128)' }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.color = 'rgb(69, 104, 220)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.color = 'rgb(107, 114, 128)';
+                        }}
+                      >
+                        Facture • {new Date(item.updatedAt).toLocaleDateString('fr-FR')}
+                      </div>
+                      <div 
+                        className='text-xs mt-2 opacity-0 group-hover:opacity-100 transition-all duration-300 font-medium'
+                        style={{ color: 'rgb(69, 104, 220)' }}
+                      >
+                        → Cliquer pour ouvrir
+                      </div>
                     </div>
                   </button>
                 )
@@ -102,31 +167,36 @@ function Sidebar() {
         </section>
       </div>
 
-      <footer className='mb-3 self-center'>
+      <footer className='mb-3 self-center w-full px-2'>
         {isLoaderLoading && (
-          <div className='bg-blue-200 rounded-3xl border-2 border-gray-200 '>
+          <div className='bg-blue-200 rounded-3xl border-2 border-gray-200 mb-4'>
             <Loader />
           </div>
         )}
 
         {isLoading && (
-          <Alert variant={status}>
-            {status === 'Success' ? <CircleCheck size={20} /> : <TriangleAlert size={20} />}
-            <div className='flex justify-between'>
-              <AlertTitle>{status}</AlertTitle>
-              <CircleX size={20} onClick={hideAlert} />
-            </div>
-            <AlertDescription>{message}</AlertDescription>
-          </Alert>
+          <div className='mb-4'>
+            <Alert variant={status}>
+              {status === 'Success' ? <CircleCheck size={20} /> : <TriangleAlert size={20} />}
+              <div className='flex justify-between'>
+                <AlertTitle>{status}</AlertTitle>
+                <CircleX size={20} onClick={hideAlert} className='cursor-pointer hover:opacity-70' />
+              </div>
+              <AlertDescription>{message}</AlertDescription>
+            </Alert>
+          </div>
         )}
 
-        <div className='mb-1 flex justify-center mt-2 '>
-          <button onClick={handleLogout} className=' max-w-xs w-60 rounded-xl px-2 py-1 bg-uploadContainerBg-200 flex items-center justify-center text-white font-semibold'>
-            <LogOut color="#ffffff" className='mr-3' />
+        <div className='flex justify-center'>
+          <button 
+            onClick={handleLogout} 
+            className='w-full max-w-xs rounded-xl px-4 py-3 bg-uploadContainerBg-200 hover:bg-opacity-90 flex items-center justify-center text-white font-semibold transition-all duration-200 hover:shadow-lg transform hover:scale-105'
+          >
+            <LogOut color="#ffffff" className='mr-3' size={18} />
             Se déconnecter
           </button>
         </div>
-      <ToastContainer  />
+        <ToastContainer />
       </footer>
     </div>
   );

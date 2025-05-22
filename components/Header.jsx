@@ -104,14 +104,14 @@ const fallbackDownload = (blob, fileName) => {
     window.URL.revokeObjectURL(url);
 };
 
-function Header({ isInvoice}) {
+function Header({ isInvoice }) {
     const { fileName } = useFileNameStore();
     const { updatedAt, setupdatedAt } = useUpdatedInvoiceTime();
     const { invoiceData } = useInvoiceData();
     const { setFilteredInvoiceData } = useFilteredInvoiceDataStore();
     const router = useRouter();
     const isLoading = useLoaderStore((state) => state.isLoading);
-    const {date, setDate} = useDateStore();
+    const { date, setDate } = useDateStore();
 
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -147,11 +147,10 @@ function Header({ isInvoice}) {
         if (!invoiceData) return;
         
         let filteredData = invoiceData;
-        
         if (searchTerm) {
             const searchTermLower = searchTerm.toLowerCase();
             const searchTermNumber = Number(searchTerm);
-            filteredData = filteredData.filter(invoice => 
+            filteredData = filteredData.filter(invoice =>
                 invoice.customerName.toLowerCase().includes(searchTermLower) ||
                 invoice.accountNo === searchTermNumber ||
                 invoice.codePennylane.toLowerCase().includes(searchTermLower) ||
@@ -166,7 +165,7 @@ function Header({ isInvoice}) {
         if (selectedDate && selectedDate.from && selectedDate.to) {
             const fromDate = new Date(selectedDate.from);
             const toDate = new Date(selectedDate.to);
-            
+
             filteredData = filteredData.filter(invoice => {
                 const transactionDate = new Date(invoice.Transactiondate);
                 // Adjust the transaction date to match the time zone of fromDate and toDate
@@ -180,9 +179,9 @@ function Header({ isInvoice}) {
     return (
         <div className="header flex flex-col">
             <div className='flex justify-between'>
-                <div className='flex items-end min-w-[600px] justify-between'>
-                    <h3 className="text-violet-gray-900 font-archivo text-[35px] font-bold leading-[32px] normal-font-style">
-                        {fileName}
+                <div className='w-[50vw] flex items-center justify-between'>
+                    <h3 className="text-violet-gray-900 font-archivo text-[30px] font-bold leading-[32px] normal-font-style">
+                        {fileName?.length > 25 ? `${fileName.substring(0, 25)}...` : fileName}
                     </h3>
                     <h3 className='font-archivo ml-3 mt-1 text-lg font-semibold'>
                         Résumé de la facture
@@ -201,24 +200,38 @@ function Header({ isInvoice}) {
             <div className='mt-1'>
                 <h3 className='text-violet-gray-800 font-archivo text-custom-18 font-normal leading-custom-24'>Sélectionnez Client pour afficher les détails</h3>
             </div>
-            <div className='mt-3 flex justify-between relative'>
-                <Search className='absolute top-1 left-3' size={18} color="#403A44" strokeWidth={1.75} />
-                <input 
-                    className='searchField' 
-                    placeholder='Recherche'
-                    value={searchTerm}
-                    onChange={handleSearch}
-                />
-                {isInvoice ? (
+            <div className="mt-3 flex gap-3 items-center">
+                {/* Search bar with icon inside */}
+                <div className="flex items-center border border-gray-300 rounded-md px-3 h-9 bg-white">
+                    <Search size={16} color="#403A44" strokeWidth={1.75} className="mr-2" />
+                    <input
+                        className="outline-none text-sm text-gray-700 placeholder:text-gray-400 bg-transparent h-7"
+                        placeholder="Recherche"
+                        value={searchTerm}
+                        onChange={handleSearch}
+                    />
+                </div>
+
+                {isInvoice && (
                     <>
-                        <div className='flex relative right-40'>
-                            <DatePicker className={"h-4"} filter={filterbyDate} />
+                        {/* Date Picker */}
+                        <div className="flex items-center h-9">
+                            <DatePicker className="h-7" filter={filterbyDate} />
                         </div>
-                        <Button className="bg-downloadButton-200 h-7" onClick={handleDownload} disabled={isLoading}>
-                            <Download className='mr-2 mt-0' size={16} color="#f6faff" />Télécharger des données
-                        </Button>
+
+                        {/* Download Button pushed to right */}
+                        <div className="ml-auto">
+                            <Button
+                                className="bg-downloadButton-200 h-7"
+                                onClick={handleDownload}
+                                disabled={isLoading}
+                            >
+                                <Download className="mr-2" size={16} color="#f6faff" />
+                                Télécharger des données
+                            </Button>
+                        </div>
                     </>
-                ) : null}
+                )}
             </div>
         </div>
     );
