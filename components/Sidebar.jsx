@@ -83,7 +83,7 @@ function Sidebar() {
               Fichiers Facturés
             </h2>
             <p className='text-gray-500 text-xs font-medium'>
-              Cliquez sur un fichier pour l'ouvrir
+              Cliquez sur un fichier pour l&apos;ouvrir
             </p>
           </div>
           <div className='flex flex-col space-y-3 files h-[370px] overflow-y-auto overflow-x-hidden pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400'>

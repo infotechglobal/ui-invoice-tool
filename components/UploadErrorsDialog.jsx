@@ -41,7 +41,7 @@ const UploadErrorsDialog = ({ errors = [], open, onClose }) => {
         
         <div className="bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 rounded-lg p-4 mb-4">
           <p className="text-sm text-gray-700 dark:text-gray-300">
-           Le fichier n'a pas pu être téléchargé. Veuillez vérifier le format et réessayer.
+           Le fichier n&pos;a pas pu être téléchargé. Veuillez vérifier le format et réessayer.
           </p>
         </div>
         
