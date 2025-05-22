@@ -223,7 +223,7 @@ useEffect(() => {
       />
       <div className="bg-white rounded-lg min-w-[350px] max-w-[900px] w-[90%] p-6 shadow-lg relative">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="m-0 text-xl font-semibold">Formula</h2>
+          <h2 className="m-0 text-xl font-semibold">Formule</h2>
           <button
             onClick={onClose}
             className="text-xl bg-transparent border-none cursor-pointer"
@@ -244,7 +244,7 @@ useEffect(() => {
             </colgroup>
             <thead>
               <tr className="bg-gray-100 sticky top-0">
-                <th className="py-2 px-2 text-left">Code</th>
+                <th className="py-2 px-2 text-left">Code Tarifare</th>
                 <th className="py-2 px-2 text-left">TVA</th>
                 <th className="py-2 px-2 text-left">HT</th>
                 <th className="py-2 px-2 text-left">Prix TTC</th>
@@ -298,18 +298,18 @@ useEffect(() => {
                       className="w-full px-2 py-1 bg-gray-100 rounded border border-gray-200"
                     />
                   </td>
-                  <td>
+                  <td className='flex gap-2'>
                     <button
                       onClick={() => handleEdit(idx)}
                       className="mr-2 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
                     >
-                      Edit
+                      Modifier
                     </button>
                     <button
                       onClick={() => handleDelete(idx)}
-                      className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                      className="px-3 py-1  bg-red-600 text-white rounded hover:bg-red-700"
                     >
-                      Delete
+                      Supprimer
                     </button>
                   </td>
                 </tr>
@@ -323,7 +323,7 @@ useEffect(() => {
           disabled={loading || isFeteching }
           className="mb-4 bg-blue-700 text-white border-none px-4 py-2 rounded-lg hover:bg-blue-800"
         >
-          + New Formula
+          + Nouvelle formule
         </button>
         {showForm && (
           <div className="bg-gray-100 p-4 rounded mb-4 shadow">
@@ -384,13 +384,13 @@ useEffect(() => {
                 onClick={handleSave}
                 className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800"
               >
-                {editingIndex !== null ? 'Update' : 'Add'}
+                {editingIndex !== null ? 'Mise à jour' : 'Ajouter'}
               </button>
               <button
                 onClick={() => { setShowForm(false); setEditingIndex(null); }}
                 className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
               >
-                Cancel
+                Annuler
               </button>
             </div>
           </div>
