@@ -38,11 +38,7 @@ export function CustomTable({ invoiceData }) {
     }, []);
 
     const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('fr-FR', {
-            style: 'currency',
-            currency: 'EUR',
-            minimumFractionDigits: 2
-        }).format(amount);
+      return `${amount} €`;
     };
 
     return (

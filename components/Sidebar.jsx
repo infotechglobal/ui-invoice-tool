@@ -136,7 +136,7 @@ function Sidebar() {
                           e.currentTarget.style.color = 'rgb(55, 65, 81)';
                         }}
                       >
-                        {item.fileName.length > 25 ? 
+                        {item?.fileName?.length > 25 ? 
                           `${item.fileName.substring(0, 25)}...` : 
                           item.fileName
                         }
