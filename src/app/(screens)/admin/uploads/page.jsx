@@ -17,7 +17,7 @@ import Image from 'next/image';
 import dayjs from 'dayjs';
 import 'dayjs/locale/fr'; // Import French locale
 dayjs.locale('fr')
-import FormulaDialog from '../../../../../components/FormulaDialog';
+import TarrifDialog from '../../../../../components/TarrifDialog';
 import { ToastContainer } from 'react-toastify';
 import { set } from 'date-fns';
 import UploadErrorsDialog from '../../../../../components/UploadErrorsDialog';
@@ -76,7 +76,7 @@ function Uploads({ isInvoice = true }) {
   const { invoiceData, setInvoiceData } = useInvoiceData();
   const router = useRouter();
   const { showLoader, hideLoader, isLoading } = useLoaderStore();
-  const [showFormulaDialog, setShowFormulaDialog] = useState(false);
+  const [showTarrifDialog, setShowTarrifDialog] = useState(false);
   const [showErrorsDialog, setShowErrorsDialog] = useState(false);
   const handleUploadClick = () => {
     if (inputFileRef.current) {
@@ -369,8 +369,8 @@ function Uploads({ isInvoice = true }) {
           </div>
           <button
             className='rounded-xl px-2 py-1 bg-uploadContainerBg-200 flex justify-center items-center text-white font-semibold  '
-            onClick={() => setShowFormulaDialog(true)} >Modifier</button>
-          <FormulaDialog open={showFormulaDialog} onClose={() => setShowFormulaDialog(false)} />
+            onClick={() => setShowTarrifDialog(true)} >Modifier</button>
+          <TarrifDialog open={showTarrifDialog} onClose={() => setShowTarrifDialog(false)} />
 
           {/* Drive Button */}
           <Button
