@@ -10,7 +10,7 @@ const emptyTarrif = {
   tarrifCode: "",
   TVA: "",
   designation: "",
-  x: "",
+  x: "100",
   description: "",
 }
 
@@ -208,7 +208,7 @@ const TarrifDialog = ({ open = true, onClose }) => {
       return;
     }
 
-    setForm(emptyTarrif)
+    setForm({ ...emptyTarrif, x: "100" }) // Ensure x is set to 100 by default
     setEditingIndex(null)
     setShowForm(true)
   }
@@ -248,7 +248,7 @@ const TarrifDialog = ({ open = true, onClose }) => {
                 <th className="py-2 px-2 text-left">Code Tarrifaire</th>
                 <th className="py-2 px-2 text-left">Designation</th>
                 <th className="py-2 px-2 text-left">TVA</th>
-                <th className="py-2 px-2 text-left">X % of Montant</th>
+                <th className="py-2 px-2 text-left">X % of montant</th>
                 <th className="py-2 px-2 text-left">Description</th>
                 <th className="py-2 px-2 text-left">Actions</th>
               </tr>
@@ -283,7 +283,7 @@ const TarrifDialog = ({ open = true, onClose }) => {
                     <td>
                       <input
                         type="text"
-                        value={Number(t.x).toFixed(2)}
+                        value={`${Number(t.x).toFixed(2)}%`}
                         disabled
                         className="w-full px-2 py-1  rounded"
                       />
