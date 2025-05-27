@@ -171,16 +171,22 @@ const TarrifDialog = ({ open = true, onClose }) => {
 
   const handleSave = async () => {
     // Validation for x
+
+     if(!form.tarrifCode || !form.designation  || !form.TVA || !form.x ) {
+      setError("Veuillez remplir tous les champs obligatoires.");
+      return;
+    }
     const xValue = parseFloat(form.x);
     if (isNaN(xValue) || xValue < 1 || xValue > 100) {
       setError("La valeur de X doit être comprise entre 1 et 100.");
       return;
     }
     const tvaValue = parseFloat(form.TVA);
-    if (isNaN(tvaValue) || tvaValue < 0 || tvaValue > 100) {
+    if (isNaN(tvaValue) || tvaValue < 1 || tvaValue > 100) {
       setError("La valeur de TVA doit être comprise entre 0 et 100.");
       return;
     }
+   
 
     setError("");
     openConfirm({
@@ -198,6 +204,7 @@ const TarrifDialog = ({ open = true, onClose }) => {
   const handleChange = (e) => {
     const { name, value } = e.target
     setForm({ ...form, [name]: value })
+    setError(""); // Clear error on change
   }
 
   const handleAddNew = () => {
