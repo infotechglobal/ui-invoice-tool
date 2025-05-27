@@ -248,7 +248,7 @@ const TarrifDialog = ({ open = true, onClose }) => {
                 <th className="py-2 px-2 text-left">Code Tarrifaire</th>
                 <th className="py-2 px-2 text-left">Designation</th>
                 <th className="py-2 px-2 text-left">TVA</th>
-                <th className="py-2 px-2 text-left">X % of montant</th>
+                <th className="py-2 px-2 text-left">X % of Montant</th>
                 <th className="py-2 px-2 text-left">Description</th>
                 <th className="py-2 px-2 text-left">Actions</th>
               </tr>
@@ -325,13 +325,14 @@ const TarrifDialog = ({ open = true, onClose }) => {
         {showForm && (
           <div className="bg-gray-100 p-4 rounded mb-4 shadow">
             <div className="flex flex-wrap gap-3 mb-3">
+              
               <input
                 name="tarrifCode"
                 placeholder="Code"
                 value={form.tarrifCode}
                 required
                 onChange={handleChange}
-                className="flex-1 min-w-[80px] px-2 py-1 border border-gray-300 rounded"
+                className="w-20 px-2 py-1 border border-gray-300 rounded"
               />
               <input
                 name="designation"
@@ -339,35 +340,41 @@ const TarrifDialog = ({ open = true, onClose }) => {
                 required
                 value={form.designation}
                 onChange={handleChange}
-                className="flex-2 min-w-[180px] px-2 py-1 border border-gray-300 rounded"
+                className="flex-2 min-w-[280px] px-2 py-1 border border-gray-300 rounded"
               />
-              <input
-                name="TVA"
-                placeholder="TVA"
-                required
-                type="number"
-                value={form.TVA}
-                onChange={handleChange}
-                className="flex-1 min-w-[60px] px-2 py-1 border border-gray-300 rounded"
-              />
-              <input
-                name="x"
-                placeholder="X (1-100)"
-                type="number"
-                step="0.01"
-                min="1"
-                max="100"
-                value={form.x}
-                onChange={handleChange}
-                className="flex-1 min-w-[60px] px-2 py-1 border border-gray-300 rounded"
-              />
+              <div className="flex items-center">
+                <input
+                  name="TVA"
+                  placeholder="TVA"
+                  required
+                  type="number"
+                  value={form.TVA}
+                  onChange={handleChange}
+                  className="w-20 px-2 py-1 border border-gray-300 rounded"
+                />
+                <span className="ml-1 text-gray-500">%</span>
+              </div>
+              <div className="flex items-center">
+                <input
+                  name="x"
+                  placeholder="X (1-100)"
+                  type="number"
+                  step="0.01"
+                  min="1"
+                  max="100"
+                  value={form.x}
+                  onChange={handleChange}
+                  className="w-20 px-2 py-1 border border-gray-300 rounded"
+                />
+                <span className="ml-1 text-gray-500">%</span>
+              </div>
               <input
                 name="description"
                 placeholder="Description"
                 type="text"
                 value={form.description}
                 onChange={handleChange}
-                className="flex-2 min-w-[180px] px-2 py-1 border border-gray-300 rounded"
+                className="flex-1 min-w-96 px-2 py-1 border border-gray-300 rounded"
               />
             </div>
             {error && (
