@@ -71,7 +71,7 @@ export function CustomTable({ invoiceData }) {
                             </TableCell>
                             <TableCell className="px-4 py-3">{user.customerName}</TableCell>
                             <TableCell className="px-4 py-3">{user.customerName.split(' ')[0]}</TableCell>
-                            <TableCell className="px-4 py-3">{user.codePennylane}</TableCell>
+                            <TableCell className="px-4 py-3">{user.tarrifCode}</TableCell>
                             <TableCell className="px-4 py-3">{user.designation}</TableCell>
                             <TableCell className="px-4 py-3">{user.Transactiondate}</TableCell>
                             <TableCell className="px-4 py-3">
