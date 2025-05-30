@@ -256,7 +256,7 @@ const TarrifDialog = ({ open = true, onClose }) => {
                 <th className="py-2 px-2 text-left">Designation</th>
                 <th className="py-2 px-2 text-left">TVA</th>
                 <th className="py-2 px-2 text-left">X % of Montant</th>
-                <th className="py-2 px-2 text-left">Description</th>
+                <th className="py-2 px-2 text-left">TTC et autres détails</th>
                 <th className="py-2 px-2 text-left">Actions</th>
               </tr>
             </thead>

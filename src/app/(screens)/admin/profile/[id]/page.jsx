@@ -122,7 +122,7 @@ function AdminProfile({ params }) {
                                         {userData.customerName || 'XXXXXXX'}
                                     </h3>
                                     <h4 className='customerIBM'>
-                                        {`IBN - ${userData.ibanNo}` || 'IBN - 0000000000'}
+                                        {`IBAN - ${userData.ibanNo}` || 'IBN - 0000000000'}
                                     </h4>
                                 </div>
                                 <div className='h-max mr-4'>
