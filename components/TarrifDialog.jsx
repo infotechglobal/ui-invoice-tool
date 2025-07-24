@@ -7,7 +7,6 @@ import ConfirmDialog from './ConfirmDialog'
 import { set } from 'date-fns'
 const emptyTarrif = {
   _id: null,
-  tarrifCode: "",
   TVA: "",
   designation: "",
   x: "100",
@@ -170,9 +169,8 @@ const TarrifDialog = ({ open = true, onClose }) => {
   };
 
   const handleSave = async () => {
-    // Validation for x
-
-     if(!form.tarrifCode || !form.designation  || !form.TVA || !form.x ) {
+    // Validation - removed tarrifCode validation
+    if(!form.designation || !form.TVA || !form.x) {
       setError("Veuillez remplir tous les champs obligatoires.");
       return;
     }
@@ -332,15 +330,7 @@ const TarrifDialog = ({ open = true, onClose }) => {
         {showForm && (
           <div className="bg-gray-100 p-4 rounded mb-4 shadow">
             <div className="flex flex-wrap gap-3 mb-3">
-              
-              <input
-                name="tarrifCode"
-                placeholder="Code"
-                value={form.tarrifCode}
-                required
-                onChange={handleChange}
-                className="w-20 px-2 py-1 border border-gray-300 rounded"
-              />
+              {/* Removed tarrifCode input */}
               <input
                 name="designation"
                 placeholder="Designation"
