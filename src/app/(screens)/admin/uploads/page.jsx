@@ -325,7 +325,7 @@ function Uploads({ isInvoice = true }) {
                 className='hidden'
                 ref={inputFileRef}
                 onChange={handleChange}
-                accept=".csv"
+                accept=".csv, .xlsx"
               />
             </button>
           </div>
