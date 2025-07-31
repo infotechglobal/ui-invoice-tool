@@ -180,7 +180,7 @@ const TarrifDialog = ({ open = true, onClose }) => {
       return;
     }
     const tvaValue = parseFloat(form.TVA);
-    if (isNaN(tvaValue) || tvaValue < 1 || tvaValue > 100) {
+    if (isNaN(tvaValue) || tvaValue < 0 || tvaValue > 100) {
       setError("La valeur de TVA doit être comprise entre 0 et 100.");
       return;
     }
