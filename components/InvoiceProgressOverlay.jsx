@@ -3,10 +3,11 @@ import React from 'react';
 import { HashLoader } from 'react-spinners';
 
 const InvoiceProgressOverlay = ({ 
-isVisible,
+  isVisible,
   progress, 
   onClose 
 }) => {
+  // let isVisible = true; // Assuming this is always visible for debugging
 // Assuming this is always visible for debugging
   const [elapsedSeconds, setElapsedSeconds] = React.useState(0);
 
@@ -21,16 +22,7 @@ isVisible,
     return () => clearInterval(interval);
   }, [isVisible, progress?.percentage]);
 
-  // Auto close when completed
-  React.useEffect(() => {
-    if (progress?.percentage === 100) {
-      const timer = setTimeout(() => {
-        onClose();
-      }, 1500); // Close after 1.5 seconds of completion
-      return () => clearTimeout(timer);
-    }
-  }, [progress?.percentage, onClose]);
-  
+  // No auto-close - will be handled by parent component during navigation
   if (!isVisible) return null;
  const percentage = progress?.percentage ?? 0;
   const processedItems = progress?.processedItems ?? 0;
@@ -169,16 +161,7 @@ isVisible,
         )}
 
         {/* Loading Animation */}
-        {progress?.percentage !== 100 && (
-          <div className="flex justify-center mb-4">
-            <HashLoader
-              color="#3b82f6"
-              loading={true}
-              size={30}
-              aria-label="Loading Spinner"
-            />
-          </div>
-        )}
+      
 
         {/* Cancel Button (show only during processing) */}
        
