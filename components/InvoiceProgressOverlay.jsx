@@ -3,18 +3,39 @@ import React from 'react';
 import { HashLoader } from 'react-spinners';
 
 const InvoiceProgressOverlay = ({ 
-  isVisible, 
+isVisible,
   progress, 
   onClose 
 }) => {
-  console.log('🎯 InvoiceProgressOverlay render - isVisible:', isVisible);
-  console.log('🎯 InvoiceProgressOverlay render - progress object:', progress);
-  console.log('🎯 Progress percentage value:', progress?.percentage, 'type:', typeof progress?.percentage);
-  console.log('🎯 Progress percentage !== undefined:', progress?.percentage !== undefined);
-  console.log('🎯 Math.round result:', progress?.percentage !== undefined ? Math.round(progress.percentage) : 'undefined');
+// Assuming this is always visible for debugging
+  const [elapsedSeconds, setElapsedSeconds] = React.useState(0);
+
+  // Auto increment elapsed time
+  React.useEffect(() => {
+    let interval;
+    if (isVisible && progress?.percentage !== 100) {
+      interval = setInterval(() => {
+        setElapsedSeconds(prev => prev + 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isVisible, progress?.percentage]);
+
+  // Auto close when completed
+  React.useEffect(() => {
+    if (progress?.percentage === 100) {
+      const timer = setTimeout(() => {
+        onClose();
+      }, 1500); // Close after 1.5 seconds of completion
+      return () => clearTimeout(timer);
+    }
+  }, [progress?.percentage, onClose]);
   
   if (!isVisible) return null;
-
+ const percentage = progress?.percentage ?? 0;
+  const processedItems = progress?.processedItems ?? 0;
+  const totalItems = progress?.totalItems ?? 0;
+  const elapsedTime = progress?.elapsedTime ?? 0;
   const formatTime = (seconds) => {
     if (seconds < 60) {
       return `${seconds}s`;
@@ -78,7 +99,7 @@ const InvoiceProgressOverlay = ({
             {/* Percentage text */}
             <div className="absolute inset-0 flex items-center justify-center">
               <span className="text-xl font-bold text-gray-800">
-                {progress.percentage}%
+                 {`${Number(percentage)}%`}
               </span>
             </div>
           </div>
@@ -105,21 +126,31 @@ const InvoiceProgressOverlay = ({
           <div className="p-3 bg-gray-50 rounded-lg">
             <div className="text-sm text-gray-600">Traités</div>
             <div className="font-bold text-gray-800">
-              {progress?.processedItems || 0} / {progress?.totalItems || 0}
+              {`${Number(processedItems)} / ${Number(totalItems)}`}
             </div>
           </div>
-          <div className="p-3 bg-gray-50 rounded-lg">
-            <div className="text-sm text-gray-600">Temps restant</div>
+                    <div className="p-3 bg-gray-50 rounded-lg">
+            <div className="text-sm text-gray-600">Temps écoulé</div>
             <div className="font-bold text-gray-800">
-              {progress?.estimatedTimeRemaining ? formatTime(progress.estimatedTimeRemaining) : '--'}
+              {formatTime(elapsedSeconds)}
             </div>
           </div>
         </div>
 
-        {/* Time Info */}
-        <div className="text-center text-sm text-gray-600 mb-6">
-          Temps écoulé: {progress?.elapsedTime ? formatTime(progress.elapsedTime) : '0s'}
+        {/* Loading Animation */}
+        {progress?.percentage !== 100 && (
+          <div className="flex justify-center mb-4">
+            <HashLoader
+              color="#3b82f6"
+              loading={true}
+              size={30}
+              aria-label="Loading Spinner"
+            />
+          </div>
+        )}
         </div>
+
+      
 
         {/* Errors */}
         {progress?.errors && progress.errors.length > 0 && (
@@ -149,27 +180,11 @@ const InvoiceProgressOverlay = ({
           </div>
         )}
 
-        {/* Close Button (only show when completed) */}
-        {progress?.percentage === 100 && (
-          <button
-            onClick={onClose}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Fermer
-          </button>
-        )}
-
-        {/* Cancel Button (show during processing) */}
-        {progress?.percentage !== 100 && (
-          <button
-            onClick={onClose}
-            className="w-full bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors"
-          >
-            Masquer (le traitement continue)
-          </button>
-        )}
+        {/* Cancel Button (show only during processing) */}
+       
       </div>
-    </div>
+ 
+
   );
 };
 
