@@ -94,6 +94,13 @@ function Uploads({ isInvoice = true }) {
     errors: []
   });
 
+  // Hydration fix
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
   // Socket event listeners for progress tracking
   useEffect(() => {
     if (!socket) {
@@ -456,6 +463,10 @@ function Uploads({ isInvoice = true }) {
   };
 
   const filteredFiles = filterFiles();
+
+  if (!hasMounted) {
+    return null; // or a loading spinner
+  }
 
   return (
     <div className='pt-2 pr-2 pl-3 flex flex-col '>
