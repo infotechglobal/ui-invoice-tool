@@ -178,7 +178,7 @@ function Uploads({ isInvoice = true }) {
         showAlert('Factures générées avec succès !', 'Success');
       } else {
         const errorCount = data.errors?.length || 0;
-        showAlert(`Traitement terminé avec ${errorCount} erreurs`, 'Warning');
+        // showAlert(`Traitement terminé avec ${errorCount} erreurs`, 'Warning');
       }
       setTimeout(() => {
         hideAlert();

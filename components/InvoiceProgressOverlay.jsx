@@ -42,6 +42,8 @@ const InvoiceProgressOverlay = ({
       case 'calculating': return 'Calcul des tarifs...';
       case 'generating-csv': return 'Génération du fichier CSV...';
       case 'generating-pdf': return 'Génération de la facture PDF...';
+      case 'generating-summary': return 'Génération du fichier récapitulatif...';
+      case 'summary-complete': return 'Fichier récapitulatif généré';
       case 'completed': return 'Terminé';
       case 'finalizing': return 'Finalisation...';
       default: return 'Traitement en cours...';
