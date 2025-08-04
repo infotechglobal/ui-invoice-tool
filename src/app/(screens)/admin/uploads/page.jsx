@@ -113,12 +113,12 @@ function Uploads({ isInvoice = true }) {
 
     const handleProgressUpdate = (data) => {
       console.log('🔄 Progress update received:', data);
-      console.log('Updating progress state with:', {
-        percentage: data.percentage,
-        processedItems: data.processedItems,
-        totalItems: data.totalItems,
-        currentItem: data.currentItem
-      });
+      // console.log('Updating progress state with:', {
+      //   percentage: data.percentage,
+      //   processedItems: data.processedItems,
+      //   totalItems: data.totalItems,
+      //   currentItem: data.currentItem
+      // });
       setProgress(prev => {
         console.log('Previous progress state:', prev);
         const newProgress = {
@@ -131,7 +131,7 @@ function Uploads({ isInvoice = true }) {
           elapsedTime: data.elapsedTime || 0,
           errors: data.errors || []
         };
-        console.log('New progress state being set:', newProgress);
+        // console.log('New progress state being set:', newProgress);
         return newProgress;
       });
       
