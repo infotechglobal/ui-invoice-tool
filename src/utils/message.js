@@ -2,7 +2,7 @@ import React from 'react';
 
 export const infoMessages = [
     {
-      text: "Veuillez ne pas fermer ou actualiser la page pendant le traitement.",
+      text: "⚠️ Veuillez ne pas fermer ou actualiser la page pendant le traitement.",
       theme: "warning",
       bgColor: "from-orange-50 to-amber-50",
       borderColor: "border-orange-400",
@@ -15,7 +15,7 @@ export const infoMessages = [
       )
     },
     {
-      text: "La page sera automatiquement redirigée vers la page des factures une fois le traitement terminé.",
+      text: "🚀 Redirection automatique après traitement.",
       theme: "info",
       bgColor: "from-blue-50 to-indigo-50",
       borderColor: "border-blue-400",
@@ -28,7 +28,7 @@ export const infoMessages = [
       )
     },
     {
-      text: "Le traitement est en cours, veuillez patienter ! ⚡",
+      text: "Le traitement est en cours, veuillez patienter ⚡",
       theme: "success",
       bgColor: "from-green-50 to-emerald-50",
       borderColor: "border-green-400",
@@ -54,7 +54,7 @@ export const infoMessages = [
       )
     },
     {
-      text: "Optimiser les calculs pour une efficacité maximale... 💨",
+      text: "💨 Optimiser les calculs pour une efficacité maximale.",
       theme: "info",
       bgColor: "from-cyan-50 to-sky-50",
       borderColor: "border-cyan-400",
@@ -67,7 +67,7 @@ export const infoMessages = [
       )
     },
     {
-      text: "Des algorithmes intelligents fonctionnant en coulisses ! 🧠",
+      text: "🧠 Des algorithmes intelligents fonctionnant en coulisses!",
       theme: "purple",
       bgColor: "from-purple-50 to-violet-50",
       borderColor: "border-purple-400",

@@ -5,7 +5,7 @@ import { HashLoader } from 'react-spinners';
 import { infoMessages } from '@/utils/message';
 
 const InvoiceProgressOverlay = ({
-isVisible,
+  isVisible,
   progress,
   onClose
 }) => {
@@ -93,7 +93,7 @@ isVisible,
             <div className={`text-sm ${infoMessages[messageIndex].textColor} font-semibold flex-1 transition-all duration-500 ease-in-out overflow-hidden ${
               fade ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'
             }`}>
-              <div className="line-clamp-2">
+              <div className={`line-clamp-2`}>
                 {infoMessages[messageIndex].text}
               </div>
             </div>
@@ -209,9 +209,9 @@ isVisible,
             <div className="font-bold text-gray-800 text-lg">
               {`${Number(processedItems)} / ${Number(totalItems)}`}
             </div>
-            <div className="text-xs text-green-600 font-medium">
+            {/* <div className="text-xs text-green-600 font-medium">
               {processedItems > 0 && `${Math.round((processedItems/totalItems) * 100)}% complete`}
-            </div>
+            </div> */}
           </div>
           <div className="p-3 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border border-gray-200 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-400 to-pink-400 animate-pulse"></div>
@@ -221,11 +221,11 @@ isVisible,
             <div className="font-bold text-gray-800 text-lg">
               {formatTime(elapsedSeconds)}
             </div>
-            <div className="text-xs text-blue-600 font-medium">
+            {/* <div className="text-xs text-blue-600 font-medium">
               {elapsedSeconds > 0 && processedItems > 0 && 
                 `${Math.round(processedItems/elapsedSeconds * 60)} items/min`
               }
-            </div>
+            </div> */}
           </div>
         </div>
 
@@ -238,23 +238,15 @@ isVisible,
             </div>
             
             {/* Speed bars animation */}
-            <div className="flex space-x-1">
-              {[...Array(5)].map((_, i) => (
-                <div
-                  key={i}
-                  className={`w-1 bg-gradient-to-t from-blue-400 to-green-400 rounded-full animate-pulse`}
-                  style={{
-                    height: `${Math.random() * 12 + 8}px`,
-                    animationDelay: `${i * 0.1}s`,
-                    animationDuration: '0.8s'
-                  }}
-                ></div>
-              ))}
-            </div>
+           
           </div>
         )}
-      </div>
+        <div className='flex justify-center'>
 
+         <HashLoader color='blue' size={25} />
+        </div>
+      </div>
+          
       {/* Errors */}
       {progress?.errors && progress.errors.length > 0 && (
         <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg">
