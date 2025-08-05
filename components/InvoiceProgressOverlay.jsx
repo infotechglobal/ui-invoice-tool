@@ -2,13 +2,14 @@
 import React from 'react';
 import { HashLoader } from 'react-spinners';
 
-const InvoiceProgressOverlay = ({ 
-  isVisible,
-  progress, 
-  onClose 
+const InvoiceProgressOverlay = ({
+ 
+  progress,
+  onClose
 }) => {
+  let isVisible = true; // Assuming this is always visible for debugging
   // let isVisible = true; // Assuming this is always visible for debugging
-// Assuming this is always visible for debugging
+  // Assuming this is always visible for debugging
   const [elapsedSeconds, setElapsedSeconds] = React.useState(0);
 
   // Auto increment elapsed time
@@ -24,7 +25,7 @@ const InvoiceProgressOverlay = ({
 
   // No auto-close - will be handled by parent component during navigation
   if (!isVisible) return null;
- const percentage = progress?.percentage ?? 0;
+  const percentage = progress?.percentage ?? 0;
   const processedItems = progress?.processedItems ?? 0;
   const totalItems = progress?.totalItems ?? 0;
   const elapsedTime = progress?.elapsedTime ?? 0;
@@ -50,6 +51,32 @@ const InvoiceProgressOverlay = ({
     }
   };
 
+  //infroamtion Messages
+
+  const infoMessages = [
+    "Veuillez patienter pendant le traitement...",
+    "Ne fermez pas cette fenêtre.",
+    "Redirection automatique vers la page des factures une fois le traitement terminé.",
+    "Merci de rester sur cette page.",
+    "Traitement en cours, tenez bon..."
+  ];
+
+  const [messageIndex, setMessageIndex] = React.useState(0);
+  const [fade, setFade] = React.useState(true);
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setFade(false);
+      setTimeout(() => {
+        setMessageIndex((prev) => (prev + 1) % infoMessages.length);
+        setFade(true);
+      }, 300); // allow fade out before changing message
+    }, 6000); // every 4 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full mx-4">
@@ -62,6 +89,14 @@ const InvoiceProgressOverlay = ({
             Traitement en cours, veuillez patienter...
           </p>
         </div>
+           <div className="text-sm text-gray-600 mb-1 h-5">
+              <div
+                className={`transition-opacity duration-500 ease-in-out ${fade ? 'opacity-100' : 'opacity-0'
+                  }`}
+              >
+                {infoMessages[messageIndex]}
+              </div>
+            </div>
 
         {/* Progress Circle */}
         <div className="flex justify-center mb-6">
@@ -93,7 +128,7 @@ const InvoiceProgressOverlay = ({
             {/* Percentage text */}
             <div className="absolute inset-0 flex items-center justify-center">
               <span className="text-xl font-bold text-gray-800">
-                 {`${Number(percentage)}%`}
+                {`${Number(percentage)}%`}
               </span>
             </div>
           </div>
@@ -102,7 +137,8 @@ const InvoiceProgressOverlay = ({
         {/* Current Item Info */}
         {progress?.currentItem && (
           <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-            <div className="text-sm text-gray-600 mb-1">Compte en cours:</div>
+         
+
             <div className="font-semibold text-gray-800">
               {progress.currentItem.accountNo}
             </div>
@@ -123,7 +159,7 @@ const InvoiceProgressOverlay = ({
               {`${Number(processedItems)} / ${Number(totalItems)}`}
             </div>
           </div>
-                    <div className="p-3 bg-gray-50 rounded-lg">
+          <div className="p-3 bg-gray-50 rounded-lg">
             <div className="text-sm text-gray-600">Temps écoulé</div>
             <div className="font-bold text-gray-800">
               {formatTime(elapsedSeconds)}
@@ -142,33 +178,33 @@ const InvoiceProgressOverlay = ({
             />
           </div>
         )}
-        </div>
-
-      
-
-        {/* Errors */}
-        {progress?.errors && progress.errors.length > 0 && (
-          <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <div className="text-sm font-semibold text-red-800 mb-2">
-              Erreurs ({progress.errors.length}):
-            </div>
-            <div className="max-h-20 overflow-y-auto">
-              {progress.errors.slice(-3).map((error, index) => (
-                <div key={index} className="text-xs text-red-600 mb-1">
-                  {error.accountNo}: {error.error}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Loading Animation */}
-      
-
-        {/* Cancel Button (show only during processing) */}
-       
       </div>
- 
+
+
+
+      {/* Errors */}
+      {progress?.errors && progress.errors.length > 0 && (
+        <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <div className="text-sm font-semibold text-red-800 mb-2">
+            Erreurs ({progress.errors.length}):
+          </div>
+          <div className="max-h-20 overflow-y-auto">
+            {progress.errors.slice(-3).map((error, index) => (
+              <div key={index} className="text-xs text-red-600 mb-1">
+                {error.accountNo}: {error.error}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Loading Animation */}
+
+
+      {/* Cancel Button (show only during processing) */}
+
+    </div>
+
 
   );
 };
