@@ -215,7 +215,7 @@ function Uploads({ isInvoice = true }) {
       socket.off('invoiceProcessingComplete', handleComplete);
       socket.off('invoiceProcessingError', handleError);
     };
-  }, [socket, showAlert, hideAlert]);
+  }, [socket, showAlert, hideAlert,progress]);
 
   const handleUploadClick = () => {
     if (inputFileRef.current) {
