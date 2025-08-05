@@ -21,6 +21,8 @@ import TarrifDialog from '../../../../../components/TarrifDialog';
 import { ToastContainer } from 'react-toastify';
 import { set } from 'date-fns';
 import UploadErrorsDialog from '../../../../../components/UploadErrorsDialog';
+import { useSocket } from '../../../../context/SocketContext';
+import InvoiceProgressOverlay from '../../../../../components/InvoiceProgressOverlay';
 const saveFile = async (blob, fileName) => {
   const { showAlert, hideAlert } = useAlertMessage.getState();
   if ('showSaveFilePicker' in window) {
@@ -78,6 +80,143 @@ function Uploads({ isInvoice = true }) {
   const { showLoader, hideLoader, isLoading } = useLoaderStore();
   const [showTarrifDialog, setShowTarrifDialog] = useState(false);
   const [showErrorsDialog, setShowErrorsDialog] = useState(false);
+  
+  // Socket and progress overlay state
+  const { socket, isConnected } = useSocket();
+  const [progress, setProgress] = useState({
+    isVisible: false,
+    percentage: 0,
+    currentItem: { accountNo: '', name: '', status: 'starting' },
+    totalItems: 0,
+    processedItems: 0,
+    estimatedTimeRemaining: 0,
+    elapsedTime: 0,
+    errors: []
+  });
+
+  // Hydration fix
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  // Socket event listeners for progress tracking
+  useEffect(() => {
+    if (!socket) {
+      console.log('Socket not available');
+      return;
+    }
+
+    console.log('Setting up socket listeners. Socket ID:', socket.id);
+    console.log('Socket connected:', socket.connected);
+
+    const handleProgressUpdate = (data) => {
+      console.log('🔄 Progress update received:', data);
+      // console.log('Updating progress state with:', {
+      //   percentage: data.percentage,
+      //   processedItems: data.processedItems,
+      //   totalItems: data.totalItems,
+      //   currentItem: data.currentItem
+      // });
+      setProgress(prev => {
+        console.log('Previous progress state:', prev);
+        const newProgress = {
+          ...prev,
+          percentage: Number(data.percentage) || 0,
+          currentItem: data.currentItem || { accountNo: '', name: '', status: 'processing' },
+          totalItems: Number(data.totalItems) || 0,
+          processedItems: Number(data.processedItems) || 0,
+          estimatedTimeRemaining: data.estimatedTimeRemaining || 0,
+          elapsedTime: data.elapsedTime || 0,
+          errors: data.errors || []
+        };
+        // console.log('New progress state being set:', newProgress);
+        return newProgress;
+      });
+      
+      // Force a console log after state update to verify
+      setTimeout(() => {
+        console.log('Progress state after update (async check):', progress);
+      }, 100);
+    };
+
+    const handleProcessingStart = (data) => {
+      console.log('🚀 Processing started:', data);
+      setProgress({
+        isVisible: true,
+        percentage: 0,
+        currentItem: { accountNo: '', name: '', status: 'starting' },
+        totalItems: Number(data.totalItems) || 0,
+        processedItems: 0,
+        estimatedTimeRemaining: 0,
+        elapsedTime: 0,
+        errors: []
+      });
+    };
+
+    const handleError = (error) => {
+      console.log('❌ Processing error:', error);
+      setProgress(prev => ({
+        ...prev,
+        status: 'error',
+        errors: [...(prev.errors || []), error.message || 'Unknown error']
+      }));
+    };
+
+    const handleComplete = (data) => {
+      console.log('✅ Processing complete:', data);
+      setProgress(prev => ({
+        ...prev,
+        percentage: 100,
+        status: 'complete'
+      }));
+      setTimeout(() => {
+        setProgress(prev => ({ ...prev, isVisible: false }));
+      }, 2000);
+      if (data.success) {
+        showAlert('Factures générées avec succès !', 'Success');
+      } else {
+        const errorCount = data.errors?.length || 0;
+        // showAlert(`Traitement terminé avec ${errorCount} erreurs`, 'Warning');
+      }
+      setTimeout(() => {
+        hideAlert();
+      }, 3000);
+    };
+
+    console.log('📡 Setting up socket event listeners...');
+    socket.on('invoiceProgress', handleProgressUpdate);
+    socket.on('invoiceProcessingStart', handleProcessingStart);
+    socket.on('invoiceError', handleError);
+    socket.on('invoiceComplete', handleComplete);
+    socket.on('invoiceProcessingComplete', handleComplete);
+    socket.on('invoiceProcessingError', handleError);
+
+    // Test socket connection with a simple event
+    socket.on('connect', () => {
+      console.log('✅ Socket connected with ID:', socket.id);
+    });
+    
+    socket.on('disconnect', () => {
+      console.log('❌ Socket disconnected');
+    });
+
+    // Test if socket is working
+    console.log('🧪 Testing socket connection...');
+    socket.emit('test', 'Hello from frontend');
+    
+    return () => {
+      console.log('🧹 Cleaning up socket listeners...');
+      socket.off('invoiceProgress', handleProgressUpdate);
+      socket.off('invoiceProcessingStart', handleProcessingStart);
+      socket.off('invoiceError', handleError);
+      socket.off('invoiceComplete', handleComplete);
+      socket.off('invoiceProcessingComplete', handleComplete);
+      socket.off('invoiceProcessingError', handleError);
+    };
+  }, [socket, showAlert, hideAlert,progress]);
+
   const handleUploadClick = () => {
     if (inputFileRef.current) {
       inputFileRef.current.click();
@@ -171,8 +310,33 @@ function Uploads({ isInvoice = true }) {
   const handlePreview = async (driveId, fileName) => {
     hideAlert();
     showLoader('Traitement du fichier. Cela prendra quelques minutes...')
+    
+    console.log('🚀 Starting file processing...');
+    console.log('📡 Socket ID being sent to backend:', socket?.id);
+    console.log('🔌 Socket connected status:', socket?.connected);
+    
+    // Show progress overlay
+    setProgress({
+      isVisible: true,
+      percentage: 0,
+      currentItem: { accountNo: '', name: '', status: 'starting' },
+      totalItems: 0,
+      processedItems: 0,
+      estimatedTimeRemaining: 0,
+      elapsedTime: 0,
+      errors: []
+    });
+    
     try {
-      const { data } = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/invoices/process/${driveId}`, { fileName });
+      console.log('🚀 About to send invoice processing request');
+      console.log('Socket object:', socket);
+      console.log('Socket ID being sent:', socket?.id);
+      console.log('Socket connected:', socket?.connected);
+      
+      const { data } = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/invoices/process/${driveId}`, { 
+        fileName,
+        socketId: socket?.id 
+      });
       console.log("processed data", data)
       const summary = data.summary; // Extracting the summary array
 
@@ -182,6 +346,10 @@ function Uploads({ isInvoice = true }) {
           hideAlert();
         }, 6200);
         setInvoiceData(summary); // Setting the invoice data to the summary array
+        
+        // Hide progress overlay before navigation
+        setProgress(prev => ({ ...prev, isVisible: false }));
+        
         router.push(`/admin/invoice/${driveId}`);
       } else {
         showAlert(data.message, 'Error');
@@ -208,6 +376,8 @@ function Uploads({ isInvoice = true }) {
       }, 5000);
     } finally {
       hideLoader();
+      // Hide progress overlay in case of any error
+      setProgress(prev => ({ ...prev, isVisible: false }));
     }
   };
 
@@ -293,6 +463,10 @@ function Uploads({ isInvoice = true }) {
   };
 
   const filteredFiles = filterFiles();
+
+  if (!hasMounted) {
+    return null; // or a loading spinner
+  }
 
   return (
     <div className='pt-2 pr-2 pl-3 flex flex-col '>
@@ -438,6 +612,10 @@ function Uploads({ isInvoice = true }) {
         errors={uploadErrors}
         open={showErrorsDialog}
         onClose={() => setShowErrorsDialog(false)}
+      />
+      <InvoiceProgressOverlay 
+        isVisible={progress.isVisible}
+        progress={progress}
       />
     </div>
 

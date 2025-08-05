@@ -23,7 +23,7 @@ function ChangePasswordPage() {
     confirmPassword: false
   });
   const [formData, setFormData] = useState({
-    email: 'fabien@gmail.com',
+    email: '', 
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
@@ -183,7 +183,7 @@ function ChangePasswordPage() {
                 onChange={handleChange}
             className='loginForm '
                 placeholder="Email"
-                disabled
+                
               />
             </div>
             <div className="mb-5 relative">
