@@ -231,7 +231,7 @@ const TarrifDialog = ({ open = true, onClose }) => {
       />
       <div className="bg-white rounded-lg min-w-[350px] max-w-[1100px] w-[95%] p-6 shadow-lg relative">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="m-0 text-xl font-semibold">Tarrifs</h2>
+          <h2 className="m-0 text-xl font-semibold">Gérer Tarifs</h2>
           <button
             onClick={onClose}
             className="text-xl bg-transparent border-none cursor-pointer"
