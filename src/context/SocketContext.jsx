@@ -46,6 +46,40 @@ export const SocketProvider = ({ children }) => {
     };
   }, []);
 
+  useEffect(() => {
+    const newSocket = io(process.env.NEXT_PUBLIC_BACKEND_URL, {
+      // Increase client-side timeout settings
+      timeout: 600000, // 10 minutes
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      forceNew: true
+    });
+
+    newSocket.on('connect', () => {
+      console.log('Connected to server:', newSocket.id);
+      setIsConnected(true);
+    });
+
+    newSocket.on('disconnect', () => {
+      console.log('Disconnected from server');
+      setIsConnected(false);
+    });
+
+    newSocket.on('connect_error', (error) => {
+      console.error('Connection error:', error);
+      setIsConnected(false);
+    });
+
+    setSocket(newSocket);
+
+    // Cleanup on unmount
+    return () => {
+      newSocket.disconnect();
+    };
+  }, []);
+
   const value = {
     socket,
     isConnected
