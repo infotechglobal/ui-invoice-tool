@@ -13,17 +13,12 @@ import useLoaderStore from '../../../../../../store/loaderStore';
 import { useFileStore } from '../../../../../../store/uploadedFilesStore';
 import useFilteredInvoiceDataStore from '../../../../../../store/FilteredInvoiceStore';
 import { useAlertMessage } from '../../../../../../store/alertStore';
-import { useSocket } from '../../../../../context/SocketContext';
-import InvoiceProgressOverlay from '../../../../../../components/InvoiceProgressOverlay';
 
 
 
 function Dashboard() {
     const { invoiceData, setInvoiceData } = useInvoiceData();
     const { showAlert, hideAlert } = useAlertMessage();
-    const { socket, isConnected } = useSocket();
-    const [progressData, setProgressData] = useState(null);
-    const [showProgress, setShowProgress] = useState(false);
 
     const { filteredInvoiceData, setFilteredInvoiceData } = useFilteredInvoiceDataStore();
     const {isLoading, showLoader, hideLoader } = useLoaderStore();
@@ -36,55 +31,6 @@ function Dashboard() {
     const { updatedAt, setUpdatedAt } = useUpdatedInvoiceTime();
     const addFile = useFileStore((state) => state.addNewFiles);
 
-    // Socket event listeners
-    useEffect(() => {
-        if (!socket) return;
-
-        const handleProgressUpdate = (data) => {
-            console.log('Progress update:', data);
-            setProgressData(data);
-        };
-
-        const handleProcessingStart = (data) => {
-            console.log('Processing started:', data);
-            setShowProgress(true);
-            setProgressData({
-                percentage: 0,
-                processedItems: 0,
-                totalItems: 0,
-                currentItem: null,
-                estimatedTimeRemaining: null,
-                elapsedTime: 0,
-                errors: []
-            });
-        };
-
-        const handleError = (error) => {
-            console.log('Processing error:', error);
-        };
-
-        const handleComplete = (data) => {
-            console.log('Processing complete:', data);
-            setProgressData(data);
-            if (data.success) {
-                showAlert('Factures générées avec succès !', 'Success');
-            } else {
-                showAlert(`Traitement terminé avec ${data.errors.length} erreurs`, 'Warning');
-            }
-        };
-
-        socket.on('invoiceProgress', handleProgressUpdate);
-        socket.on('invoiceProcessingStart', handleProcessingStart);
-        socket.on('invoiceError', handleError);
-        socket.on('invoiceComplete', handleComplete);
-
-        return () => {
-            socket.off('invoiceProgress', handleProgressUpdate);
-            socket.off('invoiceProcessingStart', handleProcessingStart);
-            socket.off('invoiceError', handleError);
-            socket.off('invoiceComplete', handleComplete);
-        };
-    }, [socket, showAlert]);
 
     const openInDrive = () => {
         if (parentFolderId !== null) {
@@ -95,9 +41,7 @@ function Dashboard() {
     useEffect(() => {
         const fetchInvoiceInfo = async () => {
                 // hideLoader();
-                
                 // showLoader('chargement de la facture...');
-           
             try {
                 const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/getInvoiceInfo`, {
                     driveId: driveId
@@ -135,59 +79,61 @@ function Dashboard() {
 
     useEffect(() => {
         const processFile = async () => {
-            if (!socket || !isConnected) {
-                console.warn('Socket not connected, using fallback processing...');
-                showLoader('Processing file...');
-            }
+            // showLoader('Processing file...');
 
             try {
-                const requestData = {
-                    fileName: fileName
-                };
+                const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/invoices/process/${driveId}`, {
+                    fileName: fileName,
+                    reqPath:"invoices"
+                });
 
-                // Add socketId if connected
-                if (socket?.id) {
-                    requestData.socketId = socket.id;
-                }
-
-                const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/invoices/process/${driveId}`, requestData);
-                
                 if (response.data.statusCode === 200) {
                     setInvoiceData(response.data.summary);
                     setFilteredInvoiceData(response.data.summary);
                     console.log('File processed successfully');
-                    
-                    // If not using socket, show success message
-                    if (!socket?.id) {
-                        showAlert('Fichier traité avec succès', 'Success');
-                    }
-                } else {
+                } 
+                else if (response.data.statusCode === 400 && response.data.message === 'File has not been processed') {
+                    showAlert("File has not been processed. Redirecting to upload page...", "Error");
+                    // Redirect to upload page
+                    setTimeout(() => {
+                        window.location.href = '/admin/uploads'; // Adjust the path as needed
+                    }, 2000);
+                }
+                
+                else {
                     showAlert('Error processing file', 'Error');
                     console.error('Error processing file:', response.data.message);
                 }
             } catch (error) {
                 console.error('Error processing file:', error);
-                setShowProgress(false); // Hide progress on error
-                
+
                 if (error?.response?.status == 401) {
                     showAlert("Please Authorize to google drive", "Error");
-                } else {
+                }
+                else if (error?.response?.status == 400 && error?.response?.data?.message === 'File has not been processed') {
+                    showAlert("File has not been processed. Redirecting to upload page...", "Error");
+                    // Redirect to upload page
+                    setTimeout(() => {
+                        window.location.href = '/admin/upload'; // Adjust the path as needed
+                    }, 2000);
+                }
+                else {
                     showAlert("Something went wrong while processing the file", "Error");
                 }
                 setTimeout(() => {
                     hideAlert();
                 }, 5000);
             } finally {
-                if (!socket?.id) {
-                    hideLoader();
-                }
+                hideLoader();
+
+
             }
         };
 
         if (fileName) {
             processFile();
         }
-    }, [driveId, fileName, setInvoiceData, showLoader, hideLoader, setFilteredInvoiceData, showAlert, hideAlert, socket, isConnected]);
+    }, [driveId, fileName, setInvoiceData, showLoader, hideLoader, setFilteredInvoiceData, showAlert, hideAlert]);
 
 
     useEffect(() => {
@@ -205,13 +151,13 @@ function Dashboard() {
         // Get the current page location from localStorage
         const currentLocation = localStorage.getItem('pageLocation');
         const newLocation = `/admin/invoice/${driveId}`;
-    
+
         // Check if the current location is different from the new location
         if (currentLocation !== newLocation) {
             localStorage.setItem('pageLocation', newLocation);
         }
     }, [driveId]);
-    
+
     return (
         <div className='pt-2 pr-2 pl-3 flex flex-col'>
             {/* Header */}
@@ -233,12 +179,6 @@ function Dashboard() {
                 </section>
             </div>
 
-            {/* Progress Overlay */}
-            <InvoiceProgressOverlay
-                isVisible={showProgress}
-                progress={progressData}
-                onClose={() => setShowProgress(false)}
-            />
         </div>
     );
 }
