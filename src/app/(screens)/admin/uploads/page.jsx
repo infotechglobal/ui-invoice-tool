@@ -241,13 +241,13 @@ function Uploads({ isInvoice = true }) {
       if (error.response) {
         // Check if the error is due to a duplicate file
         if (error.response.status === 400) {
-          showAlert("Le fichier a déjà été téléchargé.", "Error");
+          showAlert(error.response.data.message || "Le fichier a déjà été téléchargé.", "Error");
         } else if (error.response.status === 401) {
           showAlert("Please authorize to Google Drive", "Error");
         }
         else if (error.response.status === 422) {
           console.log("422 error", error.response.data.errors);
-          showAlert("Le fichier a déjà été téléchargé.", "Error");
+          showAlert(error.response.data.message ||  "Le fichier a déjà été téléchargé.", "Error");
           setUploadErrors(error?.response?.data?.errors);
           setShowErrorsDialog(true);
         }
