@@ -369,15 +369,15 @@ function Uploads({ isInvoice = true }) {
 
       else {
 
-        showAlert("Something went wrong while processing the file", "Error");
+        showAlert("Something went wrong whilee processing the file", "Error");
       }
       setTimeout(() => {
         hideAlert();
       }, 5000);
     } finally {
-      hideLoader();
-      // Hide progress overlay in case of any error
-      setProgress(prev => ({ ...prev, isVisible: false }));
+      // hideLoader();
+      // // Hide progress overlay in case of any error
+      // setProgress(prev => ({ ...prev, isVisible: false }));
     }
   };
 
