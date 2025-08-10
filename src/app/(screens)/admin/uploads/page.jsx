@@ -18,11 +18,12 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/fr'; // Import French locale
 dayjs.locale('fr')
 import TarrifDialog from '../../../../../components/TarrifDialog';
-import { ToastContainer } from 'react-toastify';
 import { set } from 'date-fns';
 import UploadErrorsDialog from '../../../../../components/UploadErrorsDialog';
 import { useSocket } from '../../../../context/SocketContext';
 import InvoiceProgressOverlay from '../../../../../components/InvoiceProgressOverlay';
+import CustomNotification from '../../../../../components/CustomNotification'; // Import custom notification
+
 const saveFile = async (blob, fileName) => {
   const { showAlert, hideAlert } = useAlertMessage.getState();
   if ('showSaveFilePicker' in window) {
@@ -81,6 +82,13 @@ function Uploads({ isInvoice = true }) {
   const [showTarrifDialog, setShowTarrifDialog] = useState(false);
   const [showErrorsDialog, setShowErrorsDialog] = useState(false);
   
+  // Custom notification state
+  const [notification, setNotification] = useState({
+    isVisible: false,
+    message: '',
+    type: 'info'
+  });
+  
   // Socket and progress overlay state
   const { socket, isConnected } = useSocket();
   const [progress, setProgress] = useState({
@@ -101,6 +109,23 @@ function Uploads({ isInvoice = true }) {
     setHasMounted(true);
   }, []);
 
+  // Function to show custom notification
+  const showNotification = (message, type = 'info') => {
+    setNotification({
+      isVisible: true,
+      message,
+      type
+    });
+  };
+
+  // Function to hide custom notification
+  const hideNotification = () => {
+    setNotification(prev => ({
+      ...prev,
+      isVisible: false
+    }));
+  };
+
   // Socket event listeners for progress tracking
   useEffect(() => {
     if (!socket) {
@@ -113,12 +138,6 @@ function Uploads({ isInvoice = true }) {
 
     const handleProgressUpdate = (data) => {
       console.log('🔄 Progress update received:', data);
-      // console.log('Updating progress state with:', {
-      //   percentage: data.percentage,
-      //   processedItems: data.processedItems,
-      //   totalItems: data.totalItems,
-      //   currentItem: data.currentItem
-      // });
       setProgress(prev => {
         console.log('Previous progress state:', prev);
         const newProgress = {
@@ -131,11 +150,9 @@ function Uploads({ isInvoice = true }) {
           elapsedTime: data.elapsedTime || 0,
           errors: data.errors || []
         };
-        // console.log('New progress state being set:', newProgress);
         return newProgress;
       });
       
-      // Force a console log after state update to verify
       setTimeout(() => {
         console.log('Progress state after update (async check):', progress);
       }, 100);
@@ -178,7 +195,6 @@ function Uploads({ isInvoice = true }) {
         showAlert('Factures générées avec succès !', 'Success');
       } else {
         const errorCount = data.errors?.length || 0;
-        // showAlert(`Traitement terminé avec ${errorCount} erreurs`, 'Warning');
       }
       setTimeout(() => {
         hideAlert();
@@ -193,7 +209,6 @@ function Uploads({ isInvoice = true }) {
     socket.on('invoiceProcessingComplete', handleComplete);
     socket.on('invoiceProcessingError', handleError);
 
-    // Test socket connection with a simple event
     socket.on('connect', () => {
       console.log('✅ Socket connected with ID:', socket.id);
     });
@@ -202,7 +217,6 @@ function Uploads({ isInvoice = true }) {
       console.log('❌ Socket disconnected');
     });
 
-    // Test if socket is working
     console.log('🧪 Testing socket connection...');
     socket.emit('test', 'Hello from frontend');
     
@@ -215,7 +229,7 @@ function Uploads({ isInvoice = true }) {
       socket.off('invoiceProcessingComplete', handleComplete);
       socket.off('invoiceProcessingError', handleError);
     };
-  }, [socket, showAlert, hideAlert,progress]);
+  }, [socket, showAlert, hideAlert, progress]);
 
   const handleUploadClick = () => {
     if (inputFileRef.current) {
@@ -223,6 +237,7 @@ function Uploads({ isInvoice = true }) {
       inputFileRef.current.value = null;
     }
   };
+
   const processFile = useCallback(async () => {
     try {
       const formData = new FormData();
@@ -232,14 +247,29 @@ function Uploads({ isInvoice = true }) {
       const { data } = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/upload/savefile/`, formData);
       console.log(data);
       addFile(data.allFiles);
+      
+      // Show regular success alert
       showAlert(data.message, "Success");
       setTimeout(() => {
         hideAlert();
       }, 3000);
+      
+      // Check if there's cleaning information and show custom notification
+      if (data.cleaningInfo && data.cleaningInfo.removedRowsCount > 0) {
+        const { removedRowNumbers, removedRowsCount, originalRowCount } = data.cleaningInfo;
+        const rowNumbersText = removedRowNumbers.length <= 5 
+          ? removedRowNumbers.join(', ')
+          : `${removedRowNumbers.slice(0, 5).join(', ')} et ${removedRowsCount - 5} autres`;
+        
+        // Show cleaning info using custom notification
+        showNotification(
+          `${removedRowsCount} ligne(s) sur ${originalRowCount} ont été supprimées car elles contenaient des données insuffisantes (lignes: ${rowNumbersText}).`,
+          'info'
+        );
+      }
     } catch (error) {
       console.log("err", error);
       if (error.response) {
-        // Check if the error is due to a duplicate file
         if (error.response.status === 400) {
           showAlert(error.response.data.message || "Le fichier a déjà été téléchargé.", "Error");
         } else if (error.response.status === 401) {
@@ -254,10 +284,8 @@ function Uploads({ isInvoice = true }) {
         else {
           showAlert("Erreur de serveur, veuillez réessayer plus tard", "Error");
         }
-
       } else {
         showAlert("Erreur réseau, veuillez réessayer plus tard", "Error");
-
       }
       setTimeout(() => {
         hideAlert();
@@ -315,7 +343,6 @@ function Uploads({ isInvoice = true }) {
     console.log('📡 Socket ID being sent to backend:', socket?.id);
     console.log('🔌 Socket connected status:', socket?.connected);
     
-    // Show progress overlay
     setProgress({
       isVisible: true,
       percentage: 0,
@@ -338,18 +365,17 @@ function Uploads({ isInvoice = true }) {
         socketId: socket?.id 
       });
       console.log("processed data", data)
-      const summary = data.summary; // Extracting the summary array
+      const summary = data.summary;
 
       if (data.statusCode === 200) {
         showAlert(data.message, "Success");
         setTimeout(() => {
           hideAlert();
         }, 6200);
-        setInvoiceData(summary); // Setting the invoice data to the summary array
+        setInvoiceData(summary);
         
-        // Hide progress overlay before navigation
         setProgress(prev => ({ ...prev, isVisible: false }));
-        
+        hideLoader();
         router.push(`/admin/invoice/${driveId}`);
       } else {
         showAlert(data.message, 'Error');
@@ -361,23 +387,18 @@ function Uploads({ isInvoice = true }) {
       console.log(error);
       if (error?.response?.status == 401) {
         showAlert("Please Authorize to google drive", "Error");
-
       }
       else if (error?.response?.status == 500) {
         showAlert(error.response.data?.cause ? error.response.data.cause : "Something went wrong while processing the file", "Error")
       }
-
       else {
-
         showAlert("Something went wrong whilee processing the file", "Error");
       }
       setTimeout(() => {
         hideAlert();
       }, 5000);
     } finally {
-      // hideLoader();
-      // // Hide progress overlay in case of any error
-      // setProgress(prev => ({ ...prev, isVisible: false }));
+      // Additional cleanup if needed
     }
   };
 
@@ -465,11 +486,20 @@ function Uploads({ isInvoice = true }) {
   const filteredFiles = filterFiles();
 
   if (!hasMounted) {
-    return null; // or a loading spinner
+    return null;
   }
 
   return (
     <div className='pt-2 pr-2 pl-3 flex flex-col '>
+      {/* Custom Notification */}
+      <CustomNotification
+        isVisible={notification.isVisible}
+        message={notification.message}
+        type={notification.type}
+        onClose={hideNotification}
+        duration={5000}
+      />
+
       <div className="header flex flex-col ">
         <div className='flex justify-between'>
           <div>
@@ -557,13 +587,11 @@ function Uploads({ isInvoice = true }) {
             Afficher tous les fichiers dans Drive
           </Button>
         </div>
-
-
       </div>
+
       {/* files */}
       <div className='h-[550px] overflow-y-scroll no-scrollbar'>
         {filteredFiles?.map((item, index) => (
-
           <div key={index} className="flex items-center gap-7 self-stretch files mt-[20px]">
             <div className='flex justify-between w-[1150px] bg-uploadContainerBg-200 rounded-lg p-2 space-y-4 border-black shadow-custom'>
               <div className='flex mainContainer flex-grow space-y-4'>
@@ -573,7 +601,6 @@ function Uploads({ isInvoice = true }) {
                     dernière modification {dayjs(item.updatedAt).format('DD MMM YYYY')}
                   </h2>
                   <div className='flex justify-between'>
-
                     <a
                       href={item.driveLink}
                       target="_blank"
@@ -608,7 +635,7 @@ function Uploads({ isInvoice = true }) {
           </div>
         ))}
       </div>
-      <ToastContainer position="top-right" autoClose={2500} />
+
       <UploadErrorsDialog
         errors={uploadErrors}
         open={showErrorsDialog}
