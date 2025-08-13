@@ -52,9 +52,9 @@ export function CustomTable({ invoiceData }) {
                         <TableHead className="px-4 py-3">Code Tarifare</TableHead>
                         <TableHead className="px-4 py-3">Descriptifs pour chaque produit facturé</TableHead>
                         <TableHead className="px-4 py-3">Date de réalisation</TableHead>
-                        <TableHead className="px-4 py-3">Montant H.T</TableHead>
+                        <TableHead className="px-4 py-3 w-[120px]">Montant H.T</TableHead>
                         <TableHead className="px-4 py-3">Taux de TVA</TableHead>
-                        <TableHead className="px-4 py-3">Montant TTC</TableHead>
+                        <TableHead className="px-4 py-3 w-[120px]">Montant TTC</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody className="cursor-pointer">

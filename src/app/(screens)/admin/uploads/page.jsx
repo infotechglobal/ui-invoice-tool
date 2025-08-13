@@ -572,9 +572,9 @@ function Uploads({ isInvoice = true }) {
             </select>
           </div>
           <button
-            className='rounded-xl px-2 py-1 bg-uploadContainerBg-200 flex justify-center items-center text-white font-semibold  '
+            className='rounded-xl px-2 py-1 bg-uploadContainerBg-200 flex justify-center items-center text-white font-semibold w-[120px] '
             onClick={() => setShowTarrifDialog(true)} >
-            Gérer</button>
+          Gérer Tarif</button>
           <TarrifDialog open={showTarrifDialog} onClose={() => setShowTarrifDialog(false)} />
 
           {/* Drive Button */}
