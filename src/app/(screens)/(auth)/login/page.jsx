@@ -57,7 +57,7 @@ function LoginPage() {
 
       if (data.status === true) {
         const token = data.token;
-        setCookie('token', token, { maxAge: 60 * 60 * 24 });
+        setCookie('token', token, { maxAge:  7 * 24 * 60 * 60 * 1000 });
         setTimeout(() => {
           router.push('/admin/uploads');
         }, 500); // Delay of 1.5 seconds before redirecting
