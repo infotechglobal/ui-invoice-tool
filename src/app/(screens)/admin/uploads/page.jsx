@@ -364,7 +364,7 @@ function Uploads({ isInvoice = true }) {
         fileName,
         socketId: socket?.id 
       });
-      console.log("processed data", data)
+      // console.log("processed data", data)
       const summary = data.summary;
 
       if (data.statusCode === 200) {
