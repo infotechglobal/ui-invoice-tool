@@ -389,6 +389,8 @@ function Uploads({ isInvoice = true }) {
         showAlert("Please Authorize to google drive", "Error");
       }
       else if (error?.response?.status == 500) {
+        setProgress(prev => ({ ...prev, isVisible: false }));
+        hideLoader();
         showAlert(error.response.data?.cause ? error.response.data.cause : "Something went wrong while processing the file", "Error")
       }
       else {
