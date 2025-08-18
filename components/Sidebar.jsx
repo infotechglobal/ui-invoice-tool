@@ -66,15 +66,15 @@ function Sidebar() {
   const getStatusIcon = (status) => {
     switch (status?.toLowerCase()) {
       case 'success':
-        return <CircleCheck size={20} />;
+        return <CircleCheck size={22} strokeWidth={2.5} />;
       case 'error':
-        return <CircleX size={20} />;
+        return <CircleX size={22} strokeWidth={2.5} />;
       case 'warning':
-        return <TriangleAlert size={20} />;
+        return <TriangleAlert size={22} strokeWidth={2.5} />;
       case 'info':
-        return <Info size={20} />;
+        return <Info size={22} strokeWidth={2.5} />;
       default:
-        return <AlertCircle size={20} />;
+        return <AlertCircle size={22} strokeWidth={2.5} />;
     }
   };
 
@@ -239,10 +239,10 @@ function Sidebar() {
           autoCloseDelay={5000}
         >
           {getStatusIcon(status)}
-          <div className='flex justify-between items-start'>
+          <div>
             <AlertTitle>{status}</AlertTitle>
+            <AlertDescription>{message}</AlertDescription>
           </div>
-          <AlertDescription>{message}</AlertDescription>
         </Alert>
       )}
 
