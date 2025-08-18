@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 
 const useLoaderStore = create((set) => ({
-  message:"s",
+  message:"",
   isLoading:false,
 
   showLoader: (message) => set((state) => ({

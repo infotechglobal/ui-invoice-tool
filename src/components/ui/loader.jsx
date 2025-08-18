@@ -28,60 +28,32 @@ function Loader() {
   if (!isLoading) return null;
 
   return (
-    <div className="fixed top-4 right-4 z-50 animate-fade-in">
-      <div className="bg-white/95 backdrop-blur-sm border border-gray-200 shadow-lg rounded-xl p-4 min-w-[200px]">
-        <div className="flex items-center space-x-3">
-          <div className="relative">
-            <HashLoader
-              color={color}
-              loading={true}
-              cssOverride={override}
-              size={24}
-              aria-label="Loading Spinner"
-              data-testid="loader"
-              speedMultiplier={1.2}
-            />
-            {/* Subtle glow effect */}
-            <div 
-              className="absolute inset-0 rounded-full blur-sm opacity-20"
-              style={{ backgroundColor: color }}
-            />
-          </div>
-          
-          <div className="flex-1">
-            <h3 className="text-sm font-medium text-gray-800 leading-tight">
-              {message || "Loading..."}
-            </h3>
-            <div className="w-full bg-gray-200 rounded-full h-1 mt-2 overflow-hidden">
-              <div 
-                className="h-full rounded-full animate-pulse"
-                style={{ 
-                  backgroundColor: color,
-                  animation: "progress 2s ease-in-out infinite"
-                }}
-              />
+    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm'>
+          <div className='bg-white/95 backdrop-blur-md rounded-2xl border-2 border-gray-200 shadow-2xl p-6 min-w-[300px] max-w-[500px] w-auto mx-4 animate-fadeIn'>
+            <div className='flex items-center space-x-4'>
+              <div className='relative flex-shrink-0'>
+                <div className='w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center'>
+                  <div className='w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin'></div>
+                </div>
+                <div className='absolute inset-0 w-12 h-12 rounded-full bg-blue-500/20 animate-pulse'></div>
+              </div>
+              
+              <div className='flex-1 min-w-0'>
+                <h3 className='text-lg font-semibold text-gray-800 leading-tight mb-2'>
+                  Chargement en cours
+                </h3>
+                <p className='text-sm text-gray-600 break-words whitespace-pre-wrap leading-relaxed'>
+                  {loaderStore().message || 'Veuillez patienter...'}
+                </p>
+                <div className='w-full bg-gray-200 rounded-full h-2 mt-3 overflow-hidden'>
+                  <div 
+                    className='h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full animate-progress'
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      
-      <style jsx>{`
-        @keyframes fade-in {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        @keyframes progress {
-          0% { width: 0%; }
-          50% { width: 70%; }
-          100% { width: 100%; }
-        }
-        
-        .animate-fade-in {
-          animation: fade-in 0.3s ease-out;
-        }
-      `}</style>
-    </div>
   );
 }
 
