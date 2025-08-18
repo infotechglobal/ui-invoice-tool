@@ -64,6 +64,21 @@ function Sidebar() {
     }, 1500); // Delay redirect by 1.5 seconds to allow alert to be visible
   }
 
+function getFrenchText(status) {
+  switch (status?.toLowerCase()) {
+    case 'success':
+      return 'Succès';
+    case 'error':
+      return 'Erreur';
+    case 'warning':
+      return 'Avertissement';
+    case 'info':
+      return 'Info';
+    default:
+      return 'Inconnu';
+  }
+}
+
   // Function to get the appropriate icon based on status
   const getStatusIcon = (status) => {
     switch (status?.toLowerCase()) {
@@ -217,7 +232,7 @@ function Sidebar() {
         >
           {getStatusIcon(status)}
           <div>
-            <AlertTitle>{status}</AlertTitle>
+            <AlertTitle>{getFrenchText(status)}</AlertTitle>
             <AlertDescription>{message}</AlertDescription>
           </div>
         </Alert>
