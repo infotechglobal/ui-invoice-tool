@@ -249,10 +249,7 @@ function Uploads({ isInvoice = true }) {
       addFile(data.allFiles);
       
       // Show regular success alert
-      showAlert(data.message, "Success");
-      setTimeout(() => {
-        hideAlert();
-      }, 3000);
+
       
       // Check if there's cleaning information and show custom notification
       if (data.cleaningInfo && data.cleaningInfo.removedRowsCount > 0) {
@@ -266,6 +263,12 @@ function Uploads({ isInvoice = true }) {
           `${removedRowsCount} ligne(s) sur ${originalRowCount} ont été supprimées car elles contenaient des données insuffisantes (lignes: ${rowNumbersText}).`,
           'info'
         );
+      }
+      else{
+              showAlert(data.message, "Success");
+      setTimeout(() => {
+        hideAlert();
+      }, 3000);
       }
     } catch (error) {
 
