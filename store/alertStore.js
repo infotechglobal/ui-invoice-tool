@@ -1,9 +1,9 @@
 import { create } from 'zustand'
 
 const useAlertMessage = create((set) => ({
-  message:"lorem ipsum dolor sit amet lorem ipsum dolor sit amet lorem ipsum dolor sit amet",
-  status:"Error",
-  isLoading:true,
+  message:"",
+  status:"",
+  isLoading:false,
   showAlert: (message, status) => set((state) => ({
     message: message,
     status: status,
