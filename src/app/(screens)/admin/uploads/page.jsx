@@ -268,6 +268,7 @@ function Uploads({ isInvoice = true }) {
         );
       }
     } catch (error) {
+
       console.log("err", error);
       if (error.response) {
         if (error.response.status === 400) {
@@ -385,11 +386,12 @@ function Uploads({ isInvoice = true }) {
       }
     } catch (error) {
       console.log(error);
+       setProgress(prev => ({ ...prev, isVisible: false }));
       if (error?.response?.status == 401) {
         showAlert("Please Authorize to google drive", "Error");
       }
       else if (error?.response?.status == 500) {
-        setProgress(prev => ({ ...prev, isVisible: false }));
+        // setProgress(prev => ({ ...prev, isVisible: false }));
         hideLoader();
         showAlert(error.response.data?.cause ? error.response.data.cause : "Something went wrong while processing the file", "Error")
       }
