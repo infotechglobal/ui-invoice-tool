@@ -274,7 +274,7 @@ function Uploads({ isInvoice = true }) {
         if (error.response.status === 400) {
           showAlert(error.response.data.message || "Le fichier a déjà été téléchargé.", "Error");
         } else if (error.response.status === 401) {
-          showAlert("Please authorize to Google Drive", "Error");
+          showAlert("Veuillez autoriser l'accès à Google Drive", "Error");
         }
         else if (error.response.status === 422) {
           console.log("422 error", error.response.data.errors);
@@ -389,7 +389,7 @@ function Uploads({ isInvoice = true }) {
        setProgress(prev => ({ ...prev, isVisible: false }));
       hideLoader();
       if (error?.response?.status == 401) {
-        showAlert("Please Authorize to google drive", "Error");
+        showAlert("Veuillez autoriser l'accès à Google Drive", "Error");
       }
       else if (error?.response?.status == 500) {
         // setProgress(prev => ({ ...prev, isVisible: false }));

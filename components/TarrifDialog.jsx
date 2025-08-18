@@ -46,9 +46,16 @@ const TarrifDialog = ({ open = true, onClose }) => {
           setTarrifs(response.data)
           toast.dismiss(infoId)
         } catch (error) {
-          console.error('Error fetching tarrifs:', error)
           toast.dismiss(infoId)
-          toast.error('Failed to fetch tarrifs')
+          console.error('Error fetching tarrifs:', error)
+          if(error?.response?.status === 401) {
+            toast.error("Veuillez autoriser laccès à Google Drive");
+            // Optionally, you could redirect the user to the login page
+          }
+          
+          else{
+            toast.error('Failed to fetch tarrifs')
+          }
         } finally {
           setLoading(false)
           setIsFetching(false)

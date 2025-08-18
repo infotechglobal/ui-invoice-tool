@@ -108,7 +108,7 @@ function Dashboard() {
                 console.error('Error processing file:', error);
 
                 if (error?.response?.status == 401) {
-                    showAlert("Please Authorize to google drive", "Error");
+                    showAlert("Veuillez autoriser l'accès à Google Drive", "Error");
                 }
                 else if (error?.response?.status == 400 && error?.response?.data?.message === 'File has not been processed') {
                     showAlert("File has not been processed. Redirecting to upload page...", "Error");
