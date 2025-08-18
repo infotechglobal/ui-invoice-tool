@@ -20,6 +20,7 @@ const TarrifDialog = ({ open = true, onClose }) => {
   const [form, setForm] = useState(emptyTarrif)
   const [showForm, setShowForm] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [fetchError, setFetchError] = useState(null)
   const [confirm, setConfirm] = useState({
     open: false,
     action: null,
@@ -40,6 +41,7 @@ const TarrifDialog = ({ open = true, onClose }) => {
       if (open) {
         setIsFetching(true)
         setLoading(true)
+        setFetchError(null) // Reset fetch error state
         const infoId = toast.loading('Fetching tarrifs...')
         try {
           const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/tarrif/getAllTarrifs`);
@@ -48,13 +50,16 @@ const TarrifDialog = ({ open = true, onClose }) => {
         } catch (error) {
           toast.dismiss(infoId)
           console.error('Error fetching tarrifs:', error)
-          if(error?.response?.status === 401) {
-            toast.error("Veuillez autoriser laccès à Google Drive");
-            // Optionally, you could redirect the user to the login page
-          }
           
-          else{
-            toast.error('Failed to fetch tarrifs')
+          // Set the appropriate error message
+          if (error?.response?.data?.message) {
+            setFetchError(error.response.data.message)
+          } else if (error?.response?.status === 401) {
+            setFetchError("Veuillez autoriser l'accès à Google Drive")
+            toast.error("Veuillez autoriser l'accès à Google Drive");
+          } else {
+            setFetchError("Échec du chargement des tarifs. Veuillez réessayer.")
+            toast.error('Échec du chargement des tarifs')
           }
         } finally {
           setLoading(false)
@@ -192,7 +197,6 @@ const TarrifDialog = ({ open = true, onClose }) => {
       return;
     }
    
-
     setError("");
     openConfirm({
       action: "save",
@@ -225,10 +229,95 @@ const TarrifDialog = ({ open = true, onClose }) => {
     setShowForm(true)
   }
 
-  if (!open) return null
+  const handleRetry = () => {
+    // Reset error state and retry fetching
+    setFetchError(null);
+    const fetchTarrifsAPI = async () => {
+      setIsFetching(true);
+      setLoading(true);
+      const infoId = toast.loading('Fetching tarrifs...');
+      try {
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/tarrif/getAllTarrifs`);
+        setTarrifs(response.data);
+        toast.dismiss(infoId);
+      } catch (error) {
+        toast.dismiss(infoId);
+        console.error('Error fetching tarrifs:', error);
+        if (error?.response?.data?.message) {
+          setFetchError(error.response.data.message);
+        } else if (error?.response?.status === 401) {
+          setFetchError("Veuillez autoriser l'accès à Google Drive");
+          toast.error("Veuillez autoriser l'accès à Google Drive");
+        } else {
+          setFetchError("Échec du chargement des tarifs. Veuillez réessayer.");
+          toast.error('Échec du chargement des tarifs');
+        }
+      } finally {
+        setLoading(false);
+        setIsFetching(false);
+      }
+    };
+    fetchTarrifsAPI();
+  };
+
+  if (!open) return null;
 
   return (
-    <div className="fixed top-0 left-0 w-screen h-screen bg-black bg-opacity-30 flex items-center justify-center z-[1000]">
+    <div className="fixed inset-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center z-[1000] overflow-y-auto">
+      <div className="fixed inset-0 w-full h-full" onClick={onClose}></div>
+      <ConfirmDialog
+        open={confirm.open}
+        title={confirm.title}
+        message={confirm.message}
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+      />
+      <div className="bg-white rounded-lg min-w-[350px] max-w-[1100px] w-[95%] max-h-[90vh] p-6 shadow-2xl relative z-[1001] my-4">
+        <div className="flex justify-between items-center mb-4 sticky top-0 bg-white pb-2 border-b">
+          <h2 className="m-0 text-2xl font-semibold text-gray-800">Gérer Tarifs</h2>
+          <button
+            onClick={onClose}
+            className="text-xl bg-transparent border-none cursor-pointer hover:bg-gray-100 w-8 h-8 rounded-full flex items-center justify-center"
+            aria-label="Close dialog"
+          >✕</button>
+        </div>
+        
+        {/* Show loading state */}
+        {isFetching && (
+          <div className="flex flex-col items-center justify-center h-64">
+            <div className="w-12 h-12 border-4 border-t-blue-600 border-gray-200 rounded-full animate-spin mb-4"></div>
+            <p className="text-lg text-gray-600">Chargement des tarifs...</p>
+          </div>
+        )}
+
+        {/* Show error state */}
+        {fetchError && !isFetching && (
+          <div className="flex flex-col items-center justify-center p-8 bg-red-50 border border-red-200 rounded-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-red-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <h3 className="text-xl font-semibold text-red-700 mb-2">Erreur de chargement des tarifs</h3>
+            <p className="text-red-600 text-center mb-6">{fetchError}</p>
+            <div className="flex gap-4">
+              <button 
+                onClick={handleRetry}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              >
+                Réessayer
+              </button>
+              <button 
+                onClick={onClose}
+                className="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition-colors"
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Show table when data is loaded successfully and there's no error */}
+        {!isFetching && !fetchError && (
+           <div className="fixed top-0 left-0 w-screen h-screen bg-black bg-opacity-30 flex items-center justify-center z-[1000]">
       <ConfirmDialog
         open={confirm.open}
         title={confirm.title}
@@ -399,6 +488,9 @@ const TarrifDialog = ({ open = true, onClose }) => {
               </button>
             </div>
           </div>
+        )}
+      </div>
+    </div>
         )}
       </div>
     </div>
