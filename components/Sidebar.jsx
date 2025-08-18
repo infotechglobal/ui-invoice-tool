@@ -64,7 +64,6 @@ function Sidebar() {
 
   return (
     <div className='mr-10 flex flex-col w-full h-full justify-between'>
-      {/* Keep the top section with files as scrollable */}
       <div className='flex-1 overflow-hidden flex flex-col'>
         <header className='px-6 py-4 border-b border-gray-100 flex-shrink-0'>
           <Link href={'/admin/uploads'} className='block'>
@@ -81,13 +80,13 @@ function Sidebar() {
           <div className='mb-6 flex-shrink-0'>
             <h2 className='text-gray-800 font-Archivo font-bold text-base leading-5 mb-2 flex items-center'>
               <File size={20} className='mr-2' style={{ color: 'rgb(69, 104, 220)' }} />
-              Fichiers Facturés
+              Fichiers déjà traités
             </h2>
             <p className='text-gray-500 text-xs font-medium'>
               Cliquez sur un fichier pour l&apos;ouvrir
             </p>
           </div>
-          {/* Make this section scrollable, but limit its height */}
+          {/* Make this section scrollable with auto height */}
           <div className='flex-1 overflow-y-auto overflow-x-hidden pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400'>
             {uploadedFiles?.map(
               (item, index) =>
@@ -169,63 +168,44 @@ function Sidebar() {
         </section>
       </div>
 
-      {/* Footer with fixed height */}
+      {/* Fixed height footer with notifications that don't push content down */}
       <footer className='mb-3 self-center w-full px-2 flex-shrink-0'>
-        {/* Absolute positioned notifications */}
-        <div className="relative w-full">
-          {/* Position notifications above the logout button */}
-          <div className="absolute bottom-full mb-3 w-full space-y-3">
-            {isLoaderLoading && (
-              <div className='bg-white rounded-xl shadow-lg border border-gray-200 p-4 z-30'>
-                <Loader />
-              </div>
-            )}
-
-            {isLoading && (
-              <div className='z-20'>
-                <Alert variant={status} className="shadow-md border">
-                  <div className="flex items-start">
-                    <div className="mr-2 mt-0.5">
-                      {status === 'Success' ? 
-                        <CircleCheck className="h-5 w-5 text-green-500" /> : 
-                        <TriangleAlert className="h-5 w-5 text-red-500" />
-                      }
-                    </div>
-                    <div className="flex-1">
-                      <AlertTitle className="font-medium">{status}</AlertTitle>
-                      <AlertDescription className="text-sm">{message}</AlertDescription>
-                    </div>
-                    <button 
-                      onClick={hideAlert}
-                      className="ml-2 flex-shrink-0 p-1 rounded-full hover:bg-gray-100"
-                    >
-                      <CircleX size={16} className="text-gray-500 hover:text-gray-700" />
-                    </button>
-                  </div>
-                </Alert>
-              </div>
-            )}
-          </div>
-          
-          {/* Logout button - always visible */}
-          <div className='flex justify-center'>
-            <button 
-              onClick={handleLogout} 
-              className='w-full max-w-xs rounded-xl px-4 py-3 bg-uploadContainerBg-200 hover:bg-opacity-90 flex items-center justify-center text-white font-semibold transition-all duration-200 hover:shadow-lg transform hover:scale-105'
-            >
-              <LogOut color="#ffffff" className='mr-3' size={18} />
-              Se déconnecter
-            </button>
-          </div>
-        </div>
-        <ToastContainer />
-      </footer>     
-    </div>    
-
+        {/* Container for notifications that doesn't affect layout flow */}
+        <div className="flex flex-col space-y-4 mb-4 max-h-[30vh] overflow-y-auto">
+          {isLoaderLoading && (
+            <div className='bg-blue-200 rounded-3xl border-2 border-gray-200'>
+              <Loader />
+            </div>
           )}
 
+          {isLoading && (
+            <div>
+              <Alert variant={status}>
+                {status === 'Success' ? <CircleCheck size={20} /> : <TriangleAlert size={20} />}
+                <div className='flex justify-between'>
+                  <AlertTitle>{status}</AlertTitle>
+                  <CircleX size={20} onClick={hideAlert} className='cursor-pointer hover:opacity-70' />
+                </div>
+                <AlertDescription>{message}</AlertDescription>
+              </Alert>
+            </div>
+          )}
+        </div>
 
-
-
+        {/* Logout button - always at the bottom */}
+        <div className='flex justify-center'>
+          <button 
+            onClick={handleLogout} 
+            className='w-full max-w-xs rounded-xl px-4 py-3 bg-uploadContainerBg-200 hover:bg-opacity-90 flex items-center justify-center text-white font-semibold transition-all duration-200 hover:shadow-lg transform hover:scale-105'
+          >
+            <LogOut color="#ffffff" className='mr-3' size={18} />
+            Se déconnecter
+          </button>
+        </div>
+        <ToastContainer />
+      </footer>
+    </div>
+  );
+}
 
 export default Sidebar;
