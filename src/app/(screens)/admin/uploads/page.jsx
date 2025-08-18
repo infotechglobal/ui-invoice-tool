@@ -387,6 +387,7 @@ function Uploads({ isInvoice = true }) {
     } catch (error) {
       console.log(error);
        setProgress(prev => ({ ...prev, isVisible: false }));
+      hideLoader();
       if (error?.response?.status == 401) {
         showAlert("Please Authorize to google drive", "Error");
       }
@@ -597,9 +598,19 @@ function Uploads({ isInvoice = true }) {
       <div className='h-[550px] overflow-y-scroll no-scrollbar'>
         {filteredFiles?.map((item, index) => (
           <div key={index} className="flex items-center gap-7 self-stretch files mt-[20px]">
-            <div className='flex justify-between w-[1150px] bg-uploadContainerBg-200 rounded-lg p-2 space-y-4 border-black shadow-custom'>
+            <div className={`flex justify-between w-[1150px] rounded-lg p-2 space-y-4 border-black shadow-custom ${
+              item.isProcessed 
+                ? 'bg-blue-600 border-l-4 border-l-blue-300' // Darker blue with indicator border for processed files
+                : 'bg-uploadContainerBg-200' // Original color for unprocessed files
+            }`}>
               <div className='flex mainContainer flex-grow space-y-4'>
                 <div className='w-full space-y-3'>
+                  {item.isProcessed && (
+                    <div className="flex items-center">
+                      <div className="w-2 h-2 rounded-full bg-green-400 mr-2"></div>
+                      <span className="text-blue-300 text-xs font-medium">Traité</span>
+                    </div>
+                  )}
                   <h1 className='text-white font-archivo text-lg font-semibold leading-6'>{item.fileName}</h1>
                   <h2 className='text-white font-syne text-base font-normal leading-4'>
                     dernière modification {dayjs(item.updatedAt).format('DD MMM YYYY')}
@@ -615,27 +626,28 @@ function Uploads({ isInvoice = true }) {
                     </a>
                     <button
                       onClick={() => handlePreview(item.driveId, item.fileName)}
-                      className='text-white font-archivo text-sm font-normal leading-4 underline relative right-[500px]'
+                      className={`font-archivo text-sm font-normal leading-4 underline relative right-[500px] ${
+                        item.isProcessed 
+                          ? 'text-gray-300 cursor-not-allowed' 
+                          : 'text-white hover:text-gray-200'
+                      }`}
                       disabled={isLoading}
                     >
-                      Aperçu
+                      {item.isProcessed ? 'Déjà traité' : 'Aperçu'}
                     </button>
                   </div>
                 </div>
               </div>
-
+              
               <button onClick={() => downloadInvoice(item)} className='h-fit relative top-[14px] left-1'>
                 <Download size={20} color="#ffffff" strokeWidth={2.25} />
               </button>
             </div>
-            {
-              !item.isProcessed && (
-                <button onClick={() => handleDelete(item.driveId)} className="icons" disabled={isLoading}>
-                  <Trash2 size={20} color="#6f6a73" strokeWidth={2.25} />
-                </button>
-              )}
-
-
+            {!item.isProcessed && (
+              <button onClick={() => handleDelete(item.driveId)} className="icons" disabled={isLoading}>
+                <Trash2 size={20} color="#6f6a73" strokeWidth={2.25} />
+              </button>
+            )}
           </div>
         ))}
       </div>
