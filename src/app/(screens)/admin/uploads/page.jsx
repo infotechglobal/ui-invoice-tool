@@ -81,14 +81,14 @@ function Uploads({ isInvoice = true }) {
   const { showLoader, hideLoader, isLoading } = useLoaderStore();
   const [showTarrifDialog, setShowTarrifDialog] = useState(false);
   const [showErrorsDialog, setShowErrorsDialog] = useState(false);
-  
+
   // Custom notification state
   const [notification, setNotification] = useState({
     isVisible: false,
     message: '',
     type: 'info'
   });
-  
+
   // Socket and progress overlay state
   const { socket, isConnected } = useSocket();
   const [progress, setProgress] = useState({
@@ -152,7 +152,7 @@ function Uploads({ isInvoice = true }) {
         };
         return newProgress;
       });
-      
+
       setTimeout(() => {
         console.log('Progress state after update (async check):', progress);
       }, 100);
@@ -212,14 +212,14 @@ function Uploads({ isInvoice = true }) {
     socket.on('connect', () => {
       console.log('✅ Socket connected with ID:', socket.id);
     });
-    
+
     socket.on('disconnect', () => {
       console.log('❌ Socket disconnected');
     });
 
     console.log('🧪 Testing socket connection...');
     socket.emit('test', 'Hello from frontend');
-    
+
     return () => {
       console.log('🧹 Cleaning up socket listeners...');
       socket.off('invoiceProgress', handleProgressUpdate);
@@ -247,28 +247,28 @@ function Uploads({ isInvoice = true }) {
       const { data } = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/upload/savefile/`, formData);
       console.log(data);
       addFile(data.allFiles);
-      
+
       // Show regular success alert
 
-      
+
       // Check if there's cleaning information and show custom notification
       if (data.cleaningInfo && data.cleaningInfo.removedRowsCount > 0) {
         const { removedRowNumbers, removedRowsCount, originalRowCount } = data.cleaningInfo;
-        const rowNumbersText = removedRowNumbers.length <= 5 
+        const rowNumbersText = removedRowNumbers.length <= 5
           ? removedRowNumbers.join(', ')
           : `${removedRowNumbers.slice(0, 5).join(', ')} et ${removedRowsCount - 5} autres`;
-        
+
         // Show cleaning info using custom notification
         showNotification(
           `${removedRowsCount} ligne(s) sur ${originalRowCount} ont été supprimées car elles contenaient des données insuffisantes (lignes: ${rowNumbersText}).`,
           'info'
         );
       }
-      else{
-              showAlert(data.message, "Success");
-      setTimeout(() => {
-        hideAlert();
-      }, 3000);
+      else {
+        showAlert(data.message, "Success");
+        setTimeout(() => {
+          hideAlert();
+        }, 3000);
       }
     } catch (error) {
 
@@ -281,7 +281,7 @@ function Uploads({ isInvoice = true }) {
         }
         else if (error.response.status === 422) {
           console.log("422 error", error.response.data.errors);
-          showAlert(error.response.data.message ||  "Le fichier a déjà été téléchargé.", "Error");
+          showAlert(error.response.data.message || "Le fichier a déjà été téléchargé.", "Error");
           setUploadErrors(error?.response?.data?.errors);
           setShowErrorsDialog(true);
         }
@@ -342,11 +342,11 @@ function Uploads({ isInvoice = true }) {
   const handlePreview = async (driveId, fileName) => {
     hideAlert();
     // showLoader('Traitement du fichier. Cela prendra quelques minutes...')
-    
+
     console.log('🚀 Starting file processing...');
     console.log('📡 Socket ID being sent to backend:', socket?.id);
     console.log('🔌 Socket connected status:', socket?.connected);
-    
+
     setProgress({
       isVisible: true,
       percentage: 0,
@@ -357,16 +357,16 @@ function Uploads({ isInvoice = true }) {
       elapsedTime: 0,
       errors: []
     });
-    
+
     try {
       console.log('🚀 About to send invoice processing request');
       console.log('Socket object:', socket);
       console.log('Socket ID being sent:', socket?.id);
       console.log('Socket connected:', socket?.connected);
-      
-      const { data } = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/invoices/process/${driveId}`, { 
+
+      const { data } = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/invoices/process/${driveId}`, {
         fileName,
-        socketId: socket?.id 
+        socketId: socket?.id
       });
       // console.log("processed data", data)
       const summary = data.summary;
@@ -377,7 +377,7 @@ function Uploads({ isInvoice = true }) {
           hideAlert();
         }, 6200);
         setInvoiceData(summary);
-        
+
         setProgress(prev => ({ ...prev, isVisible: false }));
         hideLoader();
         router.push(`/admin/invoice/${driveId}`);
@@ -389,7 +389,7 @@ function Uploads({ isInvoice = true }) {
       }
     } catch (error) {
       console.log(error);
-       setProgress(prev => ({ ...prev, isVisible: false }));
+      setProgress(prev => ({ ...prev, isVisible: false }));
       hideLoader();
       if (error?.response?.status == 401) {
         showAlert("Veuillez autoriser l'accès à Google Drive", "Error");
@@ -493,7 +493,7 @@ function Uploads({ isInvoice = true }) {
   }
 
   return (
-    <div className='pt-2 pr-2 pl-3 flex flex-col '>
+    <div className='px-1 pt-1 flex flex-col '>
       {/* Custom Notification */}
       <CustomNotification
         isVisible={notification.isVisible}
@@ -502,33 +502,35 @@ function Uploads({ isInvoice = true }) {
         onClose={hideNotification}
         duration={5000}
       />
-
-      <div className="header flex flex-col ">
-        <div className='flex justify-between'>
-          <div>
-            <h3 className="text-violet-gray-900 font-archivo text-[28px] font-bold leading-[32px] normal-font-style">
+      {/* header */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 m">
+        <div className="flex justify-between items-start">
+          <div className="flex-1">
+            <h1 className="text-gray-900 font-semibold text-2xl mb-2">
               Fichiers téléchargés
-            </h3>
+            </h1>
+            <p className='text-gray-600 text-sm leading-relaxed'>
+              Cliquez sur Aperçu pour afficher les détails de la facture
+            </p>
           </div>
-        </div>
-        {/* select client */}
-        <div className='mt-1 flex justify-between'>
-          <h3 className='text-violet-gray-800 font-archivo text-custom-18 font-normal leading-custom-24'>
-            Cliquez sur Aperçu pour afficher les détails de la facture
-          </h3>
-          <div className="flex gap-5 mr-8">
-            <button onClick={authenticate} className='  rounded-lg border-2 p-2 border-violet-gray-100  w-fit bg-white text-violet-gray-900 font-archivo font-semibold'>Authentifier</button>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-3 ml-6">
             <button
-              className="rounded-xl px-2 py-1 bg-uploadContainerBg-200 flex justify-center items-center text-white font-semibold  cursor-pointer"
+              onClick={authenticate}
+              className='px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors duration-200 shadow-sm'
+            >
+              Authentifier
+            </button>
+            <button
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg flex items-center gap-2 transition-colors duration-200 shadow-sm disabled:opacity-50"
               onClick={handleUploadClick}
               disabled={isLoading}
             >
+              <Upload size={16} />
               Téléverser un fichier
-              <Upload className="ml-2" size={16} />
               <input
                 type="file"
-                name=""
-                id="inputFile"
                 className='hidden'
                 ref={inputFileRef}
                 onChange={handleChange}
@@ -537,58 +539,64 @@ function Uploads({ isInvoice = true }) {
             </button>
           </div>
         </div>
-        {/* search bar, date picker, download invoice */}
-        <div className="mt-3 h-14 flex items-center justify-between gap-4">
-          {/* Search Input with Icon */}
-          <div className="relative flex items-center w-1/3 min-w-[200px]">
-            <Search className="absolute left-3" size={18} color="#403A44" strokeWidth={1.75} />
-            <input
-              className="searchField h-8 pl-9 w-full"
-              placeholder="Recherche"
-              disabled={isLoading}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
 
-          {/* Filters */}
-          <div className="flex items-center gap-4 mr-32">
-            <select
-              className="selectFilter"
-              onChange={(e) => setSelectedYear(e.target.value)}
-              disabled={isLoading}
-            >
-              <option className="font-semibold" value="all">Tous les ans</option>
-              {[...new Set(uploadedFiles?.map(file => dayjs(file.updatedAt).year()))].map(year => (
-                <option key={year} value={year}>{year}</option>
-              ))}
-            </select>
-            <select
-              className="selectFilter"
-              onChange={(e) => setSelectedMonth(e.target.value)}
-              disabled={isLoading}
-            >
-              <option className="font-semibold" value="all">Tous les mois</option>
-              {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
-                <option key={month} value={month}>{dayjs().month(month - 1).format('MMMM')}</option>
-              ))}
-            </select>
-          </div>
-          <button
-            className='rounded-xl px-2 py-1 bg-uploadContainerBg-200 flex justify-center items-center text-white font-semibold w-[120px] '
-            onClick={() => setShowTarrifDialog(true)} >
-          Gérer Tarif</button>
-          <TarrifDialog open={showTarrifDialog} onClose={() => setShowTarrifDialog(false)} />
+        {/* Filters and Search Section */}
+        <div className="mt-6 pt-4 border-t border-gray-200">
+          <div className="flex items-center justify-between gap-4">
+            {/* Search Input */}
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} strokeWidth={1.5} />
+              <input
+                className="w-full h-10 pl-10 pr-4 border border-gray-300 rounded-lg bg-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Rechercher un fichier..."
+                disabled={isLoading}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
 
-          {/* Drive Button */}
-          <Button
-            onClick={openInDrive}
-            className="rounded-lg border-2 mr-6 border-violet-gray-100 h-8 bg-white text-violet-gray-900 text-sm hover:bg-slate-50 flex items-center px-3"
-            disabled={isLoading}
-          >
-            <Image src={driveIcon} alt="Drive Icon" className="w-5 h-5 mr-2" />
-            Afficher tous les fichiers dans Drive
-          </Button>
+            {/* Filter Controls */}
+            <div className="flex items-center gap-3">
+              <select
+                className="h-10 px-3 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onChange={(e) => setSelectedYear(e.target.value)}
+                disabled={isLoading}
+              >
+                <option value="all">Tous les ans</option>
+                {[...new Set(uploadedFiles?.map(file => dayjs(file.updatedAt).year()))].map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+
+              <select
+                className="h-10 px-3 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                disabled={isLoading}
+              >
+                <option value="all">Tous les mois</option>
+                {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
+                  <option key={month} value={month}>{dayjs().month(month - 1).format('MMMM')}</option>
+                ))}
+              </select>
+
+              <button
+                className='px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors duration-200 shadow-sm'
+                onClick={() => setShowTarrifDialog(true)}
+              >
+                Gérer Tarif
+              </button>
+              <TarrifDialog open={showTarrifDialog} onClose={() => setShowTarrifDialog(false)} />
+
+              <Button
+                onClick={openInDrive}
+                className="px-4 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 rounded-lg flex items-center gap-2 font-medium transition-colors duration-200 shadow-sm"
+                disabled={isLoading}
+              >
+                <Image src={driveIcon} alt="Drive Icon" className="w-4 h-4" />
+                Afficher dans Drive
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -596,11 +604,10 @@ function Uploads({ isInvoice = true }) {
       <div className='h-[550px] overflow-y-scroll no-scrollbar'>
         {filteredFiles?.map((item, index) => (
           <div key={index} className="flex items-center gap-7 self-stretch files mt-[20px]">
-            <div className={`flex justify-between w-[1150px] rounded-lg p-2 space-y-4 border-black shadow-custom ${
-              item.isProcessed 
+            <div className={`flex justify-between w-[1150px] rounded-lg p-2 space-y-4 border-black shadow-custom ${item.isProcessed
                 ? 'bg-blue-600 border-l-4 border-l-blue-300' // Darker blue with indicator border for processed files
                 : 'bg-uploadContainerBg-200' // Original color for unprocessed files
-            }`}>
+              }`}>
               <div className='flex mainContainer flex-grow space-y-4'>
                 <div className='w-full space-y-3'>
                   {item.isProcessed && (
@@ -624,11 +631,10 @@ function Uploads({ isInvoice = true }) {
                     </a>
                     <button
                       onClick={() => handlePreview(item.driveId, item.fileName)}
-                      className={`font-archivo text-sm font-normal leading-4 underline relative right-[500px] ${
-                        item.isProcessed 
-                          ? 'text-gray-300 cursor-not-allowed' 
+                      className={`font-archivo text-sm font-normal leading-4 underline relative right-[500px] ${item.isProcessed
+                          ? 'text-gray-300 cursor-not-allowed'
                           : 'text-white hover:text-gray-200'
-                      }`}
+                        }`}
                       disabled={isLoading}
                     >
                       {item.isProcessed ? 'Déjà traité' : 'Aperçu'}
@@ -636,16 +642,31 @@ function Uploads({ isInvoice = true }) {
                   </div>
                 </div>
               </div>
-              
-              <button onClick={() => downloadInvoice(item)} className='h-fit relative top-[14px] left-1'>
-                <Download size={20} color="#ffffff" strokeWidth={2.25} />
-              </button>
+
+              <div className="flex items-center gap-3 relative top-[14px] left-1">
+                {item.isProcessed ? (
+                  // Show download button only for processed files
+                  <button
+                    onClick={() => downloadInvoice(item)}
+                    className="h-fit"
+                    aria-label="Download invoice"
+                  >
+                    <Download size={20} color="#ffffff" strokeWidth={2.25} />
+                  </button>
+                ) : (
+                  // Show delete button only for unprocessed files
+                  <button
+                    onClick={() => handleDelete(item.driveId)}
+                    className="h-fit"
+                    disabled={isLoading}
+                    aria-label="Delete file"
+                  >
+                    <Trash2 size={20} color="white" strokeWidth={2.25} />
+                  </button>
+                )}
+              </div>
             </div>
-            {!item.isProcessed && (
-              <button onClick={() => handleDelete(item.driveId)} className="icons" disabled={isLoading}>
-                <Trash2 size={20} color="#6f6a73" strokeWidth={2.25} />
-              </button>
-            )}
+
           </div>
         ))}
       </div>
@@ -655,7 +676,7 @@ function Uploads({ isInvoice = true }) {
         open={showErrorsDialog}
         onClose={() => setShowErrorsDialog(false)}
       />
-      <InvoiceProgressOverlay 
+      <InvoiceProgressOverlay
         isVisible={progress.isVisible}
         progress={progress}
       />
