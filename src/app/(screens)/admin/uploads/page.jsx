@@ -341,7 +341,7 @@ function Uploads({ isInvoice = true }) {
 
   const handlePreview = async (driveId, fileName) => {
     hideAlert();
-    showLoader('Traitement du fichier. Cela prendra quelques minutes...')
+    // showLoader('Traitement du fichier. Cela prendra quelques minutes...')
     
     console.log('🚀 Starting file processing...');
     console.log('📡 Socket ID being sent to backend:', socket?.id);
