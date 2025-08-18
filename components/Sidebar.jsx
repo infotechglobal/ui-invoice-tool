@@ -2,14 +2,14 @@
 import React from 'react';
 import { BrandLogo } from '../src/lib/assets';
 import Image from 'next/image';
-import { CircleCheck, CircleX, File, LogOut, TriangleAlert } from 'lucide-react';
+import { CircleCheck, CircleX, File, LogOut, TriangleAlert, AlertCircle, Info } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { deleteCookie } from 'cookies-next';
 import { useAlertMessage } from '../store/alertStore';
 import { useFileStore } from '../store/uploadedFilesStore';
-import Loader from '../src/components/ui/loader.jsx';
 import useLoaderStore from '../store/loaderStore';
+import loaderStore from '../store/loaderStore';
 import axios from 'axios';
 import { useInvoiceData } from '../store/invoiceDataStore';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -62,6 +62,38 @@ function Sidebar() {
     }, 1500); // Delay redirect by 1.5 seconds to allow alert to be visible
   }
 
+  // Function to get the appropriate icon based on status
+  const getStatusIcon = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'success':
+        return <CircleCheck size={20} />;
+      case 'error':
+        return <CircleX size={20} />;
+      case 'warning':
+        return <TriangleAlert size={20} />;
+      case 'info':
+        return <Info size={20} />;
+      default:
+        return <AlertCircle size={20} />;
+    }
+  };
+
+  // Function to get the appropriate variant based on status
+  const getStatusVariant = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'success':
+        return 'Success';
+      case 'error':
+        return 'Error';
+      case 'warning':
+        return 'Warning';
+      case 'info':
+        return 'Info';
+      default:
+        return 'default';
+    }
+  };
+
   return (
     <div className='mr-10 flex flex-col w-full h-full justify-between'>
       <div className='flex-1 overflow-hidden flex flex-col'>
@@ -94,7 +126,7 @@ function Sidebar() {
                   <button
                     key={index}
                     onClick={() => handlePreview(item.driveId, item.fileName)}
-                    className='group flex items-start space-x-4 p-4 rounded-xl bg-white border border-gray-200 transition-all duration-300 cursor-pointer shadow-sm text-left w-full hover:shadow-lg hover:transform hover:-translate-y-0.5'
+                    className='group flex items-start space-x-4 p-4 rounded-xl bg-white border border-gray-200 transition-all duration-300 cursor-pointer shadow-sm text-left w-full hover:shadow-lg hover:transform hover:-translate-y-0.5 mb-3'
                     style={{ 
                       '--hover-bg': 'rgba(69, 104, 220, 0.05)',
                       '--hover-border': 'rgba(69, 104, 220, 0.3)'
@@ -168,30 +200,54 @@ function Sidebar() {
         </section>
       </div>
 
-      {/* Fixed height footer with notifications that don't push content down */}
-      <footer className='mb-3 self-center w-full px-2 flex-shrink-0'>
-        {/* Container for notifications that doesn't affect layout flow */}
-        <div className="flex flex-col space-y-4 mb-4 max-h-[30vh] overflow-y-auto">
-          {isLoaderLoading && (
-            <div className='bg-blue-200 rounded-3xl border-2 border-gray-200'>
-              <Loader />
-            </div>
-          )}
-
-          {isLoading && (
-            <div>
-              <Alert variant={status}>
-                {status === 'Success' ? <CircleCheck size={20} /> : <TriangleAlert size={20} />}
-                <div className='flex justify-between'>
-                  <AlertTitle>{status}</AlertTitle>
-                  <CircleX size={20} onClick={hideAlert} className='cursor-pointer hover:opacity-70' />
+      {/* Loader notification - centered on screen */}
+      {isLoaderLoading && (
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm'>
+          <div className='bg-white/95 backdrop-blur-md rounded-2xl border-2 border-gray-200 shadow-2xl p-6 min-w-[300px] max-w-[500px] w-auto mx-4 animate-fadeIn'>
+            <div className='flex items-center space-x-4'>
+              <div className='relative flex-shrink-0'>
+                <div className='w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center'>
+                  <div className='w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin'></div>
                 </div>
-                <AlertDescription>{message}</AlertDescription>
-              </Alert>
+                <div className='absolute inset-0 w-12 h-12 rounded-full bg-blue-500/20 animate-pulse'></div>
+              </div>
+              
+              <div className='flex-1 min-w-0'>
+                <h3 className='text-lg font-semibold text-gray-800 leading-tight mb-2'>
+                  Chargement en cours
+                </h3>
+                <p className='text-sm text-gray-600 break-words whitespace-pre-wrap leading-relaxed'>
+                  {loaderStore().message || 'Veuillez patienter...'}
+                </p>
+                <div className='w-full bg-gray-200 rounded-full h-2 mt-3 overflow-hidden'>
+                  <div 
+                    className='h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full animate-progress'
+                  />
+                </div>
+              </div>
             </div>
-          )}
+          </div>
         </div>
+      )}
 
+      {/* Enhanced Alert - now appears as popup */}
+      {isLoading && (
+        <Alert 
+          variant={getStatusVariant(status)}
+          onClose={hideAlert}
+          autoClose={true}
+          autoCloseDelay={5000}
+        >
+          {getStatusIcon(status)}
+          <div className='flex justify-between items-start'>
+            <AlertTitle>{status}</AlertTitle>
+          </div>
+          <AlertDescription>{message}</AlertDescription>
+        </Alert>
+      )}
+
+      {/* Fixed height footer */}
+      <footer className='mb-3 self-center w-full px-2 flex-shrink-0'>
         {/* Logout button - always at the bottom */}
         <div className='flex justify-center'>
           <button 

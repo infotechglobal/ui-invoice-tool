@@ -1,16 +1,17 @@
 import * as React from "react"
 import { cva } from "class-variance-authority";
-
 import { cn } from "@/lib/utils"
 
 const alertVariants = cva(
-  "relative w-full rounded-lg border border-neutral-200 p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-neutral-950 dark:border-neutral-800 dark:[&>svg]:text-neutral-50",
+  "fixed top-6 right-6 z-50 min-w-[320px] max-w-[420px] w-auto rounded-xl shadow-2xl border-2 backdrop-blur-md transition-all duration-300 ease-in-out transform translate-x-0 opacity-100 animate-slideIn p-5 [&>svg~*]:pl-10 [&>svg+div]:translate-y-[-2px] [&>svg]:absolute [&>svg]:left-5 [&>svg]:top-5",
   {
     variants: {
       variant: {
-        default: "bg-white text-neutral-950 dark:bg-neutral-950 dark:text-neutral-50",
-        Error:"bg-red-500 text-black-700 dark:bg-red-700 dark:text-red-100 border border-red-500",
-        Success: "bg-alert-success text-neutral-950 dark:bg-neutral-950 dark:text-neutral-50 w-60 "
+        default: "bg-white/95 text-neutral-800 border-neutral-300 shadow-neutral-200/50 [&>svg]:text-neutral-600",
+        Error: "bg-red-50/95 text-red-900 border-red-300 shadow-red-200/50 [&>svg]:text-red-600",
+        Success: "bg-emerald-50/95 text-emerald-900 border-emerald-300 shadow-emerald-200/50 [&>svg]:text-emerald-600",
+        Warning: "bg-amber-50/95 text-amber-900 border-amber-300 shadow-amber-200/50 [&>svg]:text-amber-600",
+        Info: "bg-blue-50/95 text-blue-900 border-blue-300 shadow-blue-200/50 [&>svg]:text-blue-600"
       },
     },
     defaultVariants: {
@@ -19,29 +20,105 @@ const alertVariants = cva(
   }
 )
 
-const Alert = React.forwardRef(({ className, variant, ...props }, ref) => (
-  <div
-    ref={ref}
-    role="alert"
-    className={cn(alertVariants({ variant }), className)}
-    {...props} />
-))
+const Alert = React.forwardRef(({ className, variant, children, onClose, autoClose = false, autoCloseDelay = 5000, ...props }, ref) => {
+  const [isVisible, setIsVisible] = React.useState(true);
+  const [isLeaving, setIsLeaving] = React.useState(false);
+
+  React.useEffect(() => {
+    if (autoClose) {
+      const timer = setTimeout(() => {
+        handleClose();
+      }, autoCloseDelay);
+
+      return () => clearTimeout(timer);
+    }
+  }, [autoClose, autoCloseDelay]);
+
+  const handleClose = () => {
+    setIsLeaving(true);
+    setTimeout(() => {
+      setIsVisible(false);
+      onClose?.();
+    }, 300);
+  };
+
+  if (!isVisible) return null;
+
+  return (
+    <div
+      ref={ref}
+      role="alert"
+      className={cn(
+        alertVariants({ variant }), 
+        isLeaving && "opacity-0 translate-x-full",
+        className
+      )}
+      {...props}
+    >
+      {children}
+      {onClose && (
+        <button
+          onClick={handleClose}
+          className="absolute top-3 right-3 p-2 rounded-full hover:bg-black/10 transition-colors duration-200 group"
+          aria-label="Close alert"
+        >
+          <svg
+            className="w-5 h-5 text-current opacity-60 group-hover:opacity-100 transition-opacity"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      )}
+    </div>
+  );
+});
+
 Alert.displayName = "Alert"
 
 const AlertTitle = React.forwardRef(({ className, ...props }, ref) => (
   <h5
     ref={ref}
-    className={cn("text-lg  leading-none tracking-tight font-bold", className)}
-    {...props} />
+    className={cn("text-lg font-bold leading-tight tracking-tight mb-2 pr-8", className)}
+    {...props} 
+  />
 ))
 AlertTitle.displayName = "AlertTitle"
 
 const AlertDescription = React.forwardRef(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("text-sm [&_p]:leading-relaxed", className)}
-    {...props} />
+    className={cn("text-sm opacity-90 leading-relaxed break-words whitespace-pre-wrap [&_p]:leading-relaxed", className)}
+    {...props} 
+  />
 ))
 AlertDescription.displayName = "AlertDescription"
 
-export { Alert, AlertTitle, AlertDescription }
+// Alert Container for managing multiple alerts
+const AlertContainer = ({ children }) => (
+  <div className="fixed top-4 right-4 z-50 flex flex-col gap-3 max-w-sm">
+    {children}
+  </div>
+);
+
+// CSS for slide-in animation (add to your global CSS)
+const alertStyles = `
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slideIn {
+  animation: slideIn 0.3s ease-out;
+}
+`;
+
+export { Alert, AlertTitle, AlertDescription, AlertContainer, alertStyles }
