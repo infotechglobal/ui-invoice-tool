@@ -413,8 +413,6 @@ function Uploads({ isInvoice = true }) {
   const downloadInvoice = async (item) => {
     const { fileName } = item;
     const { parentFolderId } = item;
-    const { csvFolderId } = item;
-    const { pdfFolderId } = item;
     const { isProcessed } = item;
     if (!isProcessed) {
       showAlert("Veuillez prévisualiser le fichier avant de le télécharger", 'Error');
@@ -425,18 +423,15 @@ function Uploads({ isInvoice = true }) {
     }
 
     try {
-      showLoader('Télécharger des factures...');
+      showLoader('Téléchargement des factures...');
       console.log('Downloading data...');
       console.log('fileName:', fileName);
       console.log('parentFolderId:', parentFolderId);
-      console.log('csvFolderId:', csvFolderId);
-      console.log('pdfFolderId:', pdfFolderId);
 
       const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/invoices/download`, {
         fileName,
         parentFolderId,
-        csvFolderId,
-        pdfFolderId,
+        // We no longer need to specify csvFolderId and pdfFolderId as we're downloading the entire folder structure
       }, {
         responseType: 'blob',
       });
