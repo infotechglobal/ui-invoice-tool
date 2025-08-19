@@ -1,12 +1,11 @@
 'use client'
 import React, { useState, useEffect } from 'react';
-import { X, Info } from 'lucide-react';
+import { X, Info, AlertTriangle, CheckCircle, AlertCircle } from 'lucide-react';
 
 const CustomNotification = ({ 
   isVisible, 
   message, 
   onClose, 
-  duration = 5000,
   type = 'info' 
 }) => {
   const [shouldRender, setShouldRender] = useState(false);
@@ -14,13 +13,7 @@ const CustomNotification = ({
   useEffect(() => {
     if (isVisible) {
       setShouldRender(true);
-      
-      // Auto-hide after duration
-      const timer = setTimeout(() => {
-        onClose();
-      }, duration);
-
-      return () => clearTimeout(timer);
+      // Remove the auto-hide timeout
     } else {
       // Delay unmounting to allow exit animation
       const timer = setTimeout(() => {
@@ -29,7 +22,7 @@ const CustomNotification = ({
 
       return () => clearTimeout(timer);
     }
-  }, [isVisible, duration, onClose]);
+  }, [isVisible]);
 
   if (!shouldRender) return null;
 
@@ -45,19 +38,19 @@ const CustomNotification = ({
         return {
           bg: 'bg-green-500',
           border: 'border-green-400',
-          icon: <Info size={20} className="text-white" />
+          icon: <CheckCircle size={20} className="text-white" />
         };
       case 'warning':
         return {
           bg: 'bg-yellow-500',
           border: 'border-yellow-400',
-          icon: <Info size={20} className="text-white" />
+          icon: <AlertTriangle size={20} className="text-white" />
         };
       case 'error':
         return {
           bg: 'bg-red-500',
           border: 'border-red-400',
-          icon: <Info size={20} className="text-white" />
+          icon: <AlertCircle size={20} className="text-white" />
         };
       default:
         return {
@@ -87,7 +80,9 @@ const CustomNotification = ({
           </div>
           <div className="flex-1">
             <div className="text-white text-sm font-medium leading-5">
-              Données nettoyées
+              {type === 'info' ? 'Données nettoyées' : 
+               type === 'success' ? 'Succès' :
+               type === 'warning' ? 'Attention' : 'Erreur'}
             </div>
             <div className="text-white text-sm leading-5 mt-1 opacity-90">
               {message}
@@ -105,27 +100,7 @@ const CustomNotification = ({
         <X size={18} />
       </button>
       
-      {/* Progress bar */}
-      <div className="absolute bottom-0 left-0 right-0 h-1 bg-black bg-opacity-20 rounded-b-lg overflow-hidden">
-        <div 
-          className="h-full bg-white bg-opacity-30 transition-all duration-linear"
-          style={{ 
-            animation: isVisible ? `shrink ${duration}ms linear` : 'none',
-            transformOrigin: 'left'
-          }}
-        />
-      </div>
-      
-      <style jsx>{`
-        @keyframes shrink {
-          from {
-            transform: scaleX(1);
-          }
-          to {
-            transform: scaleX(0);
-          }
-        }
-      `}</style>
+      {/* Remove the progress bar since we don't have auto-closing anymore */}
     </div>
   );
 };
