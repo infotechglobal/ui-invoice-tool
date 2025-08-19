@@ -28,7 +28,23 @@ function Sidebar() {
   const isLoaderLoading = useLoaderStore((state) => state.isLoading);
   const router = useRouter();
 
+  // Add this check to determine if any file is currently being processed
+  const isAnyFileProcessing = uploadedFiles?.some(file => file.isProcessing);
+
   const handlePreview = async (driveId, fileName) => {
+    // If any file is processing, don't allow preview
+    if (isAnyFileProcessing) {
+      toast.warning('Un fichier est en cours de traitement. Veuillez patienter.', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+      return;
+    }
+
     showLoader('Chargement de la facture...');
     try {
       const { data } = await axios.post(
@@ -134,7 +150,16 @@ function getFrenchText(status) {
             <p className='text-gray-500 text-xs font-medium'>
               Cliquez sur un fichier pour l&apos;ouvrir
             </p>
+            
+            {/* Add processing indicator if any file is being processed */}
+            {isAnyFileProcessing && (
+              <div className="mt-2 px-3 py-1.5 bg-orange-50 border border-orange-200 rounded-md flex items-center">
+                <div className="w-2 h-2 rounded-full bg-orange-400 mr-2 animate-pulse"></div>
+                <span className="text-orange-700 text-xs">Traitement en cours...</span>
+              </div>
+            )}
           </div>
+          
           {/* Make this section scrollable with auto height */}
           <div className='flex-1 overflow-y-auto overflow-x-hidden pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400'>
             {uploadedFiles?.map(
@@ -143,34 +168,51 @@ function getFrenchText(status) {
                   <button
                     key={index}
                     onClick={() => handlePreview(item.driveId, item.fileName)}
-                    className='group flex items-start space-x-4 p-4 rounded-xl bg-white border border-gray-200 transition-all duration-300 cursor-pointer shadow-sm text-left w-full hover:shadow-lg hover:transform hover:-translate-y-0.5 mb-3'
+                    className={`group flex items-start space-x-4 p-4 rounded-xl border transition-all duration-300 text-left w-full mb-3 ${
+                      isAnyFileProcessing 
+                        ? 'bg-gray-100 border-gray-200 cursor-not-allowed opacity-70' 
+                        : 'bg-white border-gray-200 cursor-pointer shadow-sm hover:shadow-lg hover:transform hover:-translate-y-0.5'
+                    }`}
                     style={{ 
-                      '--hover-bg': 'rgba(69, 104, 220, 0.05)',
-                      '--hover-border': 'rgba(69, 104, 220, 0.3)'
+                      '--hover-bg': isAnyFileProcessing ? 'rgb(243, 244, 246)' : 'rgba(69, 104, 220, 0.05)',
+                      '--hover-border': isAnyFileProcessing ? 'rgb(229, 231, 235)' : 'rgba(69, 104, 220, 0.3)'
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = 'rgba(69, 104, 220, 0.05)';
-                      e.currentTarget.style.borderColor = 'rgba(69, 104, 220, 0.3)';
+                      if (!isAnyFileProcessing) {
+                        e.currentTarget.style.backgroundColor = 'rgba(69, 104, 220, 0.05)';
+                        e.currentTarget.style.borderColor = 'rgba(69, 104, 220, 0.3)';
+                      }
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'white';
-                      e.currentTarget.style.borderColor = 'rgb(229, 231, 235)';
+                      if (!isAnyFileProcessing) {
+                        e.currentTarget.style.backgroundColor = 'white';
+                        e.currentTarget.style.borderColor = 'rgb(229, 231, 235)';
+                      }
                     }}
+                    disabled={isAnyFileProcessing}
                   >
                     <div className='flex-shrink-0 mt-1'>
                       <div 
-                        className='w-10 h-10 rounded-lg flex items-center justify-center transition-colors duration-300'
-                        style={{ backgroundColor: 'rgba(69, 104, 220, 0.1)' }}
+                        className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors duration-300 ${
+                          isAnyFileProcessing 
+                            ? 'bg-gray-200' 
+                            : 'bg-blue-50'
+                        }`}
+                        style={{ backgroundColor: isAnyFileProcessing ? 'rgba(229, 231, 235)' : 'rgba(69, 104, 220, 0.1)' }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = 'rgba(69, 104, 220, 0.2)';
+                          if (!isAnyFileProcessing) {
+                            e.currentTarget.style.backgroundColor = 'rgba(69, 104, 220, 0.2)';
+                          }
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = 'rgba(69, 104, 220, 0.1)';
+                          if (!isAnyFileProcessing) {
+                            e.currentTarget.style.backgroundColor = 'rgba(69, 104, 220, 0.1)';
+                          }
                         }}
                       >
                         <File 
                           size={20} 
-                          style={{ color: 'rgb(69, 104, 220)' }}
+                          style={{ color: isAnyFileProcessing ? 'rgb(156, 163, 175)' : 'rgb(69, 104, 220)' }}
                           strokeWidth={2} 
                         />
                       </div>
@@ -178,12 +220,16 @@ function getFrenchText(status) {
                     <div className='flex-1 min-w-0'>
                       <div 
                         className='font-Archivo text-sm font-semibold leading-5 break-words mb-1 transition-colors duration-300'
-                        style={{ color: 'rgb(55, 65, 81)' }}
+                        style={{ color: isAnyFileProcessing ? 'rgb(107, 114, 128)' : 'rgb(55, 65, 81)' }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.color = 'rgb(69, 104, 220)';
+                          if (!isAnyFileProcessing) {
+                            e.currentTarget.style.color = 'rgb(69, 104, 220)';
+                          }
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.color = 'rgb(55, 65, 81)';
+                          if (!isAnyFileProcessing) {
+                            e.currentTarget.style.color = 'rgb(55, 65, 81)';
+                          }
                         }}
                       >
                         {item?.fileName?.length > 25 ? 
@@ -193,22 +239,32 @@ function getFrenchText(status) {
                       </div>
                       <div 
                         className='text-xs transition-colors duration-300'
-                        style={{ color: 'rgb(107, 114, 128)' }}
+                        style={{ color: isAnyFileProcessing ? 'rgb(156, 163, 175)' : 'rgb(107, 114, 128)' }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.color = 'rgb(69, 104, 220)';
+                          if (!isAnyFileProcessing) {
+                            e.currentTarget.style.color = 'rgb(69, 104, 220)';
+                          }
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.color = 'rgb(107, 114, 128)';
+                          if (!isAnyFileProcessing) {
+                            e.currentTarget.style.color = 'rgb(107, 114, 128)';
+                          }
                         }}
                       >
                         Facture • {new Date(item.updatedAt).toLocaleDateString('fr-FR')}
                       </div>
-                      <div 
-                        className='text-xs mt-2 opacity-0 group-hover:opacity-100 transition-all duration-300 font-medium'
-                        style={{ color: 'rgb(69, 104, 220)' }}
-                      >
-                        → Cliquer pour ouvrir
-                      </div>
+                      {isAnyFileProcessing ? (
+                        <div className='text-xs mt-2 text-gray-400'>
+                          En attente de la fin du traitement
+                        </div>
+                      ) : (
+                        <div 
+                          className='text-xs mt-2 opacity-0 group-hover:opacity-100 transition-all duration-300 font-medium'
+                          style={{ color: 'rgb(69, 104, 220)' }}
+                        >
+                          → Cliquer pour ouvrir
+                        </div>
+                      )}
                     </div>
                   </button>
                 )
