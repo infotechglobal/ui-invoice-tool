@@ -341,22 +341,12 @@ function Uploads({ isInvoice = true }) {
 
   const handlePreview = async (driveId, fileName) => {
     hideAlert();
-    // showLoader('Traitement du fichier. Cela prendra quelques minutes...')
 
     console.log('🚀 Starting file processing...');
     console.log('📡 Socket ID being sent to backend:', socket?.id);
     console.log('🔌 Socket connected status:', socket?.connected);
 
-    setProgress({
-      isVisible: true,
-      percentage: 0,
-      currentItem: { accountNo: '', name: '', status: 'starting' },
-      totalItems: 0,
-      processedItems: 0,
-      estimatedTimeRemaining: 0,
-      elapsedTime: 0,
-      errors: []
-    });
+ 
 
     try {
       console.log('🚀 About to send invoice processing request');
@@ -368,7 +358,39 @@ function Uploads({ isInvoice = true }) {
         fileName,
         socketId: socket?.id
       });
-      // console.log("processed data", data)
+
+      // Handle specific status codes
+      if (data.statusCode === 202) {
+        // File is currently being processed
+        showAlert(data.message, "Info");
+        setTimeout(() => {
+          hideAlert();
+        }, 5000);
+        setProgress(prev => ({ ...prev, isVisible: false }));
+        return;
+      }
+
+      if (data.statusCode === 409) {
+        // Another file is being processed
+        showAlert(data.message, "Warning");
+        setTimeout(() => {
+          hideAlert();
+        }, 5000);
+        setProgress(prev => ({ ...prev, isVisible: false }));
+        return;
+      }
+         setProgress({
+      isVisible: true,
+      percentage: 0,
+      currentItem: { accountNo: '', name: '', status: 'starting' },
+      totalItems: 0,
+      processedItems: 0,
+      estimatedTimeRemaining: 0,
+      elapsedTime: 0,
+      errors: []
+    });
+
+      // Process regular success response
       const summary = data.summary;
 
       if (data.statusCode === 200) {
@@ -386,27 +408,30 @@ function Uploads({ isInvoice = true }) {
         setTimeout(() => {
           hideAlert();
         }, 5000);
+        setProgress(prev => ({ ...prev, isVisible: false }));
       }
     } catch (error) {
       console.log(error);
       setProgress(prev => ({ ...prev, isVisible: false }));
       hideLoader();
-      if (error?.response?.status == 401) {
+      
+      // Handle specific error cases
+      if (error?.response?.status === 401) {
         showAlert("Veuillez autoriser l'accès à Google Drive", "Error");
-      }
-      else if (error?.response?.status == 500) {
-        // setProgress(prev => ({ ...prev, isVisible: false }));
+      } else if (error?.response?.status === 409) {
+        // Another file is being processed
+        const message = error.response.data?.message || "Un autre fichier est en cours de traitement.";
+        showAlert(message, "Warning");
+      } else if (error?.response?.status === 500) {
         hideLoader();
-        showAlert(error.response.data?.cause ? error.response.data.cause : "Something went wrong while processing the file", "Error")
+        showAlert(error.response.data?.cause ? error.response.data.cause : "Something went wrong while processing the file", "Error");
+      } else {
+        showAlert("Something went wrong while processing the file", "Error");
       }
-      else {
-        showAlert("Something went wrong whilee processing the file", "Error");
-      }
+      
       setTimeout(() => {
         hideAlert();
       }, 5000);
-    } finally {
-      // Additional cleanup if needed
     }
   };
 
@@ -604,9 +629,12 @@ function Uploads({ isInvoice = true }) {
       <div className='h-[550px] overflow-y-scroll no-scrollbar'>
         {filteredFiles?.map((item, index) => (
           <div key={index} className="flex items-center gap-7 self-stretch files mt-[20px]">
-            <div className={`flex justify-between w-[1150px] rounded-lg p-2 space-y-4 border-black shadow-custom ${item.isProcessed
+            <div className={`flex justify-between w-[1150px] rounded-lg p-2 space-y-4 border-black shadow-custom 
+              ${item.isProcessed
                 ? 'bg-blue-600 border-l-4 border-l-blue-300' // Darker blue with indicator border for processed files
-                : 'bg-uploadContainerBg-200' // Original color for unprocessed files
+                : item.isProcessing
+                  ? 'bg-orange-600 border-l-4 border-l-orange-300' // Orange for files being processed
+                  : 'bg-uploadContainerBg-200' // Original color for unprocessed files
               }`}>
               <div className='flex mainContainer flex-grow space-y-4'>
                 <div className='w-full space-y-3'>
@@ -614,6 +642,12 @@ function Uploads({ isInvoice = true }) {
                     <div className="flex items-center">
                       <div className="w-2 h-2 rounded-full bg-green-400 mr-2"></div>
                       <span className="text-blue-300 text-xs font-medium">Traité</span>
+                    </div>
+                  )}
+                  {item.isProcessing && (
+                    <div className="flex items-center">
+                      <div className="w-2 h-2 rounded-full bg-orange-300 mr-2 animate-pulse"></div>
+                      <span className="text-orange-300 text-xs font-medium">En traitement...</span>
                     </div>
                   )}
                   <h1 className='text-white font-archivo text-lg font-semibold leading-6'>{item.fileName}</h1>
@@ -631,13 +665,19 @@ function Uploads({ isInvoice = true }) {
                     </a>
                     <button
                       onClick={() => handlePreview(item.driveId, item.fileName)}
-                      className={`font-archivo text-sm font-normal leading-4 underline relative right-[500px] ${item.isProcessed
+                      className={`font-archivo text-sm font-normal leading-4 underline relative right-[500px] 
+                        ${item.isProcessed || item.isProcessing
                           ? 'text-gray-300 cursor-not-allowed'
                           : 'text-white hover:text-gray-200'
                         }`}
-                      disabled={isLoading}
+                      disabled={isLoading || item.isProcessing || item.isProcessed}
                     >
-                      {item.isProcessed ? 'Déjà traité' : 'Aperçu'}
+                      {item.isProcessed 
+                        ? 'Déjà traité' 
+                        : item.isProcessing 
+                          ? 'En traitement...' 
+                          : 'Aperçu'
+                      }
                     </button>
                   </div>
                 </div>
@@ -653,6 +693,11 @@ function Uploads({ isInvoice = true }) {
                   >
                     <Download size={20} color="#ffffff" strokeWidth={2.25} />
                   </button>
+                ) : item.isProcessing ? (
+                  // Show processing indicator
+                  <div className="h-fit">
+                    <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+                  </div>
                 ) : (
                   // Show delete button only for unprocessed files
                   <button
