@@ -1,3 +1,4 @@
+// context/SocketContext.jsx
 'use client';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
@@ -5,11 +6,9 @@ import { io } from 'socket.io-client';
 const SocketContext = createContext();
 
 export const useSocket = () => {
-  const context = useContext(SocketContext);
-  if (!context) {
-    throw new Error('useSocket must be used within a SocketProvider');
-  }
-  return context;
+  const ctx = useContext(SocketContext);
+  if (!ctx) throw new Error('useSocket must be used within a SocketProvider');
+  return ctx;
 };
 
 export const SocketProvider = ({ children }) => {
@@ -17,7 +16,6 @@ export const SocketProvider = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    // Initialize socket connection
     const socketInstance = io(process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5001', {
       transports: ['websocket'],
       autoConnect: true,
@@ -39,20 +37,23 @@ export const SocketProvider = ({ children }) => {
     });
 
     setSocket(socketInstance);
-
-    // Cleanup on unmount
-    return () => {
-      socketInstance.disconnect();
-    };
+    return () => socketInstance.disconnect();
   }, []);
 
-  const value = {
-    socket,
-    isConnected
+  const subscribeToFile = (fileId) => {
+    if (socket?.connected && fileId) {
+      socket.emit('subscribeToFile', { fileId });
+    }
+  };
+
+  const unsubscribeFromFile = (fileId) => {
+    if (socket?.connected && fileId) {
+      socket.emit('unsubscribeFromFile', { fileId });
+    }
   };
 
   return (
-    <SocketContext.Provider value={value}>
+    <SocketContext.Provider value={{ socket, isConnected, subscribeToFile, unsubscribeFromFile }}>
       {children}
     </SocketContext.Provider>
   );
