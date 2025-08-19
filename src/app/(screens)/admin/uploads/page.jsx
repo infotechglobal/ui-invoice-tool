@@ -79,8 +79,10 @@ function Uploads({ isInvoice = true }) {
   const { invoiceData, setInvoiceData } = useInvoiceData();
   const router = useRouter();
   const { showLoader, hideLoader, isLoading } = useLoaderStore();
+    const { socket, isConnected, subscribeToFile } = useSocket();
   const [showTarrifDialog, setShowTarrifDialog] = useState(false);
   const [showErrorsDialog, setShowErrorsDialog] = useState(false);
+  
 
   // Custom notification state
   const [notification, setNotification] = useState({
@@ -90,7 +92,8 @@ function Uploads({ isInvoice = true }) {
   });
 
   // Socket and progress overlay state
-  const { socket, isConnected } = useSocket();
+  // const { socket, isConnected } = useSocket();
+
   const [progress, setProgress] = useState({
     isVisible: false,
     percentage: 0,
@@ -101,6 +104,63 @@ function Uploads({ isInvoice = true }) {
     elapsedTime: 0,
     errors: []
   });
+  const [activeFileId, setActiveFileId] = useState(null);
+
+
+  const resumeFromStatus = useCallback(async (fileId) => {
+    try {
+      if (!fileId) return;
+      subscribeToFile(fileId);
+      const { data } = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/invoices/status/${fileId}`);
+      if (data.isProcessed) {
+        // Done while we were away → redirect
+        router.push(`/admin/invoice/${fileId}`);
+        localStorage.removeItem('activeFileId');
+        setProgress((p) => ({ ...p, isVisible: false }));
+        return;
+      }
+      if (data.isProcessing) {
+        setProgress((prev) => ({
+          ...prev,
+          isVisible: true,
+          ...(data.progress ? {
+            percentage: Number(data.progress.percentage) || 0,
+            currentItem: data.progress.currentItem || prev.currentItem,
+            totalItems: Number(data.progress.totalItems) || 0,
+            processedItems: Number(data.progress.processedItems) || 0,
+            estimatedTimeRemaining: data.progress.estimatedTimeRemaining || 0,
+            elapsedTime: data.progress.elapsedTime || 0,
+            errors: data.progress.errors || []
+          } : prev)
+        }));
+      } else {
+        setProgress((p) => ({ ...p, isVisible: false }));
+      }
+    } catch (e) {
+      console.error('Failed to resume status:', e);
+    }
+  }, [router, subscribeToFile]);
+
+
+    useEffect(() => {
+    const remembered = typeof window !== 'undefined' ? localStorage.getItem('activeFileId') : null;
+    // prefer the DB truth: exactly one file may be processing per server policy
+    const processing = uploadedFiles?.find((f) => f.isProcessing);
+    const fileId = processing?.driveId || remembered;
+    if (fileId) {
+      setActiveFileId(fileId);
+      resumeFromStatus(fileId);
+    }
+  }, [uploadedFiles, resumeFromStatus]);
+
+
+ useEffect(() => {
+    if (isConnected && activeFileId) {
+      subscribeToFile(activeFileId);
+    }
+  }, [isConnected, activeFileId, subscribeToFile]);
+
+
 
   // Hydration fix
   const [hasMounted, setHasMounted] = useState(false);
@@ -138,20 +198,17 @@ function Uploads({ isInvoice = true }) {
 
     const handleProgressUpdate = (data) => {
       console.log('🔄 Progress update received:', data);
-      setProgress(prev => {
-        console.log('Previous progress state:', prev);
-        const newProgress = {
-          ...prev,
-          percentage: Number(data.percentage) || 0,
-          currentItem: data.currentItem || { accountNo: '', name: '', status: 'processing' },
-          totalItems: Number(data.totalItems) || 0,
-          processedItems: Number(data.processedItems) || 0,
-          estimatedTimeRemaining: data.estimatedTimeRemaining || 0,
-          elapsedTime: data.elapsedTime || 0,
-          errors: data.errors || []
-        };
-        return newProgress;
-      });
+        setProgress((prev) => ({
+        ...prev,
+        isVisible: true,
+        percentage: Number(data.percentage) || 0,
+        currentItem: data.currentItem || prev.currentItem,
+        totalItems: Number(data.totalItems) || 0,
+        processedItems: Number(data.processedItems) || 0,
+        estimatedTimeRemaining: data.estimatedTimeRemaining || 0,
+        elapsedTime: data.elapsedTime || 0,
+        errors: data.errors || prev.errors
+      }));
 
       setTimeout(() => {
         console.log('Progress state after update (async check):', progress);
@@ -159,7 +216,10 @@ function Uploads({ isInvoice = true }) {
     };
 
     const handleProcessingStart = (data) => {
-      console.log('🚀 Processing started:', data);
+       if (data?.fileId) {
+        setActiveFileId(data.fileId);
+        localStorage.setItem('activeFileId', data.fileId);
+      }
       setProgress({
         isVisible: true,
         percentage: 0,
@@ -172,34 +232,23 @@ function Uploads({ isInvoice = true }) {
       });
     };
 
-    const handleError = (error) => {
-      console.log('❌ Processing error:', error);
-      setProgress(prev => ({
-        ...prev,
-        status: 'error',
-        errors: [...(prev.errors || []), error.message || 'Unknown error']
-      }));
+   const handleError = (error) => {
+      setProgress((prev) => ({ ...prev, isVisible: false }));
+      localStorage.removeItem('activeFileId');
     };
 
-    const handleComplete = (data) => {
-      console.log('✅ Processing complete:', data);
-      setProgress(prev => ({
-        ...prev,
-        percentage: 100,
-        status: 'complete'
-      }));
-      setTimeout(() => {
-        setProgress(prev => ({ ...prev, isVisible: false }));
-      }, 2000);
-      if (data.success) {
-        showAlert('Factures générées avec succès !', 'Success');
-      } else {
-        const errorCount = data.errors?.length || 0;
+
+const handleComplete = (data) => {
+      // redirect even after refresh
+      const fid = data?.fileId || activeFileId;
+      setProgress((prev) => ({ ...prev, percentage: 100 }));
+      setTimeout(() => setProgress((prev) => ({ ...prev, isVisible: false })), 500);
+      if (fid) {
+        localStorage.removeItem('activeFileId');
+        router.push(`/admin/invoice/${fid}`);
       }
-      setTimeout(() => {
-        hideAlert();
-      }, 3000);
     };
+
 
     console.log('📡 Setting up socket event listeners...');
     socket.on('invoiceProgress', handleProgressUpdate);
@@ -353,42 +402,33 @@ function Uploads({ isInvoice = true }) {
       console.log('Socket object:', socket);
       console.log('Socket ID being sent:', socket?.id);
       console.log('Socket connected:', socket?.connected);
+      setActiveFileId(driveId);
+      localStorage.setItem('activeFileId', driveId);
+      if (isConnected) {
+        subscribeToFile(driveId);
+      }
+
+      setProgress({
+        isVisible: true,
+        percentage: 0,
+        currentItem: { accountNo: '', name: '', status: 'starting' },
+        totalItems: 0,
+        processedItems: 0,
+        estimatedTimeRemaining: 0,
+        elapsedTime: 0,
+        errors: []
+      });
 
       const { data } = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/invoices/process/${driveId}`, {
         fileName,
-        socketId: socket?.id
+       
       });
 
-      // Handle specific status codes
-      if (data.statusCode === 202) {
-        // File is currently being processed
-        showAlert(data.message, "Info");
-        setTimeout(() => {
-          hideAlert();
-        }, 5000);
-        setProgress(prev => ({ ...prev, isVisible: false }));
+    if (data.statusCode === 202 || data.statusCode === 409) {
+        // Will receive live updates via room subscription
         return;
       }
-
-      if (data.statusCode === 409) {
-        // Another file is being processed
-        showAlert(data.message, "Warning");
-        setTimeout(() => {
-          hideAlert();
-        }, 5000);
-        setProgress(prev => ({ ...prev, isVisible: false }));
-        return;
-      }
-         setProgress({
-      isVisible: true,
-      percentage: 0,
-      currentItem: { accountNo: '', name: '', status: 'starting' },
-      totalItems: 0,
-      processedItems: 0,
-      estimatedTimeRemaining: 0,
-      elapsedTime: 0,
-      errors: []
-    });
+      
 
       // Process regular success response
       const summary = data.summary;
@@ -399,6 +439,9 @@ function Uploads({ isInvoice = true }) {
           hideAlert();
         }, 6200);
         setInvoiceData(summary);
+         localStorage.removeItem('activeFileId');
+        setProgress((p) => ({ ...p, isVisible: false }));
+        router.push(`/admin/invoice/${driveId}`);
 
         setProgress(prev => ({ ...prev, isVisible: false }));
         hideLoader();
@@ -665,12 +708,8 @@ function Uploads({ isInvoice = true }) {
                     </a>
                     <button
                       onClick={() => handlePreview(item.driveId, item.fileName)}
-                      className={`font-archivo text-sm font-normal leading-4 underline relative right-[500px] 
-                        ${item.isProcessed || item.isProcessing
-                          ? 'text-gray-300 cursor-not-allowed'
-                          : 'text-white hover:text-gray-200'
-                        }`}
-                      disabled={isLoading || item.isProcessing || item.isProcessed}
+                      className={`font-archivo text-sm font-normal leading-4 underline relative right-[500px] text-white hover:text-gray-200`}
+                      disabled={isLoading || item.isProcessing}
                     >
                       {item.isProcessed 
                         ? 'Déjà traité' 
@@ -721,10 +760,7 @@ function Uploads({ isInvoice = true }) {
         open={showErrorsDialog}
         onClose={() => setShowErrorsDialog(false)}
       />
-      <InvoiceProgressOverlay
-        isVisible={progress.isVisible}
-        progress={progress}
-      />
+      <InvoiceProgressOverlay isVisible={progress.isVisible} progress={progress} />
     </div>
 
   )
