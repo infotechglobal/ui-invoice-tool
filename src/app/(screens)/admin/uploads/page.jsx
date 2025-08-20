@@ -23,7 +23,7 @@ import UploadErrorsDialog from '../../../../../components/UploadErrorsDialog';
 import { useSocket } from '../../../../context/SocketContext';
 import InvoiceProgressOverlay from '../../../../../components/InvoiceProgressOverlay';
 import CustomNotification from '../../../../../components/CustomNotification'; // Import custom notification
-
+import { ChevronRight, Play, Loader2, Eye } from 'lucide-react';
 const saveFile = async (blob, fileName) => {
   const { showAlert, hideAlert } = useAlertMessage.getState();
   if ('showSaveFilePicker' in window) {
@@ -160,7 +160,7 @@ useEffect(() => {
       setActiveFileId(fileId);
       
       // Show loader immediately when there's a file to check
-      showLoader("Vérification du statut de traitement...");
+      // showLoader("Vérification du statut de traitement...");
       
       // Check if there's actual processing happening
       const isActivelyProcessing = await resumeFromStatus(fileId);
@@ -729,7 +729,7 @@ const handleComplete = (data) => {
                   {item.isProcessed && (
                     <div className="flex items-center">
                       <div className="w-2 h-2 rounded-full bg-green-400 mr-2"></div>
-                      <span className="text-blue-300 text-xs font-medium">Traité</span>
+                      <span className="text-blue-300 text-xs font-medium">Déjà traité</span>
                     </div>
                   )}
                   {item.isProcessing && (
@@ -752,17 +752,42 @@ const handleComplete = (data) => {
                       Ouvrir dans Drive
                     </a>
                     <button
-                      onClick={() => handlePreview(item.driveId, item.fileName)}
-                      className={`font-archivo text-sm font-normal leading-4 underline relative right-[500px] text-white hover:text-gray-200`}
-                      disabled={isLoading || item.isProcessing || isAnyFileProcessing}
-                    >
-                      {item.isProcessed 
-                        ? 'Déjà traité' 
-                        : item.isProcessing 
-                          ? 'En traitement...' 
-                          : 'Aperçu'
-                      }
-                    </button>
+  onClick={() => handlePreview(item.driveId, item.fileName)}
+  className={`
+    flex items-center gap-2 px-4 py-2 rounded-lg
+    font-archivo text-sm font-medium
+    transition-all duration-200
+    ${item.isProcessed
+      ? 'bg-blue-500  text-white'
+      : item.isProcessing
+        ? 'bg-orange-500 cursor-not-allowed text-white'
+        : 'bg-white hover:bg-gray-50 text-blue-600 hover:text-blue-700'
+    }
+    ${(isLoading || isAnyFileProcessing) && !item.isProcessing
+      ? 'opacity-50 cursor-not-allowed'
+      : ''
+    }
+    relative right-[500px] shadow-sm
+  `}
+  disabled={isLoading || item.isProcessing || isAnyFileProcessing}
+>
+  {item.isProcessed ? (
+    <>
+      <span>Suivant</span>
+      <ChevronRight size={16} className="transition-transform group-hover:translate-x-0.5" />
+    </>
+  ) : item.isProcessing ? (
+    <>
+      <Loader2 size={16} className="animate-spin" />
+      <span>En traitement...</span>
+    </>
+  ) : (
+    <>
+      <Eye size={16} />
+      <span>Aperçu</span>
+    </>
+  )}
+</button>
                   </div>
                 </div>
               </div>
