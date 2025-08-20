@@ -573,7 +573,8 @@ const handleComplete = (data) => {
   };
 
   const openInDrive = () => {
-    window.open(`https://drive.google.com/drive/folders/1q83H2RcUy2nEfTYhrd9dNC1f96jtBwyt`);
+    console.log('Opening Google Drive folder...', process.env.NEXT_FOLDER_ID);
+    window.open(`https://drive.google.com/drive/folders/${process.env.NEXT_PUBLIC_FOLDER_ID}`);
   };
 
   useEffect(() => {
