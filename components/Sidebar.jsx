@@ -59,6 +59,12 @@ function Sidebar() {
       }
     } catch (error) {
       console.log(error);
+      if(error?.response?.status === 401) {
+        showAlert("Veuillez autoriser l'accès à Google Drive", "Error");
+        // Redirect immediately on auth error
+       
+        return;
+      }
     } finally {
       hideLoader();
     }
