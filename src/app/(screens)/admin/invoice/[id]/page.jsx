@@ -13,10 +13,12 @@ import useLoaderStore from '../../../../../../store/loaderStore';
 import { useFileStore } from '../../../../../../store/uploadedFilesStore';
 import useFilteredInvoiceDataStore from '../../../../../../store/FilteredInvoiceStore';
 import { useAlertMessage } from '../../../../../../store/alertStore';
+// import { useRouter } from 'next/router';
 
 
 
 function Dashboard() {
+    // const router = useRouter();
     const { invoiceData, setInvoiceData } = useInvoiceData();
     const { showAlert, hideAlert } = useAlertMessage();
 
@@ -40,8 +42,6 @@ function Dashboard() {
 
     useEffect(() => {
         const fetchInvoiceInfo = async () => {
-                // hideLoader();
-                // showLoader('chargement de la facture...');
             try {
                 const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/getInvoiceInfo`, {
                     driveId: driveId
@@ -57,16 +57,28 @@ function Dashboard() {
 
                 console.log('Invoice info fetched successfully');
             } catch (error) {
+                // Check for authentication errors
+                if (error?.response?.status === 401) {
+                    showAlert("Veuillez autoriser l'accès à Google Drive", "Error");
+                    // Redirect immediately on auth error
+                    window.location.href = '/admin/uploads';
+                    return;
+                }
+                
+                // Handle other errors
                 if (error?.response?.data?.message) {
                     showAlert(error.response.data.message, 'Error');
-                }
-                else {
+                } else {
                     showAlert('Erreur lors de la récupération de la facture', 'Error');
-
                 }
                 setTimeout(() => {
                     hideAlert();
                 }, 5000);
+                
+                // Redirect to uploads page after showing error
+                setTimeout(() => {
+                    window.location.href = '/admin/uploads';
+                }, 2000);
 
                 console.error('Error fetching invoice info:', error);
             } finally {
@@ -109,12 +121,15 @@ function Dashboard() {
 
                 if (error?.response?.status == 401) {
                     showAlert("Veuillez autoriser l'accès à Google Drive", "Error");
+                        setTimeout(() => {
+                        window.location.href = '/admin/uploads'; // Adjust the path as needed
+                    }, 1690);
                 }
                 else if (error?.response?.status == 400 && error?.response?.data?.message === 'File has not been processed') {
                     showAlert("File has not been processed. Redirecting to upload page...", "Error");
                     // Redirect to upload page
                     setTimeout(() => {
-                        window.location.href = '/admin/upload'; // Adjust the path as needed
+                        window.location.href = '/admin/uploads'; // Adjust the path as needed
                     }, 2000);
                 }
                 else {
