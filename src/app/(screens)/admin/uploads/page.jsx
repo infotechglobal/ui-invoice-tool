@@ -82,7 +82,7 @@ function Uploads({ isInvoice = true }) {
     const { socket, isConnected, subscribeToFile } = useSocket();
   const [showTarrifDialog, setShowTarrifDialog] = useState(false);
   const [showErrorsDialog, setShowErrorsDialog] = useState(false);
-  
+  const [driveAuth, setDriveAuth] = useState(false);  
 
   // Custom notification state
   const [notification, setNotification] = useState({
@@ -107,58 +107,96 @@ function Uploads({ isInvoice = true }) {
   const [activeFileId, setActiveFileId] = useState(null);
 
 
-  const resumeFromStatus = useCallback(async (fileId) => {
-    try {
-      if (!fileId) return;
-      subscribeToFile(fileId);
-      const { data } = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/invoices/status/${fileId}`);
-      if (data.isProcessed) {
-        // Done while we were away → redirect
-        router.push(`/admin/invoice/${fileId}`);
-        localStorage.removeItem('activeFileId');
-        setProgress((p) => ({ ...p, isVisible: false }));
-        return;
-      }
-      if (data.isProcessing) {
-        setProgress((prev) => ({
-          ...prev,
-          isVisible: true,
-          ...(data.progress ? {
-            percentage: Number(data.progress.percentage) || 0,
-            currentItem: data.progress.currentItem || prev.currentItem,
-            totalItems: Number(data.progress.totalItems) || 0,
-            processedItems: Number(data.progress.processedItems) || 0,
-            estimatedTimeRemaining: data.progress.estimatedTimeRemaining || 0,
-            elapsedTime: data.progress.elapsedTime || 0,
-            errors: data.progress.errors || []
-          } : prev)
-        }));
-      } else {
-        setProgress((p) => ({ ...p, isVisible: false }));
-      }
-    } catch (e) {
-      console.error('Failed to resume status:', e);
+const resumeFromStatus = useCallback(async (fileId) => {
+  try {
+    if (!fileId) return false; // Return false if no fileId
+    
+    subscribeToFile(fileId);
+    const { data } = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/invoices/status/${fileId}`);
+    
+    if (data.isProcessed) {
+      // Done while we were away → redirect
+      router.push(`/admin/invoice/${fileId}`);
+      localStorage.removeItem('activeFileId');
+      setProgress((p) => ({ ...p, isVisible: false }));
+      return false; // No active processing
     }
-  }, [router, subscribeToFile]);
+    
+    if (data.isProcessing) {
+      setProgress((prev) => ({
+        ...prev,
+        isVisible: true,
+        ...(data.progress ? {
+          percentage: Number(data.progress.percentage) || 0,
+          currentItem: data.progress.currentItem || prev.currentItem,
+          totalItems: Number(data.progress.totalItems) || 0,
+          processedItems: Number(data.progress.processedItems) || 0,
+          estimatedTimeRemaining: data.progress.estimatedTimeRemaining || 0,
+          elapsedTime: data.progress.elapsedTime || 0,
+          errors: data.progress.errors || []
+        } : {})
+      }));
+      return true; // Active processing resumed
+    } else {
+      setProgress((p) => ({ ...p, isVisible: false }));
+      localStorage.removeItem('activeFileId'); // Clean up if not processing
+      return false; // No active processing
+    }
+  } catch (e) {
+    console.error('Failed to resume status:', e);
+    localStorage.removeItem('activeFileId'); // Clean up on error
+    return false; // No active processing
+  }
+}, [router, subscribeToFile]);
 
+useEffect(() => {
+  const remembered = typeof window !== "undefined" ? localStorage.getItem("activeFileId") : null;
+  const processing = uploadedFiles?.find((f) => f.isProcessing);
+  const fileId = processing?.driveId || remembered;
 
-    useEffect(() => {
-    const remembered = typeof window !== 'undefined' ? localStorage.getItem('activeFileId') : null;
-    // prefer the DB truth: exactly one file may be processing per server policy
-    const processing = uploadedFiles?.find((f) => f.isProcessing);
-    const fileId = processing?.driveId || remembered;
+  const initializeLoader = async () => {
     if (fileId) {
+      console.log('Found file to resume:', fileId);
       setActiveFileId(fileId);
-      resumeFromStatus(fileId);
+      
+      // Show loader immediately when there's a file to check
+      showLoader("Vérification du statut de traitement...");
+      
+      // Check if there's actual processing happening
+      const isActivelyProcessing = await resumeFromStatus(fileId);
+      
+      if (!isActivelyProcessing) {
+        // If no active processing, hide loader immediately
+        hideLoader();
+      }
+      // If actively processing, loader will be hidden when progress overlay shows
+    } else {
+      // No file to resume, hide loader immediately
+      hideLoader();
     }
-  }, [uploadedFiles, resumeFromStatus]);
+  };
 
+  initializeLoader();
+}, [uploadedFiles, resumeFromStatus, showLoader, hideLoader]);
 
- useEffect(() => {
-    if (isConnected && activeFileId) {
-      subscribeToFile(activeFileId);
+// Hide loader when progress overlay becomes visible
+useEffect(() => {
+  if (progress.isVisible) {
+    hideLoader();
+  }
+}, [progress.isVisible, hideLoader]);
+
+// Additional cleanup: hide loader after a reasonable timeout if nothing happens
+useEffect(() => {
+  const timer = setTimeout(() => {
+    // If no progress overlay is showing after 5 seconds, ensure loader is hidden
+    if (!progress.isVisible) {
+      hideLoader();
     }
-  }, [isConnected, activeFileId, subscribeToFile]);
+  }, 5000);
+
+  return () => clearTimeout(timer);
+}, [progress.isVisible, hideLoader]);
 
 
 
@@ -245,7 +283,7 @@ const handleComplete = (data) => {
       setTimeout(() => setProgress((prev) => ({ ...prev, isVisible: false })), 500);
       if (fid) {
         localStorage.removeItem('activeFileId');
-        router.push(`/admin/invoice/${fid}`);
+        if(driveAuth==true)router.push(`/admin/invoice/${fid}`);
       }
     };
 
@@ -327,7 +365,9 @@ const handleComplete = (data) => {
           showAlert(error.response.data.message || "Le fichier a déjà été téléchargé.", "Error");
         } else if (error.response.status === 401) {
           showAlert("Veuillez autoriser l'accès à Google Drive", "Error");
+          setDriveAuth(false);
         }
+        
         else if (error.response.status === 422) {
           console.log("422 error", error.response.data.errors);
           showAlert(error.response.data.message || "Le fichier a déjà été téléchargé.", "Error");
@@ -423,6 +463,7 @@ const handleComplete = (data) => {
         fileName,
        
       });
+      setDriveAuth(true);
 
     if (data.statusCode === 202 || data.statusCode === 409) {
         // Will receive live updates via room subscription
@@ -461,6 +502,7 @@ const handleComplete = (data) => {
       // Handle specific error cases
       if (error?.response?.status === 401) {
         showAlert("Veuillez autoriser l'accès à Google Drive", "Error");
+        setDriveAuth(false);
       } else if (error?.response?.status === 409) {
         // Another file is being processed
         const message = error.response.data?.message || "Un autre fichier est en cours de traitement.";
@@ -559,6 +601,7 @@ const handleComplete = (data) => {
   if (!hasMounted) {
     return null;
   }
+    const isAnyFileProcessing = uploadedFiles?.some(file => file.isProcessing);
 
   return (
     <div className='px-1 pt-1 flex flex-col '>
@@ -586,14 +629,15 @@ const handleComplete = (data) => {
           <div className="flex items-center gap-3 ml-6">
             <button
               onClick={authenticate}
-              className='px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors duration-200 shadow-sm'
+              disabled={isAnyFileProcessing}
+              className={`px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors duration-200 shadow-sm ${isAnyFileProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               Authentifier
             </button>
             <button
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg flex items-center gap-2 transition-colors duration-200 shadow-sm disabled:opacity-50"
+              className={`px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg flex items-center gap-2 transition-colors duration-200 shadow-sm ${isLoading || isAnyFileProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
               onClick={handleUploadClick}
-              disabled={isLoading}
+              disabled={isLoading || isAnyFileProcessing}
             >
               <Upload size={16} />
               Téléverser un fichier
@@ -626,9 +670,9 @@ const handleComplete = (data) => {
             {/* Filter Controls */}
             <div className="flex items-center gap-3">
               <select
-                className="h-10 px-3 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`h-10 px-3 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isLoading || isAnyFileProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
                 onChange={(e) => setSelectedYear(e.target.value)}
-                disabled={isLoading}
+                disabled={isLoading || isAnyFileProcessing}
               >
                 <option value="all">Tous les ans</option>
                 {[...new Set(uploadedFiles?.map(file => dayjs(file.updatedAt).year()))].map(year => (
@@ -637,9 +681,9 @@ const handleComplete = (data) => {
               </select>
 
               <select
-                className="h-10 px-3 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`h-10 px-3 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isLoading || isAnyFileProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                disabled={isLoading}
+                disabled={isLoading || isAnyFileProcessing}
               >
                 <option value="all">Tous les mois</option>
                 {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
@@ -648,8 +692,9 @@ const handleComplete = (data) => {
               </select>
 
               <button
-                className='px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors duration-200 shadow-sm'
+                className={`px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors duration-200 shadow-sm ${isLoading || isAnyFileProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
                 onClick={() => setShowTarrifDialog(true)}
+                disabled={isLoading || isAnyFileProcessing}
               >
                 Gérer Tarif
               </button>
@@ -695,7 +740,7 @@ const handleComplete = (data) => {
                   )}
                   <h1 className='text-white font-archivo text-lg font-semibold leading-6'>{item.fileName}</h1>
                   <h2 className='text-white font-syne text-base font-normal leading-4'>
-                    dernière modification {dayjs(item.updatedAt).format('DD MMM YYYY')}
+                    dernière modification {dayjs(item.updatedAt).format('DD MMM YYYY')} {dayjs(item.updatedAt).format('HH:mm:ss')}
                   </h2>
                   <div className='flex justify-between'>
                     <a
@@ -709,7 +754,7 @@ const handleComplete = (data) => {
                     <button
                       onClick={() => handlePreview(item.driveId, item.fileName)}
                       className={`font-archivo text-sm font-normal leading-4 underline relative right-[500px] text-white hover:text-gray-200`}
-                      disabled={isLoading || item.isProcessing}
+                      disabled={isLoading || item.isProcessing || isAnyFileProcessing}
                     >
                       {item.isProcessed 
                         ? 'Déjà traité' 
@@ -727,7 +772,8 @@ const handleComplete = (data) => {
                   // Show download button only for processed files
                   <button
                     onClick={() => downloadInvoice(item)}
-                    className="h-fit"
+                    disabled={isLoading || isAnyFileProcessing} 
+                    className={`h-fit ${isLoading || isAnyFileProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
                     aria-label="Download invoice"
                   >
                     <Download size={20} color="#ffffff" strokeWidth={2.25} />
@@ -741,8 +787,9 @@ const handleComplete = (data) => {
                   // Show delete button only for unprocessed files
                   <button
                     onClick={() => handleDelete(item.driveId)}
-                    className="h-fit"
-                    disabled={isLoading}
+                    
+                    
+                   className={`h-fit ${isLoading || isAnyFileProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
                     aria-label="Delete file"
                   >
                     <Trash2 size={20} color="white" strokeWidth={2.25} />
