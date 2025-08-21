@@ -785,7 +785,7 @@ const handleComplete = (data) => {
   ) : (
     <>
       <Eye size={16} />
-      <span>Aperçu</span>
+      <span>Traiter</span>
     </>
   )}
 </button>
