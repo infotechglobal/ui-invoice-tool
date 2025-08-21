@@ -277,15 +277,15 @@ useEffect(() => {
 
 
 const handleComplete = (data) => {
-      // redirect even after refresh
-      const fid = data?.fileId || activeFileId;
-      setProgress((prev) => ({ ...prev, percentage: 100 }));
-      setTimeout(() => setProgress((prev) => ({ ...prev, isVisible: false })), 500);
-      if (fid) {
-        localStorage.removeItem('activeFileId');
-        if(driveAuth==true)router.push(`/admin/invoice/${fid}`);
-      }
-    };
+  // redirect even after refresh
+  const fid = data?.fileId || activeFileId;
+  setProgress((prev) => ({ ...prev, percentage: 100 }));
+  setTimeout(() => setProgress((prev) => ({ ...prev, isVisible: false })), 500);
+  if (fid) {
+    localStorage.removeItem('activeFileId');
+    router.push(`/admin/invoice/${fid}`); // Always redirect after completion
+  }
+};
 
 
     console.log('📡 Setting up socket event listeners...');
