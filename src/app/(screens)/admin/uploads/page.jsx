@@ -79,10 +79,10 @@ function Uploads({ isInvoice = true }) {
   const { invoiceData, setInvoiceData } = useInvoiceData();
   const router = useRouter();
   const { showLoader, hideLoader, isLoading } = useLoaderStore();
-    const { socket, isConnected, subscribeToFile } = useSocket();
+  const { socket, isConnected, subscribeToFile } = useSocket();
   const [showTarrifDialog, setShowTarrifDialog] = useState(false);
   const [showErrorsDialog, setShowErrorsDialog] = useState(false);
-  const [driveAuth, setDriveAuth] = useState(false);  
+  const [driveAuth, setDriveAuth] = useState(false);
 
   // Custom notification state
   const [notification, setNotification] = useState({
@@ -107,96 +107,96 @@ function Uploads({ isInvoice = true }) {
   const [activeFileId, setActiveFileId] = useState(null);
 
 
-const resumeFromStatus = useCallback(async (fileId) => {
-  try {
-    if (!fileId) return false; // Return false if no fileId
-    
-    subscribeToFile(fileId);
-    const { data } = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/invoices/status/${fileId}`);
-    
-    if (data.isProcessed) {
-      // Done while we were away → redirect
-      router.push(`/admin/invoice/${fileId}`);
-      localStorage.removeItem('activeFileId');
-      setProgress((p) => ({ ...p, isVisible: false }));
+  const resumeFromStatus = useCallback(async (fileId) => {
+    try {
+      if (!fileId) return false; // Return false if no fileId
+
+      subscribeToFile(fileId);
+      const { data } = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/invoices/status/${fileId}`);
+
+      if (data.isProcessed) {
+        // Done while we were away → redirect
+        router.push(`/admin/invoice/${fileId}`);
+        localStorage.removeItem('activeFileId');
+        setProgress((p) => ({ ...p, isVisible: false }));
+        return false; // No active processing
+      }
+
+      if (data.isProcessing) {
+        setProgress((prev) => ({
+          ...prev,
+          isVisible: true,
+          ...(data.progress ? {
+            percentage: Number(data.progress.percentage) || 0,
+            currentItem: data.progress.currentItem || prev.currentItem,
+            totalItems: Number(data.progress.totalItems) || 0,
+            processedItems: Number(data.progress.processedItems) || 0,
+            estimatedTimeRemaining: data.progress.estimatedTimeRemaining || 0,
+            elapsedTime: data.progress.elapsedTime || 0,
+            errors: data.progress.errors || []
+          } : {})
+        }));
+        return true; // Active processing resumed
+      } else {
+        setProgress((p) => ({ ...p, isVisible: false }));
+        localStorage.removeItem('activeFileId'); // Clean up if not processing
+        return false; // No active processing
+      }
+    } catch (e) {
+      console.error('Failed to resume status:', e);
+      localStorage.removeItem('activeFileId'); // Clean up on error
       return false; // No active processing
     }
-    
-    if (data.isProcessing) {
-      setProgress((prev) => ({
-        ...prev,
-        isVisible: true,
-        ...(data.progress ? {
-          percentage: Number(data.progress.percentage) || 0,
-          currentItem: data.progress.currentItem || prev.currentItem,
-          totalItems: Number(data.progress.totalItems) || 0,
-          processedItems: Number(data.progress.processedItems) || 0,
-          estimatedTimeRemaining: data.progress.estimatedTimeRemaining || 0,
-          elapsedTime: data.progress.elapsedTime || 0,
-          errors: data.progress.errors || []
-        } : {})
-      }));
-      return true; // Active processing resumed
-    } else {
-      setProgress((p) => ({ ...p, isVisible: false }));
-      localStorage.removeItem('activeFileId'); // Clean up if not processing
-      return false; // No active processing
-    }
-  } catch (e) {
-    console.error('Failed to resume status:', e);
-    localStorage.removeItem('activeFileId'); // Clean up on error
-    return false; // No active processing
-  }
-}, [router, subscribeToFile]);
+  }, [router, subscribeToFile]);
 
-useEffect(() => {
-  const remembered = typeof window !== "undefined" ? localStorage.getItem("activeFileId") : null;
-  const processing = uploadedFiles?.find((f) => f.isProcessing);
-  const fileId = processing?.driveId || remembered;
+  useEffect(() => {
+    const remembered = typeof window !== "undefined" ? localStorage.getItem("activeFileId") : null;
+    const processing = uploadedFiles?.find((f) => f.isProcessing);
+    const fileId = processing?.driveId || remembered;
 
-  const initializeLoader = async () => {
-    if (fileId) {
-      console.log('Found file to resume:', fileId);
-      setActiveFileId(fileId);
-      
-      // Show loader immediately when there's a file to check
-      // showLoader("Vérification du statut de traitement...");
-      
-      // Check if there's actual processing happening
-      const isActivelyProcessing = await resumeFromStatus(fileId);
-      
-      if (!isActivelyProcessing) {
-        // If no active processing, hide loader immediately
+    const initializeLoader = async () => {
+      if (fileId) {
+        console.log('Found file to resume:', fileId);
+        setActiveFileId(fileId);
+
+        // Show loader immediately when there's a file to check
+        // showLoader("Vérification du statut de traitement...");
+
+        // Check if there's actual processing happening
+        const isActivelyProcessing = await resumeFromStatus(fileId);
+
+        if (!isActivelyProcessing) {
+          // If no active processing, hide loader immediately
+          hideLoader();
+        }
+        // If actively processing, loader will be hidden when progress overlay shows
+      } else {
+        // No file to resume, hide loader immediately
         hideLoader();
       }
-      // If actively processing, loader will be hidden when progress overlay shows
-    } else {
-      // No file to resume, hide loader immediately
+    };
+
+    initializeLoader();
+  }, [uploadedFiles, resumeFromStatus, showLoader, hideLoader]);
+
+  // Hide loader when progress overlay becomes visible
+  useEffect(() => {
+    if (progress.isVisible) {
       hideLoader();
     }
-  };
+  }, [progress.isVisible, hideLoader]);
 
-  initializeLoader();
-}, [uploadedFiles, resumeFromStatus, showLoader, hideLoader]);
+  // Additional cleanup: hide loader after a reasonable timeout if nothing happens
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      // If no progress overlay is showing after 5 seconds, ensure loader is hidden
+      if (!progress.isVisible) {
+        hideLoader();
+      }
+    }, 5000);
 
-// Hide loader when progress overlay becomes visible
-useEffect(() => {
-  if (progress.isVisible) {
-    hideLoader();
-  }
-}, [progress.isVisible, hideLoader]);
-
-// Additional cleanup: hide loader after a reasonable timeout if nothing happens
-useEffect(() => {
-  const timer = setTimeout(() => {
-    // If no progress overlay is showing after 5 seconds, ensure loader is hidden
-    if (!progress.isVisible) {
-      hideLoader();
-    }
-  }, 5000);
-
-  return () => clearTimeout(timer);
-}, [progress.isVisible, hideLoader]);
+    return () => clearTimeout(timer);
+  }, [progress.isVisible, hideLoader]);
 
 
 
@@ -236,7 +236,7 @@ useEffect(() => {
 
     const handleProgressUpdate = (data) => {
       console.log('🔄 Progress update received:', data);
-        setProgress((prev) => ({
+      setProgress((prev) => ({
         ...prev,
         isVisible: true,
         percentage: Number(data.percentage) || 0,
@@ -254,7 +254,7 @@ useEffect(() => {
     };
 
     const handleProcessingStart = (data) => {
-       if (data?.fileId) {
+      if (data?.fileId) {
         setActiveFileId(data.fileId);
         localStorage.setItem('activeFileId', data.fileId);
       }
@@ -270,22 +270,22 @@ useEffect(() => {
       });
     };
 
-   const handleError = (error) => {
+    const handleError = (error) => {
       setProgress((prev) => ({ ...prev, isVisible: false }));
       localStorage.removeItem('activeFileId');
     };
 
 
-const handleComplete = (data) => {
-  // redirect even after refresh
-  const fid = data?.fileId || activeFileId;
-  setProgress((prev) => ({ ...prev, percentage: 100 }));
-  setTimeout(() => setProgress((prev) => ({ ...prev, isVisible: false })), 500);
-  if (fid) {
-    localStorage.removeItem('activeFileId');
-    router.push(`/admin/invoice/${fid}`); // Always redirect after completion
-  }
-};
+    const handleComplete = (data) => {
+      // redirect even after refresh
+      const fid = data?.fileId || activeFileId;
+      setProgress((prev) => ({ ...prev, percentage: 100 }));
+      setTimeout(() => setProgress((prev) => ({ ...prev, isVisible: false })), 500);
+      if (fid) {
+        localStorage.removeItem('activeFileId');
+        router.push(`/admin/invoice/${fid}`); // Always redirect after completion
+      }
+    };
 
 
     console.log('📡 Setting up socket event listeners...');
@@ -367,7 +367,7 @@ const handleComplete = (data) => {
           showAlert("Veuillez autoriser l'accès à Google Drive", "Error");
           setDriveAuth(false);
         }
-        
+
         else if (error.response.status === 422) {
           console.log("422 error", error.response.data.errors);
           showAlert(error.response.data.message || "Le fichier a déjà été téléchargé.", "Error");
@@ -435,7 +435,7 @@ const handleComplete = (data) => {
     console.log('📡 Socket ID being sent to backend:', socket?.id);
     console.log('🔌 Socket connected status:', socket?.connected);
 
- 
+
 
     try {
       console.log('🚀 About to send invoice processing request');
@@ -461,15 +461,15 @@ const handleComplete = (data) => {
 
       const { data } = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/invoices/process/${driveId}`, {
         fileName,
-       
+
       });
       setDriveAuth(true);
 
-    if (data.statusCode === 202 || data.statusCode === 409) {
+      if (data.statusCode === 202 || data.statusCode === 409) {
         // Will receive live updates via room subscription
         return;
       }
-      
+
 
       // Process regular success response
       const summary = data.summary;
@@ -480,7 +480,7 @@ const handleComplete = (data) => {
           hideAlert();
         }, 6200);
         setInvoiceData(summary);
-         localStorage.removeItem('activeFileId');
+        localStorage.removeItem('activeFileId');
         setProgress((p) => ({ ...p, isVisible: false }));
         router.push(`/admin/invoice/${driveId}`);
 
@@ -498,7 +498,7 @@ const handleComplete = (data) => {
       console.log(error);
       setProgress(prev => ({ ...prev, isVisible: false }));
       hideLoader();
-      
+
       // Handle specific error cases
       if (error?.response?.status === 401) {
         showAlert("Veuillez autoriser l'accès à Google Drive", "Error");
@@ -513,7 +513,7 @@ const handleComplete = (data) => {
       } else {
         showAlert("Something went wrong while processing the file", "Error");
       }
-      
+
       setTimeout(() => {
         hideAlert();
       }, 5000);
@@ -602,7 +602,7 @@ const handleComplete = (data) => {
   if (!hasMounted) {
     return null;
   }
-    const isAnyFileProcessing = uploadedFiles?.some(file => file.isProcessing);
+  const isAnyFileProcessing = uploadedFiles?.some(file => file.isProcessing);
 
   return (
     <div className='px-1 pt-1 flex flex-col '>
@@ -715,10 +715,10 @@ const handleComplete = (data) => {
       </div>
 
       {/* files */}
-      <div className='h-[550px] overflow-y-scroll no-scrollbar'>
+      <div className='max-h-[82vh] overflow-y-scroll px-2'>
         {filteredFiles?.map((item, index) => (
           <div key={index} className="flex items-center gap-7 self-stretch files mt-[20px]">
-            <div className={`flex justify-between w-[1150px] rounded-lg p-2 space-y-4 border-black shadow-custom 
+            <div className={`flex justify-between w-full rounded-lg p-2 space-y-4 border-black shadow-custom 
               ${item.isProcessed
                 ? 'bg-blue-600 border-l-4 border-l-blue-300' // Darker blue with indicator border for processed files
                 : item.isProcessing
@@ -753,42 +753,42 @@ const handleComplete = (data) => {
                       Ouvrir dans Drive
                     </a>
                     <button
-  onClick={() => handlePreview(item.driveId, item.fileName)}
-  className={`
+                      onClick={() => handlePreview(item.driveId, item.fileName)}
+                      className={`
     flex items-center gap-2 px-4 py-2 rounded-lg
     font-archivo text-sm font-medium
     transition-all duration-200
     ${item.isProcessed
-      ? 'bg-blue-500  text-white'
-      : item.isProcessing
-        ? 'bg-orange-500 cursor-not-allowed text-white'
-        : 'bg-white hover:bg-gray-50 text-blue-600 hover:text-blue-700'
-    }
+                          ? 'bg-blue-500  text-white'
+                          : item.isProcessing
+                            ? 'bg-orange-500 cursor-not-allowed text-white'
+                            : 'bg-white hover:bg-gray-50 text-blue-600 hover:text-blue-700'
+                        }
     ${(isLoading || isAnyFileProcessing) && !item.isProcessing
-      ? 'opacity-50 cursor-not-allowed'
-      : ''
-    }
+                          ? 'opacity-50 cursor-not-allowed'
+                          : ''
+                        }
     relative right-[500px] shadow-sm
   `}
-  disabled={isLoading || item.isProcessing || isAnyFileProcessing}
->
-  {item.isProcessed ? (
-    <>
-      <span>Suivant</span>
-      <ChevronRight size={16} className="transition-transform group-hover:translate-x-0.5" />
-    </>
-  ) : item.isProcessing ? (
-    <>
-      <Loader2 size={16} className="animate-spin" />
-      <span>En traitement...</span>
-    </>
-  ) : (
-    <>
-      <Eye size={16} />
-      <span>Traiter</span>
-    </>
-  )}
-</button>
+                      disabled={isLoading || item.isProcessing || isAnyFileProcessing}
+                    >
+                      {item.isProcessed ? (
+                        <>
+                          <span>Suivant</span>
+                          <ChevronRight size={16} className="transition-transform group-hover:translate-x-0.5" />
+                        </>
+                      ) : item.isProcessing ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin" />
+                          <span>En traitement...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Eye size={16} />
+                          <span>Traiter</span>
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -798,7 +798,7 @@ const handleComplete = (data) => {
                   // Show download button only for processed files
                   <button
                     onClick={() => downloadInvoice(item)}
-                    disabled={isLoading || isAnyFileProcessing} 
+                    disabled={isLoading || isAnyFileProcessing}
                     className={`h-fit ${isLoading || isAnyFileProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
                     aria-label="Download invoice"
                   >
@@ -813,9 +813,9 @@ const handleComplete = (data) => {
                   // Show delete button only for unprocessed files
                   <button
                     onClick={() => handleDelete(item.driveId)}
-                    
-                    
-                   className={`h-fit ${isLoading || isAnyFileProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+
+
+                    className={`h-fit ${isLoading || isAnyFileProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
                     aria-label="Delete file"
                   >
                     <Trash2 size={20} color="white" strokeWidth={2.25} />
@@ -827,7 +827,20 @@ const handleComplete = (data) => {
           </div>
         ))}
       </div>
-
+      <div className="fixed bottom-6 left-[60%] transform -translate-x-1/2 z-20 bg-white/90 border border-gray-200 shadow-lg px-6 py-2 rounded-lg flex items-center justify-center gap-6 max-w-md w-fit">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+          <span className="text-gray-700 text-sm font-medium">Total: {filteredFiles?.length || 0}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-green-500"></div>
+          <span className="text-gray-700 text-sm font-medium">Traités: {filteredFiles?.filter(f => f.isProcessed).length || 0}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-orange-500"></div>
+          <span className="text-gray-700 text-sm font-medium">Non traités: {filteredFiles?.filter(f => !f.isProcessed).length || 0}</span>
+        </div>
+      </div>
       <UploadErrorsDialog
         errors={uploadErrors}
         open={showErrorsDialog}
