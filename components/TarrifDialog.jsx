@@ -5,12 +5,66 @@ import 'react-toastify/dist/ReactToastify.css'
 import { initialFormulas } from '@/lib/utils'
 import ConfirmDialog from './ConfirmDialog'
 import { set } from 'date-fns'
+
 const emptyTarrif = {
   _id: null,
   TVA: "",
   designation: "",
   x: "100",
   description: "",
+}
+
+// Helper function to validate French number format
+const isValidFrenchNumber = (value) => {
+  if (typeof value !== 'string') return false;
+  
+  const trimmed = value.trim();
+  if (trimmed === '') return false;
+  
+  // French number format rules:
+  // - Only one comma allowed (decimal separator)
+  // - Spaces allowed as thousands separator
+  // - No other special characters except digits, one comma, and spaces
+  
+  const commaCount = (trimmed.match(/,/g) || []).length;
+  
+  // More than one comma is invalid
+  if (commaCount > 1) return false;
+  
+  // Check if it matches valid French number pattern
+  // Pattern: optional digits with spaces, optional comma with decimal part
+  const frenchNumberPattern = /^[\d\s]*,?\d*$/;
+  
+  return frenchNumberPattern.test(trimmed);
+}
+
+// Helper function to convert French number format to English
+const convertFrenchToEnglishNumber = (value) => {
+  if (typeof value !== 'string') return value;
+  
+  // Remove spaces (thousands separator in French)
+  let cleaned = value.replace(/\s/g, '');
+  
+  // Replace French decimal comma with English decimal point
+  return cleaned.replace(',', '.');
+}
+
+// Helper function to parse and validate number from string
+const parseNumberFromString = (value) => {
+  if (!value || value.trim() === '') return null;
+  
+  const trimmed = value.trim();
+  
+  // First validate if it's a valid French number format
+  if (!isValidFrenchNumber(trimmed)) return null;
+  
+  // Convert French format to English format
+  const englishFormat = convertFrenchToEnglishNumber(trimmed);
+  
+  // Parse the number
+  const parsed = parseFloat(englishFormat);
+  
+  return isNaN(parsed) ? null : parsed;
 }
 
 const TarrifDialog = ({ open = true, onClose }) => {
@@ -72,7 +126,13 @@ const TarrifDialog = ({ open = true, onClose }) => {
 
   const handleEdit = (idx) => {
     setEditingIndex(idx)
-    setForm(tarrifs[idx])
+    // Convert numbers back to strings for editing
+    const tarrifToEdit = {
+      ...tarrifs[idx],
+      TVA: tarrifs[idx].TVA ? tarrifs[idx].TVA.toString() : "",
+      x: tarrifs[idx].x ? tarrifs[idx].x.toString() : "100"
+    };
+    setForm(tarrifToEdit)
     setShowForm(true)
   }
 
@@ -181,27 +241,49 @@ const TarrifDialog = ({ open = true, onClose }) => {
   };
 
   const handleSave = async () => {
-    // Validation - removed tarrifCode validation
+    // Validation with French number format support
     if(!form.designation || !form.TVA || !form.x) {
       setError("Veuillez remplir tous les champs obligatoires.");
       return;
     }
-    const xValue = parseFloat(form.x);
-    if (isNaN(xValue) || xValue < 1 || xValue > 100) {
-      setError("La valeur de X doit être comprise entre 1 et 100.");
+
+    // Validate and parse X value with French format support
+    if (!isValidFrenchNumber(form.x)) {
+      setError("Format de X invalide. Utilisez le format français (ex: 99,5 ou 12 345,67)");
       return;
     }
-    const tvaValue = parseFloat(form.TVA);
-    if (isNaN(tvaValue) || tvaValue < 0 || tvaValue > 100) {
+    
+    const xValue = parseNumberFromString(form.x);
+    if (xValue === null || xValue < 0 || xValue > 100) {
+      setError("La valeur de X doit être comprise entre 0 et 100.");
+      return;
+    }
+
+    // Validate and parse TVA value with French format support
+    if (!isValidFrenchNumber(form.TVA)) {
+      setError("Format de TVA invalide. Utilisez le format français (ex: 20,5 ou 99,99)");
+      return;
+    }
+    
+    const tvaValue = parseNumberFromString(form.TVA);
+    if (tvaValue === null || tvaValue < 0 || tvaValue > 100) {
       setError("La valeur de TVA doit être comprise entre 0 et 100.");
       return;
     }
-   
+
     setError("");
+
+    // Prepare form data with converted numbers for backend
+    const formDataForBackend = {
+      ...form,
+      TVA: tvaValue,
+      x: xValue
+    };
+
     openConfirm({
       action: "save",
       idx: editingIndex,
-      form,
+      form: formDataForBackend, // Send the converted form data
       title: editingIndex !== null ? "Update Tarrif" : "Add Tarrif",
       message:
         editingIndex !== null
@@ -317,180 +399,159 @@ const TarrifDialog = ({ open = true, onClose }) => {
 
         {/* Show table when data is loaded successfully and there's no error */}
         {!isFetching && !fetchError && (
-           <div className="fixed top-0 left-0 w-screen h-screen bg-black bg-opacity-30 flex items-center justify-center z-[1000]">
-      <ConfirmDialog
-        open={confirm.open}
-        title={confirm.title}
-        message={confirm.message}
-        onConfirm={handleConfirm}
-        onCancel={handleCancel}
-      />
-      <div className="bg-white rounded-lg min-w-[350px] max-w-[1100px] w-[95%] p-6 shadow-lg relative">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="m-0 text-xl font-semibold">Gérer Tarifs</h2>
-          <button
-            onClick={onClose}
-            className="text-xl bg-transparent border-none cursor-pointer"
-          >✕</button>
-        </div>
-        <div className="overflow-y-auto max-h-[350px] border border-gray-200 rounded-md mb-4 bg-gray-50">
-          <table className="min-w-full border-collapse table-fixed">
-            <colgroup>
-              <col style={{ width: '10%' }} /> {/* Code */}
-              <col style={{ width: '20%' }} /> {/* Designation */}
-              <col style={{ width: '10%' }} /> {/* TVA */}
-              <col style={{ width: '10%' }} /> {/* X */}
-              <col style={{ width: '30%' }} /> {/* Description */}
-              <col style={{ width: '20%' }} /> {/* Actions */}
-            </colgroup>
+          <div>
+            <div className="overflow-y-auto max-h-[350px] border border-gray-200 rounded-md mb-4 bg-gray-50">
+              <table className="min-w-full border-collapse table-fixed">
+                <colgroup>
+                  <col style={{ width: '10%' }} /> {/* Code */}
+                  <col style={{ width: '20%' }} /> {/* Designation */}
+                  <col style={{ width: '10%' }} /> {/* TVA */}
+                  <col style={{ width: '10%' }} /> {/* X */}
+                  <col style={{ width: '30%' }} /> {/* Description */}
+                  <col style={{ width: '20%' }} /> {/* Actions */}
+                </colgroup>
 
-            <thead>
-              <tr className="bg-gray-100 sticky top-0">
-                <th className="py-2 px-2 text-left">Code Tarrifaire</th>
-                <th className="py-2 px-2 text-left">Designation</th>
-                <th className="py-2 px-2 text-left">TVA</th>
-                <th className="py-2 px-2 text-left">X % du Montant</th>
-                <th className="py-2 px-2 text-left">TTC et autres détails</th>
-                <th className="py-2 px-2 text-left">Actions</th>
-              </tr>
-            </thead>
-            {!isFetching &&
-              <tbody>
-                {tarrifs.map((t, idx) => (
-                  <tr key={t.id || t._id || idx} className="even:bg-gray-100 odd:bg-gray-200">
-                    <td>
-                      <input
-                        type="text"
-                        value={t.tarrifCode}
-                        disabled
-                        className="w-20 px-1 py-1 rounded bg-none "
-                      />
-                    </td>
-                    <td className="">
-                      <div className="w-full px-2 py-1  rounded  whitespace-pre-wrap break-words min-h-[48px]">
-                        {t.designation}
-                      </div>
-                    </td>
-                    <td>
-                      <div className="flex items-center">
+                <thead>
+                  <tr className="bg-gray-100 sticky top-0">
+                    <th className="py-2 px-2 text-left">Code Tarrifaire</th>
+                    <th className="py-2 px-2 text-left">Designation</th>
+                    <th className="py-2 px-2 text-left">TVA</th>
+                    <th className="py-2 px-2 text-left">X % du Montant</th>
+                    <th className="py-2 px-2 text-left">TTC et autres détails</th>
+                    <th className="py-2 px-2 text-left">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tarrifs.map((t, idx) => (
+                    <tr key={t.id || t._id || idx} className="even:bg-gray-100 odd:bg-gray-200">
+                      <td>
                         <input
                           type="text"
-                          value={`${Number(t.TVA).toFixed(2)}%`}
+                          value={t.tarrifCode}
                           disabled
-                          className="w-20 px-2 py-1  rounded  "
+                          className="w-20 px-1 py-1 rounded bg-none "
                         />
-                      </div>
-                    </td>
-                    <td>
-                      <input
-                        type="text"
-                        value={`${Number(t.x).toFixed(2)}%`}
-                        disabled
-                        className="w-full px-2 py-1  rounded"
-                      />
-                    </td>
-                    <td className="align-top">
-                      <div className="w-full px-2 py-1 rounded whitespace-pre-wrap break-words min-h-[48px] max-w-[260px]">
-                        {t.description}
-                      </div>
-                    </td>
-                    <td className="align-middle">
-                      <div className="flex gap-2 items-center justify-center h-full">
-                        <button
-                          onClick={() => handleEdit(idx)}
-                          className="mr-2 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
-                        >
-                          Modifier
-                        </button>
-                        <button
-                          onClick={() => handleDelete(idx)}
-                          className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
-                        >
-                          Supprimer
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            }
-          </table>
-        </div>
-        <button
-          onClick={handleAddNew}
-          disabled={loading || isFetching}
-          className="mb-4 bg-blue-700 text-white border-none px-4 py-2 rounded-lg hover:bg-blue-800"
-        >
-          {showForm ? 'Fermer le formulaire' : '+  Ajouter un nouveau tarrif'}
-        </button>
-        {showForm && (
-          <div className="bg-gray-100 p-4 rounded mb-4 shadow">
-            <div className="flex flex-wrap gap-3 mb-3">
-              {/* Removed tarrifCode input */}
-              <input
-                name="designation"
-                placeholder="Designation"
-                required
-                value={form.designation}
-                onChange={handleChange}
-                className="flex-2 min-w-[280px] px-2 py-1 border border-gray-300 rounded"
-              />
-              <div className="flex items-center">
-                <input
-                  name="TVA"
-                  placeholder="TVA"
-                  required
-                  type="number"
-                  value={form.TVA}
-                  onChange={handleChange}
-                  className="w-20 px-2 py-1 border border-gray-300 rounded"
-                />
-                <span className="ml-1 text-gray-500">%</span>
-              </div>
-              <div className="flex items-center">
-                <input
-                  name="x"
-                  placeholder="X (1-100)"
-                  type="number"
-                  step="0.01"
-                  min="1"
-                  max="100"
-                  value={form.x}
-                  onChange={handleChange}
-                  className="w-20 px-2 py-1 border border-gray-300 rounded"
-                />
-                <span className="ml-1 text-gray-500">%</span>
-              </div>
-              <input
-                name="description"
-                placeholder="Description"
-                type="text"
-                value={form.description}
-                onChange={handleChange}
-                className="flex-1 min-w-96 px-2 py-1 border border-gray-300 rounded"
-              />
+                      </td>
+                      <td className="">
+                        <div className="w-full px-2 py-1  rounded  whitespace-pre-wrap break-words min-h-[48px]">
+                          {t.designation}
+                        </div>
+                      </td>
+                      <td>
+                        <div className="flex items-center">
+                          <input
+                            type="text"
+                            value={`${Number(t.TVA).toFixed(2)}%`}
+                            disabled
+                            className="w-20 px-2 py-1  rounded  "
+                          />
+                        </div>
+                      </td>
+                      <td>
+                        <input
+                          type="text"
+                          value={`${Number(t.x).toFixed(2)}%`}
+                          disabled
+                          className="w-full px-2 py-1  rounded"
+                        />
+                      </td>
+                      <td className="align-top">
+                        <div className="w-full px-2 py-1 rounded whitespace-pre-wrap break-words min-h-[48px] max-w-[260px]">
+                          {t.description}
+                        </div>
+                      </td>
+                      <td className="align-middle">
+                        <div className="flex gap-2 items-center justify-center h-full">
+                          <button
+                            onClick={() => handleEdit(idx)}
+                            className="mr-2 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                          >
+                            Modifier
+                          </button>
+                          <button
+                            onClick={() => handleDelete(idx)}
+                            className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                          >
+                            Supprimer
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-            {error && (
-              <div className="text-red-600 text-sm mb-2">{error}</div>
+            <button
+              onClick={handleAddNew}
+              disabled={loading || isFetching}
+              className="mb-4 bg-blue-700 text-white border-none px-4 py-2 rounded-lg hover:bg-blue-800"
+            >
+              {showForm ? 'Fermer le formulaire' : '+  Ajouter un nouveau tarrif'}
+            </button>
+            {showForm && (
+              <div className="bg-gray-100 p-4 rounded mb-4 shadow">
+                <div className="flex flex-wrap gap-3 mb-3">
+                  {/* Removed tarrifCode input */}
+                  <input
+                    name="designation"
+                    placeholder="Designation"
+                    required
+                    value={form.designation}
+                    onChange={handleChange}
+                    className="flex-2 min-w-[280px] px-2 py-1 border border-gray-300 rounded"
+                  />
+                  <div className="flex items-center">
+                    <input
+                      name="TVA"
+                      placeholder="TVA (ex: 20,5)"
+                      required
+                      type="text"
+                      value={form.TVA}
+                      onChange={handleChange}
+                      className="w-20 px-2 py-1 border border-gray-300 rounded"
+                    />
+                    <span className="ml-1 text-gray-500">%</span>
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      name="x"
+                      placeholder="X (ex: 99,5)"
+                      type="text"
+                      value={form.x}
+                      onChange={handleChange}
+                      className="w-20 px-2 py-1 border border-gray-300 rounded"
+                    />
+                    <span className="ml-1 text-gray-500">%</span>
+                  </div>
+                  <input
+                    name="description"
+                    placeholder="Description"
+                    type="text"
+                    value={form.description}
+                    onChange={handleChange}
+                    className="flex-1 min-w-96 px-2 py-1 border border-gray-300 rounded"
+                  />
+                </div>
+                {error && (
+                  <div className="text-red-600 text-sm mb-2">{error}</div>
+                )}
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleSave}
+                    className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800"
+                  >
+                    {editingIndex !== null ? 'Mise à jour' : 'Ajouter'}
+                  </button>
+                  <button
+                    onClick={() => { setShowForm(false); setEditingIndex(null); setError(""); }}
+                    className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </div>
             )}
-            <div className="flex gap-3">
-              <button
-                onClick={handleSave}
-                className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800"
-              >
-                {editingIndex !== null ? 'Mise à jour' : 'Ajouter'}
-              </button>
-              <button
-                onClick={() => { setShowForm(false); setEditingIndex(null); setError(""); }}
-                className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
-              >
-                Annuler
-              </button>
-            </div>
           </div>
-        )}
-      </div>
-    </div>
         )}
       </div>
     </div>
