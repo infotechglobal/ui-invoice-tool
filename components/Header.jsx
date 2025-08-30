@@ -205,7 +205,7 @@ return (
                 </p>
             </div>
             
-            <div className='flex flex-wrap items-center gap-2'>
+            <div className='flex flex-wrap items-center gap-2 px-4'>
                 <Button size="sm" className="bg-downloadButton-200 text-white hover:bg-downloadButton-300 transition-colors text-xs px-3 py-2">
                     <ArrowUp className='mr-1' size={14} strokeWidth={2} />
                     <span className="hidden sm:inline">Mise à jour:</span>
@@ -243,20 +243,21 @@ return (
 
       {/* Action Buttons (pushed to right) */}
       <div className="flex items-center gap-2 ml-auto">
+   
+        
         <Button
+          className="bg-downloadButton-200 text-white hover:bg-downloadButton-300 transition-colors h-10 px-4 text-sm flex items-center"
+          onClick={openInDrive}
+        >
+         Ouvrir dans Drive
+        </Button>
+             <Button
           className="bg-downloadButton-200 text-white hover:bg-downloadButton-300 transition-colors h-10 px-4 text-sm flex items-center"
           onClick={handleDownload}
           disabled={isLoading}
         >
           <Download className="mr-1" size={14} strokeWidth={2} />
           Télécharger
-        </Button>
-        
-        <Button
-          className="bg-downloadButton-200 text-white hover:bg-downloadButton-300 transition-colors h-10 px-4 text-sm flex items-center"
-          onClick={openInDrive}
-        >
-          Ouvrir Drive
         </Button>
       </div>
     </div>
