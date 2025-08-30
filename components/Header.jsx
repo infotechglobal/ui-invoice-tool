@@ -104,7 +104,7 @@ const fallbackDownload = (blob, fileName) => {
     window.URL.revokeObjectURL(url);
 };
 
-function Header({ isInvoice }) {
+function Header({ isInvoice, parentFolderId }) {
     const { fileName } = useFileNameStore();
     const { updatedAt, setupdatedAt } = useUpdatedInvoiceTime();
     const { invoiceData } = useInvoiceData();
@@ -136,7 +136,11 @@ function Header({ isInvoice }) {
         setSearchTerm(e.target.value);
         filterInvoices(e.target.value,date);
     };
-
+        const openInDrive = () => {
+        if (parentFolderId !== null) {
+            window.open(`https://drive.google.com/drive/folders/${parentFolderId}`);
+        }
+    };
 
     const filterbyDate= (date)=>{
 
@@ -180,65 +184,88 @@ function Header({ isInvoice }) {
     
         setFilteredInvoiceData(filteredData);
     };
-    return (
-        <div className="header flex flex-col">
-            <div className='flex justify-between'>
-                <div className='w-[50vw] flex items-center justify-between'>
-                    <h3 className="text-violet-gray-900 font-archivo text-[30px] font-bold leading-[32px] normal-font-style">
-                        {fileName?.length > 25 ? `${fileName.substring(0, 25)}...` : fileName}
+return (
+    <div className="space-y-4">
+        {/* Title Section */}
+        <div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3'>
+            <div className='flex-1 min-w-0'>
+                <div className='flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-6'>
+                    <h3 className="text-2xl font-bold text-violet-gray-900 font-archivo truncate">
+                        {fileName?.length > 35 ? `${fileName.substring(0, 35)}...` : fileName}
                     </h3>
-                    <h3 className='font-archivo ml-3 mt-1 text-lg font-semibold'>
-                        Résumé de la facture
-                    </h3>
+                    <div className='flex items-center gap-2'>
+                        <div className='hidden lg:block w-px h-5 bg-gray-300'></div>
+                        <h3 className='text-lg font-semibold text-gray-700 font-archivo'>
+                            Résumé de la facture
+                        </h3>
+                    </div>
                 </div>
-                <div className='flex items-end'>
-                    <Button size="btn" className="bg-downloadButton-200 h-6">
-                        <ArrowUp className='mr-2 mt-0' size={16} color="#f6faff" strokeWidth={3} />
-                        Dernière mise à jour : {formatDate(updatedAt)}
-                    </Button>
-                    <Button size="btn" className="bg-downloadButton-200 h-6 ml-3" onClick={handleBack}>
-                        <ArrowLeft className='mr-2 mt-0' size={16} color="#f6faff" />Retourner
-                    </Button>
-                </div>
+                <p className='text-gray-600 font-archivo mt-2'>
+                    Sélectionnez Client pour afficher les détails
+                </p>
             </div>
-            <div className='mt-1'>
-                <h3 className='text-violet-gray-800 font-archivo text-custom-18 font-normal leading-custom-24'>Sélectionnez Client pour afficher les détails</h3>
-            </div>
-            <div className="mt-3 flex gap-3 items-center">
-                {/* Search bar with icon inside */}
-                <div className="flex items-center border border-gray-300 rounded-md px-3 h-9 bg-white">
-                    <Search size={16} color="#403A44" strokeWidth={1.75} className="mr-2" />
-                    <input
-                        className="outline-none text-sm text-gray-700 placeholder:text-gray-400 bg-transparent h-7"
-                        placeholder="Recherche"
-                        value={searchTerm}
-                        onChange={handleSearch}
-                    />
-                </div>
-
-                {isInvoice && (
-                    <>
-                        {/* Date Picker */}
-                        <div className="flex items-center h-9">
-                            <DatePicker className="h-7" filter={filterbyDate} />
-                        </div>
-
-                        {/* Download Button pushed to right */}
-                        <div className="ml-auto">
-                            <Button
-                                className="bg-downloadButton-200 h-7"
-                                onClick={handleDownload}
-                                disabled={isLoading}
-                            >
-                                <Download className="mr-2" size={16} color="#f6faff" />
-                                Télécharger des données
-                            </Button>
-                        </div>
-                    </>
-                )}
+            
+            <div className='flex flex-wrap items-center gap-2'>
+                <Button size="sm" className="bg-downloadButton-200 text-white hover:bg-downloadButton-300 transition-colors text-xs px-3 py-2">
+                    <ArrowUp className='mr-1' size={14} strokeWidth={2} />
+                    <span className="hidden sm:inline">Mise à jour:</span>
+                    <span className="font-medium ml-1">{formatDate(updatedAt)}</span>
+                </Button>
+                <Button size="sm" className="bg-downloadButton-200 text-white hover:bg-downloadButton-300 transition-colors text-xs px-8 py-2" onClick={handleBack}>
+                    <ArrowLeft className='mr-1' size={14} strokeWidth={2} />
+                    Retour
+                </Button>
             </div>
         </div>
-    );
+
+
+<div className="flex flex-col sm:flex-row items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+  
+  {/* Search bar */}
+  <div className="flex items-center flex-1 max-w-sm h-10 border border-gray-300 rounded-md bg-white px-3">
+    <Search size={14} className="text-gray-500 mr-2" strokeWidth={2} />
+    <input
+      type="text"
+      className="w-full text-sm placeholder-gray-500 focus:outline-none"
+      placeholder="Recherche..."
+      value={searchTerm}
+      onChange={handleSearch}
+    />
+  </div>
+
+  {isInvoice && (
+    <div className="flex flex-1 items-center gap-3">
+      
+      {/* Date Picker */}
+      <div className="flex h-10 flex-1 max-w-xs">
+        <DatePicker className="h-full w-full text-sm" filter={filterbyDate} />
+      </div>
+
+      {/* Action Buttons (pushed to right) */}
+      <div className="flex items-center gap-2 ml-auto">
+        <Button
+          className="bg-downloadButton-200 text-white hover:bg-downloadButton-300 transition-colors h-10 px-4 text-sm flex items-center"
+          onClick={handleDownload}
+          disabled={isLoading}
+        >
+          <Download className="mr-1" size={14} strokeWidth={2} />
+          Télécharger
+        </Button>
+        
+        <Button
+          className="bg-downloadButton-200 text-white hover:bg-downloadButton-300 transition-colors h-10 px-4 text-sm flex items-center"
+          onClick={openInDrive}
+        >
+          Ouvrir Drive
+        </Button>
+      </div>
+    </div>
+  )}
+</div>
+
+
+    </div>
+);
 }
 
 export default Header;
