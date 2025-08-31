@@ -20,14 +20,15 @@ import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 
 export function CustomTable({ invoiceData }) {
-    const rowPerPage = 6;
+    // Change from 6 to 8 records per page
+    const rowPerPage = 8;
     const [pageNo, setPageNo] = useState(1);
     const [startIndex, setStartIndex] = useState(0);
     const [endIndex, setEndIndex] = useState(rowPerPage);
     const [fileData, setFileData] = useState([]);
     const scrollContainerRef = useRef(null);
     const tableRef = useRef(null);
-    
+
     useEffect(() => {
         // Check if `window` is defined and `localStorage` is available
         if (typeof window !== 'undefined' && localStorage.getItem('fileData')) {
@@ -64,12 +65,12 @@ export function CustomTable({ invoiceData }) {
         <div className="flex flex-col h-full max">
             {/* Table Container with horizontal scroll */}
             <div className="flex-1 flex flex-col min-h-0">
-                <div 
+                <div
                     ref={scrollContainerRef}
                     className="flex-1 overflow-x-auto overflow-y-hidden border border-gray-200 rounded-xl shadow-md bg-white"
                     style={{ scrollbarWidth: 'thin' }}
                 >
-                    <Table 
+                    <Table
                         ref={tableRef}
                         className="w-full min-w-[1200px] text-sm text-gray-700"
                     >
@@ -106,13 +107,21 @@ export function CustomTable({ invoiceData }) {
                         </TableHeader>
                         <TableBody>
                             {invoiceData?.slice(startIndex, endIndex).map((user, index) => (
-                                <TableRow
-                                    key={index}
-                                    className="hover:bg-gray-50 transition-colors duration-200 border-b border-gray-100 cursor-pointer group"
-                                    onClick={() => window.location.href = `/admin/profile/${user.accountNo}`}
-                                >
+                            <TableRow
+  key={index}
+  className="
+    border-b border-gray-100 cursor-pointer group
+    transition-all duration-300 ease-in-out
+    hover:bg-gradient-to-r hover:from-blue-50 hover:to-white
+    hover:shadow-lg hover:shadow-blue-100/60
+    hover:scale-[1.002] hover:border-blue-200
+    rounded-md
+  "
+  onClick={() => window.location.href = `/admin/profile/${user.accountNo}`}
+>
+
                                     <TableCell className="px-4 py-4">
-                                        <Link 
+                                        <Link
                                             href={`/admin/profile/${user.accountNo}`}
                                             className="font-medium text-blue-600 hover:text-blue-800 underline decoration-1 underline-offset-2 hover:decoration-2 transition-all duration-200"
                                         >
@@ -145,7 +154,7 @@ export function CustomTable({ invoiceData }) {
                                         <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
                                             {`${user.TVA}%`}
                                         </span>
-                                    </TableCell>   
+                                    </TableCell>
                                     <TableCell className="px-4 py-4 text-right font-bold text-gray-900">
                                         {formatCurrency(user.TTC)}
                                     </TableCell>
@@ -155,82 +164,83 @@ export function CustomTable({ invoiceData }) {
                     </Table>
                 </div>
 
-       
+
             </div>
 
             {/* Enhanced Pagination */}
             <div className="flex-shrink-0 mt-6">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between px-4">
                     {/* Results info */}
-                    <div className="text-sm text-gray-600">
+                    <div className="text-sm text-gray-600 w-[200px]">
                         Affichage {startIndex + 1} à {Math.min(endIndex, invoiceData?.length || 0)} sur {invoiceData?.length || 0} résultats
                     </div>
 
-                    {/* Pagination controls */}
-                    <Pagination>
-                        <PaginationContent className="gap-1">
-                            <PaginationItem>
-                                <PaginationPrevious
-                                    className={`rounded-lg px-3 py-2 text-sm border transition-all duration-200 ${
-                                        startIndex === 0 
-                                            ? "pointer-events-none opacity-40 bg-gray-50 text-gray-400 border-gray-200" 
+                    {/* Centered Pagination controls */}
+                    <div className="flex-1 flex justify-center">
+                        <Pagination>
+                            <PaginationContent className="gap-1">
+                                <PaginationItem>
+                                    <PaginationPrevious
+                                        className={`rounded-lg px-3 py-2 text-sm border transition-all duration-200 ${
+                                            startIndex === 0
+                                                ? "pointer-events-none opacity-40 bg-gray-50 text-gray-400 border-gray-200"
+                                                : "hover:bg-gray-100 bg-white text-gray-700 border-gray-300 hover:border-gray-400 shadow-sm hover:shadow"
+                                        }`}
+                                        onClick={handlePreviousClick}
+                                    />
+                                </PaginationItem>
+
+                                {/* Page numbers */}
+                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                    let pageNumber;
+                                    if (totalPages <= 5) {
+                                        pageNumber = i + 1;
+                                    } else if (pageNo <= 3) {
+                                        pageNumber = i + 1;
+                                    } else if (pageNo >= totalPages - 2) {
+                                        pageNumber = totalPages - 4 + i;
+                                    } else {
+                                        pageNumber = pageNo - 2 + i;
+                                    }
+
+                                    return (
+                                        <PaginationItem key={pageNumber}>
+                                            <PaginationLink
+                                                href="#"
+                                                className={`px-3 py-2 rounded-lg text-sm border transition-all duration-200 ${pageNumber === pageNo
+                                                        ? "bg-blue-600 text-white border-blue-600 shadow-md"
+                                                        : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400 shadow-sm hover:shadow"
+                                                    }`}
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    const newStartIndex = (pageNumber - 1) * rowPerPage;
+                                                    const newEndIndex = newStartIndex + rowPerPage;
+                                                    setPageNo(pageNumber);
+                                                    setStartIndex(newStartIndex);
+                                                    setEndIndex(newEndIndex);
+                                                }}
+                                            >
+                                                {pageNumber}
+                                            </PaginationLink>
+                                        </PaginationItem>
+                                    );
+                                })}
+
+                                <PaginationItem>
+                                    <PaginationNext
+                                        className={`rounded-lg px-3 py-2 text-sm border transition-all duration-200 ${endIndex >= (invoiceData?.length || 0)
+                                            ? "pointer-events-none opacity-40 bg-gray-50 text-gray-400 border-gray-200"
                                             : "hover:bg-gray-100 bg-white text-gray-700 border-gray-300 hover:border-gray-400 shadow-sm hover:shadow"
-                                    }`}
-                                    onClick={handlePreviousClick}
-                                />
-                            </PaginationItem>
+                                        }`}
+                                        onClick={handleNextClick}
+                                    />
+                                </PaginationItem>
+                            </PaginationContent>
+                        </Pagination>
+                    </div>
 
-                            {/* Page numbers */}
-                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                                let pageNumber;
-                                if (totalPages <= 5) {
-                                    pageNumber = i + 1;
-                                } else if (pageNo <= 3) {
-                                    pageNumber = i + 1;
-                                } else if (pageNo >= totalPages - 2) {
-                                    pageNumber = totalPages - 4 + i;
-                                } else {
-                                    pageNumber = pageNo - 2 + i;
-                                }
-
-                                return (
-                                    <PaginationItem key={pageNumber}>
-                                        <PaginationLink
-                                            href="#"
-                                            className={`px-3 py-2 rounded-lg text-sm border transition-all duration-200 ${
-                                                pageNumber === pageNo
-                                                    ? "bg-blue-600 text-white border-blue-600 shadow-md"
-                                                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400 shadow-sm hover:shadow"
-                                            }`}
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                const newStartIndex = (pageNumber - 1) * rowPerPage;
-                                                const newEndIndex = newStartIndex + rowPerPage;
-                                                setPageNo(pageNumber);
-                                                setStartIndex(newStartIndex);
-                                                setEndIndex(newEndIndex);
-                                            }}
-                                        >
-                                            {pageNumber}
-                                        </PaginationLink>
-                                    </PaginationItem>
-                                );
-                            })}
-
-                            <PaginationItem>
-                                <PaginationNext
-                                    className={`rounded-lg px-3 py-2 text-sm border transition-all duration-200 ${
-                                        endIndex >= (invoiceData?.length || 0)
-                                            ? "pointer-events-none opacity-40 bg-gray-50 text-gray-400 border-gray-200" 
-                                            : "hover:bg-gray-100 bg-white text-gray-700 border-gray-300 hover:border-gray-400 shadow-sm hover:shadow"
-                                    }`}
-                                    onClick={handleNextClick}
-                                />
-                            </PaginationItem>
-                        </PaginationContent>
-                    </Pagination>
-
-         
+                    {/* Empty div for symmetrical spacing */}
+                    <div className="w-[200px]"></div>
                 </div>
             </div>
         </div>
