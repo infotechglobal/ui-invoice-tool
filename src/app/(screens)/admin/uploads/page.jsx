@@ -603,73 +603,75 @@ function Uploads({ isInvoice = true }) {
     return null;
   }
   const isAnyFileProcessing = uploadedFiles?.some(file => file.isProcessing);
+return (
+  <div className="flex flex-col h-screen pr-6">
+    {/* Custom Notification */}
+    <CustomNotification
+      isVisible={notification.isVisible}
+      message={notification.message}
+      type={notification.type}
+      onClose={hideNotification}
+      duration={5000}
+    />
 
-  return (
-    <div className='px-1 pt-1 flex flex-col '>
-      {/* Custom Notification */}
-      <CustomNotification
-        isVisible={notification.isVisible}
-        message={notification.message}
-        type={notification.type}
-        onClose={hideNotification}
-        duration={5000}
-      />
-      {/* header */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 m">
-        <div className="flex justify-between items-start">
-          <div className="flex-1">
-            <h1 className="text-gray-900 font-semibold text-2xl mb-2">
-              Fichiers téléchargés
-            </h1>
-            <p className='text-gray-600 text-sm leading-relaxed'>
-              Cliquez sur Aperçu pour afficher les détails de la facture
-            </p>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center gap-3 ml-6">
-            <button
-              onClick={authenticate}
-              disabled={isAnyFileProcessing}
-              className={`px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors duration-200 shadow-sm ${isAnyFileProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              Authentifier
-            </button>
-            <button
-              className={`px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg flex items-center gap-2 transition-colors duration-200 shadow-sm ${isLoading || isAnyFileProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
-              onClick={handleUploadClick}
-              disabled={isLoading || isAnyFileProcessing}
-            >
-              <Upload size={16} />
-              Téléverser un fichier
-              <input
-                type="file"
-                className='hidden'
-                ref={inputFileRef}
-                onChange={handleChange}
-                accept=".csv, .xlsx"
-              />
-            </button>
-          </div>
+    {/* Header - Fixed at top */}
+    <div className="flex-shrink-0 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4">
+        <div className="flex-1">
+          <h1 className="text-gray-900 font-semibold text-xl lg:text-2xl mb-2">
+            Fichiers téléchargés
+          </h1>
+          <p className='text-gray-600 text-sm leading-relaxed'>
+            Cliquez sur Aperçu pour afficher les détails de la facture
+          </p>
         </div>
 
-        {/* Filters and Search Section */}
-        <div className="mt-6 pt-4 border-t border-gray-200">
-          <div className="flex items-center justify-between gap-4">
-            {/* Search Input */}
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} strokeWidth={1.5} />
-              <input
-                className="w-full h-10 pl-10 pr-4 border border-gray-300 rounded-lg bg-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Rechercher un fichier..."
-                disabled={isLoading}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <button
+            onClick={authenticate}
+            disabled={isAnyFileProcessing}
+            className={`px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors duration-200 shadow-sm text-sm ${isAnyFileProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            Authentifier
+          </button>
+          <button
+            className={`px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg flex items-center justify-center gap-2 transition-colors duration-200 shadow-sm text-sm ${isLoading || isAnyFileProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+            onClick={handleUploadClick}
+            disabled={isLoading || isAnyFileProcessing}
+          >
+            <Upload size={16} />
+            <span className="hidden sm:inline">Téléverser un fichier</span>
+            <span className="sm:hidden">Upload</span>
+            <input
+              type="file"
+              className='hidden'
+              ref={inputFileRef}
+              onChange={handleChange}
+              accept=".csv, .xlsx"
+            />
+          </button>
+        </div>
+      </div>
 
-            {/* Filter Controls */}
-            <div className="flex items-center gap-3">
+      {/* Filters and Search Section */}
+      <div className="mt-6 pt-4 border-t border-gray-200">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          {/* Search Input */}
+          <div className="relative flex-1 max-w-full lg:max-w-sm">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} strokeWidth={1.5} />
+            <input
+              className="w-full h-10 pl-10 pr-4 border border-gray-300 rounded-lg bg-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Rechercher un fichier..."
+              disabled={isLoading}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          {/* Filter Controls */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+            <div className="flex flex-col sm:flex-row gap-3">
               <select
                 className={`h-10 px-3 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isLoading || isAnyFileProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
                 onChange={(e) => setSelectedYear(e.target.value)}
@@ -691,31 +693,36 @@ function Uploads({ isInvoice = true }) {
                   <option key={month} value={month}>{dayjs().month(month - 1).format('MMMM')}</option>
                 ))}
               </select>
+            </div>
 
+            <div className="flex flex-col sm:flex-row gap-3">
               <button
-                className={`px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors duration-200 shadow-sm ${isLoading || isAnyFileProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors duration-200 shadow-sm text-sm ${isLoading || isAnyFileProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
                 onClick={() => setShowTarrifDialog(true)}
                 disabled={isLoading || isAnyFileProcessing}
               >
-                Gérer Tarif
+                <span className="hidden sm:inline">Gérer Tarif</span>
+                <span className="sm:hidden">Tarif</span>
               </button>
               <TarrifDialog open={showTarrifDialog} onClose={() => setShowTarrifDialog(false)} />
 
               <Button
                 onClick={openInDrive}
-                className="px-4 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 rounded-lg flex items-center gap-2 font-medium transition-colors duration-200 shadow-sm"
+                className="px-4 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 rounded-lg flex items-center justify-center gap-2 font-medium transition-colors duration-200 shadow-sm text-sm"
                 disabled={isLoading}
               >
                 <Image src={driveIcon} alt="Drive Icon" className="w-4 h-4" />
-                Afficher dans Drive
+                <span className="hidden sm:inline">Afficher dans Drive</span>
+                <span className="sm:hidden">Drive</span>
               </Button>
             </div>
           </div>
         </div>
       </div>
+    </div>
 
-      {/* files */}
-      <div className='max-h-[82vh] overflow-y-scroll px-2'>
+    {/* Files Content - Scrollable area */}
+<div className='flex-1 min-h-0 overflow-y-auto px-4 py-4'>
         {filteredFiles?.map((item, index) => (
           <div key={index} className="flex items-center gap-7 self-stretch files mt-[20px]">
             <div className={`flex justify-between w-full rounded-lg p-2 space-y-4 border-black shadow-custom 
@@ -827,29 +834,36 @@ function Uploads({ isInvoice = true }) {
           </div>
         ))}
       </div>
-      <div className="fixed bottom-6 left-[60%] transform -translate-x-1/2 z-20 bg-white/90 border border-gray-200 shadow-lg px-6 py-2 rounded-lg flex items-center justify-center gap-6 max-w-md w-fit">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-          <span className="text-gray-700 text-sm font-medium">Total: {filteredFiles?.length || 0}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-green-500"></div>
-          <span className="text-gray-700 text-sm font-medium">Traités: {filteredFiles?.filter(f => f.isProcessed).length || 0}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-orange-500"></div>
-          <span className="text-gray-700 text-sm font-medium">Non traités: {filteredFiles?.filter(f => !f.isProcessed).length || 0}</span>
+
+    {/* Summary - Fixed at bottom */}
+    <div className="flex-shrink-0 bg-gradient-to-r from-gray-50 to-white border-t border-gray-200 shadow-lg z-30">
+      <div className="flex items-center justify-center py-4 px-6">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 max-w-4xl">
+          <div className="flex items-center justify-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-blue-500 shadow-sm"></div>
+            <span className="text-gray-700 text-sm font-semibold">Total: {filteredFiles?.length || 0}</span>
+          </div>
+          <div className="flex items-center justify-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-green-500 shadow-sm"></div>
+            <span className="text-gray-700 text-sm font-semibold">Traités: {filteredFiles?.filter(f => f.isProcessed).length || 0}</span>
+          </div>
+          <div className="flex items-center justify-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-orange-500 shadow-sm"></div>
+            <span className="text-gray-700 text-sm font-semibold">Non traités: {filteredFiles?.filter(f => !f.isProcessed).length || 0}</span>
+          </div>
         </div>
       </div>
-      <UploadErrorsDialog
-        errors={uploadErrors}
-        open={showErrorsDialog}
-        onClose={() => setShowErrorsDialog(false)}
-      />
-      <InvoiceProgressOverlay isVisible={progress.isVisible} progress={progress} />
     </div>
 
-  )
+    <UploadErrorsDialog
+      errors={uploadErrors}
+      open={showErrorsDialog}
+      onClose={() => setShowErrorsDialog(false)}
+    />
+    <InvoiceProgressOverlay isVisible={progress.isVisible} progress={progress} />
+  </div>
+);
+
 }
 
 export default Uploads;
