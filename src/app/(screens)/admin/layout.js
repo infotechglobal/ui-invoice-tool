@@ -18,11 +18,11 @@ export default function ScreensLayout({ children }) {
   }, [fetchData]);
 
   return (
-    <div className="flex bg-sidebarBG">
+    <div className="flex bg-sidebarBG ">
       <div className="w-[280px] h-[100vh] flex-shrink-0">
         <Sidebar />
       </div>
-      <div className="flex-grow border-2 border-inherit">
+      <div className="flex-1 overflow-hidden">
         {children}
       </div>
     </div>

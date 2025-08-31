@@ -18,7 +18,7 @@ export default function RootLayout({ children }) {
         <title>{metadata.title}</title>
         <meta name="description" content={metadata.description} />
       </head>
-      <body>
+      <body className="overflow-y-hidden">
         <SocketProvider>
           <div>
             {children}
