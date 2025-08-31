@@ -34,11 +34,7 @@ function Dashboard() {
     const addFile = useFileStore((state) => state.addNewFiles);
 
 
-    const openInDrive = () => {
-        if (parentFolderId !== null) {
-            window.open(`https://drive.google.com/drive/folders/${parentFolderId}`);
-        }
-    };
+ 
 
     useEffect(() => {
         const fetchInvoiceInfo = async () => {
@@ -173,29 +169,25 @@ function Dashboard() {
         }
     }, [driveId]);
 
-    return (
-        <div className='pt-2 pr-2 pl-3 flex flex-col'>
-            {/* Header */}
-            <Header isInvoice={true} />
 
-            {/* Main content */}
-            <div className='main flex flex-col pt-5'>
-                {/* Dropdown, download, upload to drive button */}
-                <div className='dropdowns flex gap-x-5'>
-                    {/* Dropdown */}
-                    {/* <SelectScrollable /> */}
-
-                    {/* Upload to drive button */}
-                    <Button onClick={openInDrive} variant="downloadBtn">Ouvrir dans Drive</Button>
-                </div>
-                {/* Table */}
-                <section className='mt-6'>
-                    <CustomTable invoiceData={filteredInvoiceData} />
-                </section>
+return (
+    <div className='h-screen overflow-hidden'>
+        <div className='h-full flex flex-col'>
+            {/* Header - Fixed height */}
+            <div className='flex-shrink-0 px-6 py-4 border-b border-gray-200'>
+                <Header isInvoice={true} parentFolderId={parentFolderId}/>
             </div>
 
+            {/* Main content - Flexible height */}
+            <div className='flex-1 px-6 py-4 overflow-hidden'>
+                {/* Table Section */}
+                <div className='h-full'>
+                    <CustomTable invoiceData={filteredInvoiceData} />
+                </div>
+            </div>
         </div>
-    );
+    </div>
+);
 }
 
 export default Dashboard;
