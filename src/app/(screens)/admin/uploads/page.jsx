@@ -24,6 +24,15 @@ import { useSocket } from '../../../../context/SocketContext';
 import InvoiceProgressOverlay from '../../../../../components/InvoiceProgressOverlay';
 import CustomNotification from '../../../../../components/CustomNotification'; // Import custom notification
 import { ChevronRight, Play, Loader2, Eye } from 'lucide-react';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+
 const saveFile = async (blob, fileName) => {
   const { showAlert, hideAlert } = useAlertMessage.getState();
   if ('showSaveFilePicker' in window) {
@@ -83,6 +92,14 @@ function Uploads({ isInvoice = true }) {
   const [showTarrifDialog, setShowTarrifDialog] = useState(false);
   const [showErrorsDialog, setShowErrorsDialog] = useState(false);
   const [driveAuth, setDriveAuth] = useState(false);
+
+  const rowPerPage = 5;
+  const [pageNo, setPageNo] = useState(1);
+  const [startIndex, setStartIndex] = useState(0);
+  const [endIndex, setEndIndex] = useState(rowPerPage);
+
+
+
 
   // Custom notification state
   const [notification, setNotification] = useState({
@@ -599,131 +616,149 @@ function Uploads({ isInvoice = true }) {
 
   const filteredFiles = filterFiles();
 
+  const handlePreviousClick = () => {
+    if (startIndex > 0) {
+      setPageNo(pageNo - 1);
+      setStartIndex(startIndex - rowPerPage);
+      setEndIndex(endIndex - rowPerPage);
+    }
+  };
+
+  const handleNextClick = () => {
+    if (endIndex < filteredFiles?.length) {
+      setPageNo(pageNo + 1);
+      setStartIndex(startIndex + rowPerPage);
+      setEndIndex(endIndex + rowPerPage);
+    }
+  };
+
+  const totalPages = Math.ceil((filteredFiles?.length || 0) / rowPerPage);
+
   if (!hasMounted) {
     return null;
   }
   const isAnyFileProcessing = uploadedFiles?.some(file => file.isProcessing);
-return (
-  <div className="flex flex-col h-screen pr-6 pb-3">
-    {/* Custom Notification */}
-    <CustomNotification
-      isVisible={notification.isVisible}
-      message={notification.message}
-      type={notification.type}
-      onClose={hideNotification}
-      duration={5000}
-    />
+  return (
+    <div className="flex flex-col h-screen pr-6 pb-3">
+      {/* Custom Notification */}
+      <CustomNotification
+        isVisible={notification.isVisible}
+        message={notification.message}
+        type={notification.type}
+        onClose={hideNotification}
+        duration={5000}
+      />
 
-    {/* Header - Fixed at top */}
-    <div className="flex-shrink-0 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4">
-        <div className="flex-1">
-          <h1 className="text-gray-900 font-semibold text-xl lg:text-2xl mb-2">
-            Fichiers téléchargés
-          </h1>
-          <p className='text-gray-600 text-sm leading-relaxed'>
-            Cliquez sur Aperçu pour afficher les détails de la facture
-          </p>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          <button
-            onClick={authenticate}
-            disabled={isAnyFileProcessing}
-            className={`px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors duration-200 shadow-sm text-sm ${isAnyFileProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            Authentifier
-          </button>
-          <button
-            className={`px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg flex items-center justify-center gap-2 transition-colors duration-200 shadow-sm text-sm ${isLoading || isAnyFileProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
-            onClick={handleUploadClick}
-            disabled={isLoading || isAnyFileProcessing}
-          >
-            <Upload size={16} />
-            <span className="hidden sm:inline">Téléverser un fichier</span>
-            <span className="sm:hidden">Upload</span>
-            <input
-              type="file"
-              className='hidden'
-              ref={inputFileRef}
-              onChange={handleChange}
-              accept=".csv, .xlsx"
-            />
-          </button>
-        </div>
-      </div>
-
-      {/* Filters and Search Section */}
-      <div className="mt-6 pt-4 border-t border-gray-200">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          {/* Search Input */}
-          <div className="relative flex-1 max-w-full lg:max-w-sm">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} strokeWidth={1.5} />
-            <input
-              className="w-full h-10 pl-10 pr-4 border border-gray-300 rounded-lg bg-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Rechercher un fichier..."
-              disabled={isLoading}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+      {/* Header - Fixed at top */}
+      <div className="flex-shrink-0 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4">
+          <div className="flex-1">
+            <h1 className="text-gray-900 font-semibold text-xl lg:text-2xl mb-2">
+              Fichiers téléchargés
+            </h1>
+            <p className='text-gray-600 text-sm leading-relaxed'>
+              Cliquez sur Aperçu pour afficher les détails de la facture
+            </p>
           </div>
 
-          {/* Filter Controls */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <select
-                className={`h-10 px-3 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isLoading || isAnyFileProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
-                onChange={(e) => setSelectedYear(e.target.value)}
-                disabled={isLoading || isAnyFileProcessing}
-              >
-                <option value="all">Tous les ans</option>
-                {[...new Set(uploadedFiles?.map(file => dayjs(file.updatedAt).year()))].map(year => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <button
+              onClick={authenticate}
+              disabled={isAnyFileProcessing}
+              className={`px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors duration-200 shadow-sm text-sm ${isAnyFileProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              Authentifier
+            </button>
+            <button
+              className={`px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg flex items-center justify-center gap-2 transition-colors duration-200 shadow-sm text-sm ${isLoading || isAnyFileProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+              onClick={handleUploadClick}
+              disabled={isLoading || isAnyFileProcessing}
+            >
+              <Upload size={16} />
+              <span className="hidden sm:inline">Téléverser un fichier</span>
+              <span className="sm:hidden">Upload</span>
+              <input
+                type="file"
+                className='hidden'
+                ref={inputFileRef}
+                onChange={handleChange}
+                accept=".csv, .xlsx"
+              />
+            </button>
+          </div>
+        </div>
 
-              <select
-                className={`h-10 px-3 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isLoading || isAnyFileProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                disabled={isLoading || isAnyFileProcessing}
-              >
-                <option value="all">Tous les mois</option>
-                {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
-                  <option key={month} value={month}>{dayjs().month(month - 1).format('MMMM')}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                className={`px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors duration-200 shadow-sm text-sm ${isLoading || isAnyFileProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
-                onClick={() => setShowTarrifDialog(true)}
-                disabled={isLoading || isAnyFileProcessing}
-              >
-                <span className="hidden sm:inline">Gérer Tarif</span>
-                <span className="sm:hidden">Tarif</span>
-              </button>
-              <TarrifDialog open={showTarrifDialog} onClose={() => setShowTarrifDialog(false)} />
-
-              <Button
-                onClick={openInDrive}
-                className="px-4 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 rounded-lg flex items-center justify-center gap-2 font-medium transition-colors duration-200 shadow-sm text-sm"
+        {/* Filters and Search Section */}
+        <div className="mt-6 pt-4 border-t border-gray-200">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            {/* Search Input */}
+            <div className="relative flex-1 max-w-full lg:max-w-sm">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} strokeWidth={1.5} />
+              <input
+                className="w-full h-10 pl-10 pr-4 border border-gray-300 rounded-lg bg-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Rechercher un fichier..."
                 disabled={isLoading}
-              >
-                <Image src={driveIcon} alt="Drive Icon" className="w-4 h-4" />
-                <span className="hidden sm:inline">Afficher dans Drive</span>
-                <span className="sm:hidden">Drive</span>
-              </Button>
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            {/* Filter Controls */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <select
+                  className={`h-10 px-3 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isLoading || isAnyFileProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  onChange={(e) => setSelectedYear(e.target.value)}
+                  disabled={isLoading || isAnyFileProcessing}
+                >
+                  <option value="all">Tous les ans</option>
+                  {[...new Set(uploadedFiles?.map(file => dayjs(file.updatedAt).year()))].map(year => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
+
+                <select
+                  className={`h-10 px-3 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isLoading || isAnyFileProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  disabled={isLoading || isAnyFileProcessing}
+                >
+                  <option value="all">Tous les mois</option>
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
+                    <option key={month} value={month}>{dayjs().month(month - 1).format('MMMM')}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  className={`px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors duration-200 shadow-sm text-sm ${isLoading || isAnyFileProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  onClick={() => setShowTarrifDialog(true)}
+                  disabled={isLoading || isAnyFileProcessing}
+                >
+                  <span className="hidden sm:inline">Gérer Tarif</span>
+                  <span className="sm:hidden">Tarif</span>
+                </button>
+                <TarrifDialog open={showTarrifDialog} onClose={() => setShowTarrifDialog(false)} />
+
+                <Button
+                  onClick={openInDrive}
+                  className="px-4 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 rounded-lg flex items-center justify-center gap-2 font-medium transition-colors duration-200 shadow-sm text-sm"
+                  disabled={isLoading}
+                >
+                  <Image src={driveIcon} alt="Drive Icon" className="w-4 h-4" />
+                  <span className="hidden sm:inline">Afficher dans Drive</span>
+                  <span className="sm:hidden">Drive</span>
+                </Button>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    {/* Files Content - Scrollable area */}
-<div className='flex-1 min-h-0 overflow-y-auto px-4 py-4'>
-        {filteredFiles?.map((item, index) => (
+      {/* Files Content - Scrollable area */}
+      <div className='flex-1 min-h-0 overflow-y-auto px-4 py-4'>
+        {filteredFiles?.slice(startIndex, endIndex).map((item, index) => (
           <div key={index} className="flex items-center gap-7 self-stretch files mt-[20px]">
             <div className={`flex justify-between w-full rounded-lg p-2 space-y-4 border-black shadow-custom 
               ${item.isProcessed
@@ -835,34 +870,101 @@ return (
         ))}
       </div>
 
-    {/* Summary - Fixed at bottom */}
-    <div className="flex-shrink-0  z-30">
-      <div className="flex items-center justify-center py-4 px-6">
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 max-w-4xl">
-          <div className="flex items-center justify-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-blue-500 shadow-sm"></div>
-            <span className="text-gray-700 text-sm font-semibold">Total: {filteredFiles?.length || 0}</span>
+      <div className="flex-shrink-0 z-30">
+        <div className="flex items-center justify-around py-4 px-6">
+          {/* Left side info */}
+          <div className="flex items-center w-full gap-6">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-blue-500 shadow-sm"></div>
+              <span className="text-gray-700 text-sm font-semibold">
+                Total: {filteredFiles?.length || 0}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-green-500 shadow-sm"></div>
+              <span className="text-gray-700 text-sm font-semibold">
+                Traités: {filteredFiles?.filter(f => f.isProcessed).length || 0}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-orange-500 shadow-sm"></div>
+              <span className="text-gray-700 text-sm font-semibold">
+                Non traités: {filteredFiles?.filter(f => !f.isProcessed).length || 0}
+              </span>
+            </div>
           </div>
-          <div className="flex items-center justify-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-green-500 shadow-sm"></div>
-            <span className="text-gray-700 text-sm font-semibold">Traités: {filteredFiles?.filter(f => f.isProcessed).length || 0}</span>
-          </div>
-          <div className="flex items-center justify-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-orange-500 shadow-sm"></div>
-            <span className="text-gray-700 text-sm font-semibold">Non traités: {filteredFiles?.filter(f => !f.isProcessed).length || 0}</span>
-          </div>
+
+          {/* Right side pagination */}
+          <Pagination className="w-fit">
+            <PaginationContent className="gap-1">
+              <PaginationItem>
+                <PaginationPrevious
+                  className={`rounded-lg px-3 py-2 text-sm border transition-all duration-200 ${startIndex === 0
+                      ? "pointer-events-none opacity-40 bg-gray-50 text-gray-400 border-gray-200"
+                      : "hover:bg-gray-100 bg-white text-gray-700 border-gray-300 hover:border-gray-400 shadow-sm hover:shadow"
+                    }`}
+                  onClick={handlePreviousClick}
+                />
+              </PaginationItem>
+
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNumber;
+                if (totalPages <= 5) {
+                  pageNumber = i + 1;
+                } else if (pageNo <= 3) {
+                  pageNumber = i + 1;
+                } else if (pageNo >= totalPages - 2) {
+                  pageNumber = totalPages - 4 + i;
+                } else {
+                  pageNumber = pageNo - 2 + i;
+                }
+
+                return (
+                  <PaginationItem key={pageNumber}>
+                    <PaginationLink
+                      href="#"
+                      className={`px-3 py-2 rounded-lg text-sm border transition-all duration-200 ${pageNumber === pageNo
+                          ? "bg-blue-600 text-white border-blue-600 shadow-md"
+                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400 shadow-sm hover:shadow"
+                        }`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        const newStartIndex = (pageNumber - 1) * rowPerPage;
+                        const newEndIndex = newStartIndex + rowPerPage;
+                        setPageNo(pageNumber);
+                        setStartIndex(newStartIndex);
+                        setEndIndex(newEndIndex);
+                      }}
+                    >
+                      {pageNumber}
+                    </PaginationLink>
+                  </PaginationItem>
+                );
+              })}
+
+              <PaginationItem>
+                <PaginationNext
+                  className={`rounded-lg px-3 py-2 text-sm border transition-all duration-200 ${endIndex >= (filteredFiles?.length || 0)
+                      ? "pointer-events-none opacity-40 bg-gray-50 text-gray-400 border-gray-200"
+                      : "hover:bg-gray-100 bg-white text-gray-700 border-gray-300 hover:border-gray-400 shadow-sm hover:shadow"
+                    }`}
+                  onClick={handleNextClick}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
       </div>
-    </div>
 
-    <UploadErrorsDialog
-      errors={uploadErrors}
-      open={showErrorsDialog}
-      onClose={() => setShowErrorsDialog(false)}
-    />
-    <InvoiceProgressOverlay isVisible={progress.isVisible} progress={progress} />
-  </div>
-);
+
+      <UploadErrorsDialog
+        errors={uploadErrors}
+        open={showErrorsDialog}
+        onClose={() => setShowErrorsDialog(false)}
+      />
+      <InvoiceProgressOverlay isVisible={progress.isVisible} progress={progress} />
+    </div>
+  );
 
 }
 
