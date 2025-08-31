@@ -24,13 +24,13 @@ export function DatePicker({ className, filter }) {
   };
 
   return (
-    <div className={`grid gap-2 ${className}`}>
+    <div className={`grid gap-0 ${className}`}>
       <Popover>
         <PopoverTrigger asChild>
           <Button
             id="date"
             variant="outline"
-            className={`w-[300px] justify-start text-left font-normal h-[75%] ${
+            className={`w-[300px] justify-start text-left font-normal h-[100%] ${
               !date && 'text-muted-foreground'
             }`}
           >
