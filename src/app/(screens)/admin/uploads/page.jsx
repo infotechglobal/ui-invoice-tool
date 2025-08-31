@@ -604,7 +604,7 @@ function Uploads({ isInvoice = true }) {
   }
   const isAnyFileProcessing = uploadedFiles?.some(file => file.isProcessing);
 return (
-  <div className="flex flex-col h-screen pr-6">
+  <div className="flex flex-col h-screen pr-6 pb-3">
     {/* Custom Notification */}
     <CustomNotification
       isVisible={notification.isVisible}
@@ -836,7 +836,7 @@ return (
       </div>
 
     {/* Summary - Fixed at bottom */}
-    <div className="flex-shrink-0 bg-gradient-to-r from-gray-50 to-white border-t border-gray-200 shadow-lg z-30">
+    <div className="flex-shrink-0  z-30">
       <div className="flex items-center justify-center py-4 px-6">
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 max-w-4xl">
           <div className="flex items-center justify-center gap-2">
