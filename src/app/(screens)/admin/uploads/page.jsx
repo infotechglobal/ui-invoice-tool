@@ -900,8 +900,8 @@ function Uploads({ isInvoice = true }) {
               <PaginationItem>
                 <PaginationPrevious
                   className={`rounded-lg px-3 py-2 text-sm border transition-all duration-200 ${startIndex === 0
-                      ? "pointer-events-none opacity-40 bg-gray-50 text-gray-400 border-gray-200"
-                      : "hover:bg-gray-100 bg-white text-gray-700 border-gray-300 hover:border-gray-400 shadow-sm hover:shadow"
+                    ? "pointer-events-none opacity-40 bg-gray-50 text-gray-400 border-gray-200"
+                    : "hover:bg-gray-100 bg-white text-gray-700 border-gray-300 hover:border-gray-400 shadow-sm hover:shadow"
                     }`}
                   onClick={handlePreviousClick}
                 />
@@ -924,8 +924,8 @@ function Uploads({ isInvoice = true }) {
                     <PaginationLink
                       href="#"
                       className={`px-3 py-2 rounded-lg text-sm border transition-all duration-200 ${pageNumber === pageNo
-                          ? "bg-blue-600 text-white border-blue-600 shadow-md"
-                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400 shadow-sm hover:shadow"
+                        ? "bg-blue-600 text-white border-blue-600 shadow-md"
+                        : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400 shadow-sm hover:shadow"
                         }`}
                       onClick={(e) => {
                         e.preventDefault();
@@ -945,8 +945,8 @@ function Uploads({ isInvoice = true }) {
               <PaginationItem>
                 <PaginationNext
                   className={`rounded-lg px-3 py-2 text-sm border transition-all duration-200 ${endIndex >= (filteredFiles?.length || 0)
-                      ? "pointer-events-none opacity-40 bg-gray-50 text-gray-400 border-gray-200"
-                      : "hover:bg-gray-100 bg-white text-gray-700 border-gray-300 hover:border-gray-400 shadow-sm hover:shadow"
+                    ? "pointer-events-none opacity-40 bg-gray-50 text-gray-400 border-gray-200"
+                    : "hover:bg-gray-100 bg-white text-gray-700 border-gray-300 hover:border-gray-400 shadow-sm hover:shadow"
                     }`}
                   onClick={handleNextClick}
                 />
