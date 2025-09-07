@@ -24,6 +24,14 @@ import { useSocket } from '../../../../context/SocketContext';
 import InvoiceProgressOverlay from '../../../../../components/InvoiceProgressOverlay';
 import CustomNotification from '../../../../../components/CustomNotification'; // Import custom notification
 import { ChevronRight, Play, Loader2, Eye } from 'lucide-react';
+
+import { Calendar, CalendarDays } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+
 import {
   Pagination,
   PaginationContent,
@@ -92,7 +100,8 @@ function Uploads({ isInvoice = true }) {
   const [showTarrifDialog, setShowTarrifDialog] = useState(false);
   const [showErrorsDialog, setShowErrorsDialog] = useState(false);
   const [driveAuth, setDriveAuth] = useState(false);
-
+  const [invoiceDate, setInvoiceDate] = useState(null);
+  const [selectedFileId, setSelectedFileId] = useState(null);
   const rowPerPage = 5;
   const [pageNo, setPageNo] = useState(1);
   const [startIndex, setStartIndex] = useState(0);
@@ -448,11 +457,29 @@ function Uploads({ isInvoice = true }) {
   const handlePreview = async (driveId, fileName) => {
     hideAlert();
 
+    // Validate invoice date is selected
+    if (!invoiceDate) {
+      showAlert("Veuillez sélectionner une date de facture avant de traiter le fichier.", "Error");
+      setTimeout(() => {
+        hideAlert();
+      }, 3000);
+      return;
+    }
+
+    // Validate invoice date is not in future
+    const today = new Date();
+    today.setHours(23, 59, 59, 999); // Set to end of today
+    if (invoiceDate > today) {
+      showAlert("La date de facture ne peut pas être dans le futur.", "Error");
+      setTimeout(() => {
+        hideAlert();
+      }, 3000);
+      return;
+    }
+
     console.log('🚀 Starting file processing...');
     console.log('📡 Socket ID being sent to backend:', socket?.id);
     console.log('🔌 Socket connected status:', socket?.connected);
-
-
 
     try {
       console.log('🚀 About to send invoice processing request');
@@ -476,17 +503,21 @@ function Uploads({ isInvoice = true }) {
         errors: []
       });
 
+      // Format date as dd/mm/yyyy string
+      const formattedDate = format(invoiceDate, "dd/MM/yyyy");
+
       const { data } = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/invoices/process/${driveId}`, {
         fileName,
-
+        invoiceDate: formattedDate, // Pass formatted date to backend
       });
       setDriveAuth(true);
 
       if (data.statusCode === 202 || data.statusCode === 409) {
-        // Will receive live updates via room subscription
+        // Reset date after successful submission
+        setInvoiceDate(null);
+        setSelectedFileId(null);
         return;
       }
-
 
       // Process regular success response
       const summary = data.summary;
@@ -504,6 +535,10 @@ function Uploads({ isInvoice = true }) {
         setProgress(prev => ({ ...prev, isVisible: false }));
         hideLoader();
         router.push(`/admin/invoice/${driveId}`);
+
+        // Reset date after successful processing
+        setInvoiceDate(null);
+        setSelectedFileId(null);
       } else {
         showAlert(data.message, 'Error');
         setTimeout(() => {
@@ -770,9 +805,14 @@ function Uploads({ isInvoice = true }) {
               <div className='flex mainContainer flex-grow space-y-4'>
                 <div className='w-full space-y-3'>
                   {item.isProcessed && (
-                    <div className="flex items-center">
+                    <div className="flex items-center justify-between">
+                      <div className='flex items-center'>
                       <div className="w-2 h-2 rounded-full bg-green-400 mr-2"></div>
                       <span className="text-blue-300 text-xs font-medium">Déjà traité</span>
+                      </div>
+                        <div className="text-white text-xs font-extrabold bg-white/20 px-2 py-1 rounded">
+                            Date sélectionnée :  {item.invoiceDate? item.invoiceDate : 'Date de facture non définie'}
+                            </div>
                     </div>
                   )}
                   {item.isProcessing && (
@@ -786,33 +826,77 @@ function Uploads({ isInvoice = true }) {
                     dernière modification {dayjs(item.updatedAt).format('DD MMM YYYY')} {dayjs(item.updatedAt).format('HH:mm:ss')}
                   </h2>
                   <div className='flex justify-between'>
-                    <a
-                      href={item.driveLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className='text-white font-archivo text-sm font-normal leading-4 underline'
-                    >
-                      Ouvrir dans Drive
-                    </a>
+                    <div className="flex items-center gap-3">
+                      <a
+                        href={item.driveLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className='text-white font-archivo text-sm font-normal leading-4 underline'
+                      >
+                        Ouvrir dans Drive
+                      </a>
+
+                      {/* Calendar icon for unprocessed files only */}
+                      {!item.isProcessed && !item.isProcessing && (
+                        <>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <button
+                                className={`p-1 hover:bg-white/10 rounded transition-colors ${isLoading || isAnyFileProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                disabled={isLoading || isAnyFileProcessing}
+                                aria-label="Select invoice date"
+                                onClick={() => setSelectedFileId(item.driveId)}
+                              >
+                                <CalendarDays size={16} color="#ffffff" strokeWidth={2.25} />
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <CalendarComponent
+                                mode="single"
+                                selected={selectedFileId === item.driveId ? invoiceDate : null}
+                                onSelect={(date) => {
+                                  setInvoiceDate(date);
+                                  setSelectedFileId(item.driveId);
+                                }}
+                                disabled={(date) => date > new Date()}
+                                initialFocus
+                                locale={fr}
+                              />
+                            </PopoverContent>
+                          </Popover>
+
+                          {/* Show selected date */}
+                        
+                        </>
+                      )}
+                    </div>
+
                     <button
                       onClick={() => handlePreview(item.driveId, item.fileName)}
                       className={`
-    flex items-center gap-2 px-4 py-2 rounded-lg
-    font-archivo text-sm font-medium
-    transition-all duration-200
-    ${item.isProcessed
+        flex items-center gap-2 px-4 py-2 rounded-lg
+        font-archivo text-sm font-medium
+        transition-all duration-200
+        ${item.isProcessed
                           ? 'bg-blue-500  text-white'
                           : item.isProcessing
                             ? 'bg-orange-500 cursor-not-allowed text-white'
-                            : 'bg-white hover:bg-gray-50 text-blue-600 hover:text-blue-700'
+                            : (selectedFileId === item.driveId && invoiceDate)
+                              ? 'bg-white hover:bg-gray-50 text-blue-600 hover:text-blue-700'
+                              : 'bg-gray-300 cursor-not-allowed text-gray-500'
                         }
-    ${(isLoading || isAnyFileProcessing) && !item.isProcessing
+        ${(isLoading || isAnyFileProcessing) && !item.isProcessing
                           ? 'opacity-50 cursor-not-allowed'
                           : ''
                         }
-    relative right-[500px] shadow-sm
-  `}
-                      disabled={isLoading || item.isProcessing || isAnyFileProcessing}
+        relative right-[500px] shadow-sm
+      `}
+                      disabled={
+                        isLoading ||
+                        item.isProcessing ||
+                        isAnyFileProcessing ||
+                        (!item.isProcessed && (!invoiceDate || selectedFileId !== item.driveId))
+                      }
                     >
                       {item.isProcessed ? (
                         <>
@@ -855,8 +939,7 @@ function Uploads({ isInvoice = true }) {
                   // Show delete button only for unprocessed files
                   <button
                     onClick={() => handleDelete(item.driveId)}
-
-
+                    disabled={isLoading || isAnyFileProcessing}
                     className={`h-fit ${isLoading || isAnyFileProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
                     aria-label="Delete file"
                   >
