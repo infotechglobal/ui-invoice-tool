@@ -1,10 +1,11 @@
 "use client";
 import * as React from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react"
 import { DayPicker } from "react-day-picker"
 
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 function Calendar({
   className,
@@ -12,15 +13,41 @@ function Calendar({
   showOutsideDays = true,
   ...props
 }) {
+  const [currentMonth, setCurrentMonth] = React.useState(new Date());
+  
+  // Generate years from 1900 to current year
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: currentYear - 1900 + 1 }, (_, i) => currentYear - i);
+  
+  // Month names for selection
+  const months = [
+    "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+    "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
+  ];
+
+  const handleYearChange = (year) => {
+    const newDate = new Date(currentMonth);
+    newDate.setFullYear(parseInt(year));
+    setCurrentMonth(newDate);
+  };
+
+  const handleMonthChange = (monthIndex) => {
+    const newDate = new Date(currentMonth);
+    newDate.setMonth(parseInt(monthIndex));
+    setCurrentMonth(newDate);
+  };
+
   return (
-    (<DayPicker
+    <DayPicker
       showOutsideDays={showOutsideDays}
       className={cn("p-3", className)}
+      month={currentMonth}
+      onMonthChange={setCurrentMonth}
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
         caption: "flex justify-center pt-1 relative items-center",
-        caption_label: "text-sm font-medium",
+        caption_label: "text-sm font-medium hidden", // Hide default label
         nav: "space-x-1 flex items-center",
         nav_button: cn(
           buttonVariants({ variant: "outline" }),
@@ -40,7 +67,7 @@ function Calendar({
         ),
         day_range_end: "day-range-end",
         day_selected:
-          "bg-neutral-900 text-neutral-50 hover:bg-neutral-900 hover:text-neutral-50 focus:bg-neutral-900 focus:text-neutral-50 dark:bg-neutral-50 dark:text-neutral-900 dark:hover:bg-neutral-50 dark:hover:text-neutral-900 dark:focus:bg-neutral-50 dark:focus:text-neutral-900",
+          "bg-blue-500 text-white hover:bg-blue-600 hover:text-white focus:bg-blue-500 focus:text-white dark:bg-blue-500 dark:text-white dark:hover:bg-blue-600 dark:hover:text-white dark:focus:bg-blue-500 dark:focus:text-white",
         day_today: "bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-50",
         day_outside:
           "day-outside text-neutral-500 opacity-50 aria-selected:bg-neutral-100/50 aria-selected:text-neutral-500 aria-selected:opacity-30 dark:text-neutral-400 dark:aria-selected:bg-neutral-800/50 dark:aria-selected:text-neutral-400",
@@ -53,8 +80,79 @@ function Calendar({
       components={{
         IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
         IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
+        Caption: ({ displayMonth }) => (
+          <div className="flex justify-center pt-1 relative items-center w-full">
+            <div className="flex items-center space-x-2">
+              {/* Month Selector */}
+              <Select 
+                value={displayMonth.getMonth().toString()} 
+                onValueChange={handleMonthChange}
+              >
+                <SelectTrigger className="w-24 h-8 text-sm border-none shadow-none p-1 focus:ring-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {months.map((month, index) => (
+                    <SelectItem key={index} value={index.toString()}>
+                      {month}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              {/* Year Selector */}
+              <Select 
+                value={displayMonth.getFullYear().toString()} 
+                onValueChange={handleYearChange}
+              >
+                <SelectTrigger className="w-20 h-8 text-sm border-none shadow-none p-1 focus:ring-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="max-h-48 overflow-y-auto">
+                  {years.map((year) => (
+                    <SelectItem key={year} value={year.toString()}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* Navigation buttons */}
+            <button
+              type="button"
+              className={cn(
+                buttonVariants({ variant: "outline" }),
+                "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 absolute left-1"
+              )}
+              onClick={() => {
+                const newDate = new Date(currentMonth);
+                newDate.setMonth(newDate.getMonth() - 1);
+                setCurrentMonth(newDate);
+              }}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            
+            <button
+              type="button"
+              className={cn(
+                buttonVariants({ variant: "outline" }),
+                "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 absolute right-1"
+              )}
+              onClick={() => {
+                const newDate = new Date(currentMonth);
+                newDate.setMonth(newDate.getMonth() + 1);
+                setCurrentMonth(newDate);
+              }}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+        ),
       }}
-      {...props} />)
+      {...props}
+    />
   );
 }
 Calendar.displayName = "Calendar"
