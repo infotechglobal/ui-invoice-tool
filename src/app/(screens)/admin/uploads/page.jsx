@@ -454,11 +454,11 @@ function Uploads({ isInvoice = true }) {
     window.open(`${process.env.NEXT_PUBLIC_BACKEND_URL}/upload/auth/google`);
   };
 
-  const handlePreview = async (driveId, fileName) => {
+  const handlePreview = async (driveId, fileName, isProcessed) => {
     hideAlert();
 
     // Validate invoice date is selected
-    if (!invoiceDate) {
+    if (!isProcessed && !invoiceDate) {
       showAlert("Veuillez sélectionner une date de facture avant de traiter le fichier.", "Error");
       setTimeout(() => {
         hideAlert();
@@ -469,7 +469,7 @@ function Uploads({ isInvoice = true }) {
     // Validate invoice date is not in future
     const today = new Date();
     today.setHours(23, 59, 59, 999); // Set to end of today
-    if (invoiceDate > today) {
+    if (invoiceDate && invoiceDate > today) {
       showAlert("La date de facture ne peut pas être dans le futur.", "Error");
       setTimeout(() => {
         hideAlert();
@@ -504,7 +504,8 @@ function Uploads({ isInvoice = true }) {
       });
 
       // Format date as dd/mm/yyyy string
-      const formattedDate = format(invoiceDate, "dd/MM/yyyy");
+      let formattedDate =format(new Date(), "dd/MM/yyyy");
+      if(!isProcessed)formattedDate= format(invoiceDate, "dd/MM/yyyy");
 
       const { data } = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/invoices/process/${driveId}`, {
         fileName,
@@ -872,7 +873,7 @@ function Uploads({ isInvoice = true }) {
                     </div>
 
                     <button
-                      onClick={() => handlePreview(item.driveId, item.fileName)}
+                      onClick={() => handlePreview(item.driveId, item.fileName, item.isProcessed)}
                       className={`
         flex items-center gap-2 px-4 py-2 rounded-lg
         font-archivo text-sm font-medium
